@@ -1,32 +1,27 @@
-import Link from "next/link";
-import ToolCard from "../components/ToolCard";
+import Link from 'next/link';
+import ToolCard from '../components/ToolCard';
+import { Button } from '../components/ui/button';
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-50">
-      <div className="mx-auto max-w-5xl px-6 py-16">
+      <div className="mx-auto max-w-5xl px-6 py-20">
         <header className="text-center">
-          <h1 className="text-4xl font-bold text-zinc-900">Shenoy Labs</h1>
-          <p className="mt-4 text-lg text-zinc-600">
+          <h1 className="text-5xl font-extrabold tracking-tight text-zinc-900">Shenoy Labs</h1>
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-zinc-600">
             Thoughtful tools, calculators, and projects built in public.
           </p>
-          <div className="mt-6 flex justify-center gap-4">
-            <Link
-              href="/tools"
-              className="rounded-full bg-indigo-600 px-4 py-2 text-white font-medium hover:bg-indigo-700"
-            >
-              Try Tools
+          <div className="mt-8 flex justify-center gap-4">
+            <Link href="/tools" legacyBehavior>
+              <Button>Try tools</Button>
             </Link>
-            <Link
-              href="/projects"
-              className="rounded-full border border-zinc-200 px-4 py-2 text-zinc-900"
-            >
-              Projects
+            <Link href="/projects" legacyBehavior>
+              <Button variant="outline">Projects</Button>
             </Link>
           </div>
         </header>
 
-        <section className="mt-12">
+        <section className="mt-14">
           <h2 className="text-2xl font-semibold text-zinc-900">Featured Tools</h2>
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <ToolCard
@@ -42,7 +37,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mt-10">
+        <section className="mt-12">
           <h2 className="text-2xl font-semibold text-zinc-900">Projects</h2>
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <ToolCard
@@ -58,7 +53,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mt-10">
+        <section className="mt-12">
           <h2 className="text-2xl font-semibold text-zinc-900">Latest Articles</h2>
           <ul className="mt-4 space-y-3">
             <li>
