@@ -1,0 +1,32 @@
+---
+title: "Scientific Caffeine Calculator"
+date: "2026-04-05"
+summary: "Project writeup for the flagship Scientific Caffeine Calculator."
+stack:
+  - Next.js
+  - TypeScript
+  - React
+  - Tailwind
+repo: "https://github.com/lakshmanshenoy/shenoylabs-caffeine"
+---
+
+# Scientific Caffeine Calculator — Project
+
+## Problem
+
+Users want a reliable way to translate a beverage volume (mL) and estimated concentration into a caffeine intake estimate that accounts for measurement uncertainty and per-person factors.
+
+## Approach
+
+- Separate UI from calculation engine. Formula and unit conversions live in `lib/calculators/caffeine.ts` so they can be reused across tools and articles.
+- Use MDX for article integration so we can embed interactive React calculators inside writeups.
+
+## Roadmap
+
+1. Implement `caffeine.ts` with robust unit handling and uncertainty propagation.
+2. Wire the engine into `/tools/caffeine-calculator` with a small interactive UI.
+3. Add tests and example datasets.
+
+## Notes
+
+This file is a starter project writeup. Screenshots, example inputs, and implementation notes will be added as the calculator is built.
