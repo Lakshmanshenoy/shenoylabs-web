@@ -1,22 +1,31 @@
 import Link from 'next/link';
 import ToolCard from '../components/ToolCard';
-import { Button } from '../components/ui/button';
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-6 py-16 sm:py-20 lg:py-28">
-          <header className="text-center">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-foreground">Shenoy Labs</h1>
+        <header className="text-center">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-foreground">
+            Shenoy Labs
+          </h1>
           <p className="mx-auto mt-4 max-w-3xl text-base sm:text-lg md:text-xl text-muted leading-relaxed">
             Thoughtful tools, calculators, and projects built in public.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
-            <Link href="/tools" className="w-full sm:w-auto">
-              <Button className="w-full sm:w-auto">Try tools</Button>
+            <Link
+              href="/tools"
+              className="inline-flex w-full sm:w-auto items-center justify-center rounded-md text-sm font-medium h-12 px-6 bg-primary text-white hover:bg-primary-400"
+              style={{ minHeight: 48 }}
+            >
+              Try tools
             </Link>
-            <Link href="/projects" className="w-full sm:w-auto">
-              <Button variant="outline" className="w-full sm:w-auto">Projects</Button>
+            <Link
+              href="/projects"
+              className="inline-flex w-full sm:w-auto items-center justify-center rounded-md text-sm font-medium h-12 px-6 border border-border bg-white text-foreground hover:bg-background"
+              style={{ minHeight: 48 }}
+            >
+              Projects
             </Link>
           </div>
         </header>
@@ -59,7 +68,7 @@ export default function Home() {
             <li>
               <Link
                 href="/articles/how-much-caffeine-in-cold-brew"
-                className="text-primary hover:underline"
+                className="text-indigo-300 hover:underline"
               >
                 How much caffeine is in cold brew?
               </Link>

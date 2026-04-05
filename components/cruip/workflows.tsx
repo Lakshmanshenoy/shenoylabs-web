@@ -1,8 +1,8 @@
-import Image from "next/image";
-import WorflowImg01 from "@/public/images/workflow-01.png";
-import WorflowImg02 from "@/public/images/workflow-02.png";
-import WorflowImg03 from "@/public/images/workflow-03.png";
-import Spotlight from "@/components/spotlight";
+import Image from 'next/image';
+import WorflowImg01 from '@/public/images/workflow-01.png';
+import WorflowImg02 from '@/public/images/workflow-02.png';
+import WorflowImg03 from '@/public/images/workflow-03.png';
+import Spotlight from '@/components/spotlight';
 
 export default function Workflows() {
   return (
@@ -20,9 +20,8 @@ export default function Workflows() {
               Map your product journey
             </h2>
             <p className="text-lg text-indigo-200/65">
-              Simple and elegant interface to start collaborating with your team
-              in minutes. It seamlessly integrates with your code and your
-              favorite programming languages.
+              Simple and elegant interface to start collaborating with your team in minutes. It
+              seamlessly integrates with your code and your favorite programming languages.
             </p>
           </div>
           {/* Spotlight items */}
@@ -38,12 +37,7 @@ export default function Workflows() {
                   className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full border border-gray-700/50 bg-gray-800/65 text-gray-200 opacity-0 transition-opacity group-hover/card:opacity-100"
                   aria-hidden="true"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width={9}
-                    height={8}
-                    fill="none"
-                  >
+                  <svg xmlns="http://www.w3.org/2000/svg" width={9} height={8} fill="none">
                     <path
                       fill="#F4F4F5"
                       d="m4.92 8-.787-.763 2.733-2.68H0V3.443h6.866L4.133.767 4.92 0 9 4 4.92 8Z"
@@ -68,8 +62,9 @@ export default function Workflows() {
                     </span>
                   </div>
                   <p className="text-indigo-200/65">
-                    Streamline the product development flow with a content
-                    platform that's aligned across specs and insights.
+                    {
+                      "Streamline the product development flow with a content platform that's aligned across specs and insights."
+                    }
                   </p>
                 </div>
               </div>
@@ -85,12 +80,7 @@ export default function Workflows() {
                   className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full border border-gray-700/50 bg-gray-800/65 text-gray-200 opacity-0 transition-opacity group-hover/card:opacity-100"
                   aria-hidden="true"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width={9}
-                    height={8}
-                    fill="none"
-                  >
+                  <svg xmlns="http://www.w3.org/2000/svg" width={9} height={8} fill="none">
                     <path
                       fill="#F4F4F5"
                       d="m4.92 8-.787-.763 2.733-2.68H0V3.443h6.866L4.133.767 4.92 0 9 4 4.92 8Z"
@@ -115,8 +105,9 @@ export default function Workflows() {
                     </span>
                   </div>
                   <p className="text-indigo-200/65">
-                    Streamline the product development flow with a content
-                    platform that's aligned across specs and insights.
+                    {
+                      "Streamline the product development flow with a content platform that's aligned across specs and insights."
+                    }
                   </p>
                 </div>
               </div>
@@ -132,12 +123,7 @@ export default function Workflows() {
                   className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full border border-gray-700/50 bg-gray-800/65 text-gray-200 opacity-0 transition-opacity group-hover/card:opacity-100"
                   aria-hidden="true"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width={9}
-                    height={8}
-                    fill="none"
-                  >
+                  <svg xmlns="http://www.w3.org/2000/svg" width={9} height={8} fill="none">
                     <path
                       fill="#F4F4F5"
                       d="m4.92 8-.787-.763 2.733-2.68H0V3.443h6.866L4.133.767 4.92 0 9 4 4.92 8Z"
@@ -162,8 +148,9 @@ export default function Workflows() {
                     </span>
                   </div>
                   <p className="text-indigo-200/65">
-                    Streamline the product development flow with a content
-                    platform that's aligned across specs and insights.
+                    {
+                      "Streamline the product development flow with a content platform that's aligned across specs and insights."
+                    }
                   </p>
                 </div>
               </div>

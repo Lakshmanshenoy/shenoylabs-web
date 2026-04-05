@@ -32,12 +32,18 @@
       "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
   }
 
-  /* Ensure anchors use the primary design token for sufficient contrast */
+  /* Default anchors inherit surrounding color; use utility classes for themed links */
   a {
-    color: var(--primary) !important;
+    color: inherit;
   }
-  a:hover {
-    color: var(--primary-hover) !important;
+  /* Keep explicit primary utility available via classes */
+  a.text-primary,
+  .text-primary {
+    color: var(--primary);
+  }
+  a.text-primary:hover,
+  .text-primary:hover {
+    color: var(--primary-hover);
   }
 
   /* Ensure headings use the foreground token in all themes */

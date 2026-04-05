@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from 'next/link';
 
 export default function ArticlesPage() {
   return (
@@ -8,7 +8,10 @@ export default function ArticlesPage() {
 
       <ul className="mt-6 space-y-4">
         <li>
-          <Link href="/articles/how-much-caffeine-in-cold-brew" className="text-primary hover:underline">
+          <Link
+            href="/articles/how-much-caffeine-in-cold-brew"
+            className="text-indigo-300 hover:underline"
+          >
             How much caffeine is in cold brew?
           </Link>
         </li>

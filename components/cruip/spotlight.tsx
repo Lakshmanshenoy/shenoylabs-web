@@ -1,17 +1,14 @@
-"use client";
+'use client';
 
-import React, { useRef, useState, useEffect } from "react";
-import useMousePosition from "@/utils/useMousePosition";
+import React, { useRef, useState, useEffect, useCallback } from 'react';
+import useMousePosition from '@/utils/useMousePosition';
 
 type SpotlightProps = {
   children: React.ReactNode;
   className?: string;
 };
 
-export default function Spotlight({
-  children,
-  className = "",
-}: SpotlightProps) {
+export default function Spotlight({ children, className = '' }: SpotlightProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mousePosition = useMousePosition();
   const mouse = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -19,35 +16,19 @@ export default function Spotlight({
   const [boxes, setBoxes] = useState<Array<HTMLElement>>([]);
 
   useEffect(() => {
-    containerRef.current &&
-      setBoxes(
-        Array.from(containerRef.current.children).map(
-          (el) => el as HTMLElement,
-        ),
-      );
+    if (containerRef.current) {
+      setBoxes(Array.from(containerRef.current.children).map((el) => el as HTMLElement));
+    }
   }, []);
 
-  useEffect(() => {
-    initContainer();
-    window.addEventListener("resize", initContainer);
-
-    return () => {
-      window.removeEventListener("resize", initContainer);
-    };
-  }, [boxes]);
-
-  useEffect(() => {
-    onMouseMove();
-  }, [mousePosition]);
-
-  const initContainer = () => {
+  const initContainer = useCallback(() => {
     if (containerRef.current) {
       containerSize.current.w = containerRef.current.offsetWidth;
       containerSize.current.h = containerRef.current.offsetHeight;
     }
-  };
+  }, []);
 
-  const onMouseMove = () => {
+  const onMouseMove = useCallback(() => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       const { w, h } = containerSize.current;
@@ -58,16 +39,27 @@ export default function Spotlight({
         mouse.current.x = x;
         mouse.current.y = y;
         boxes.forEach((box) => {
-          const boxX =
-            -(box.getBoundingClientRect().left - rect.left) + mouse.current.x;
-          const boxY =
-            -(box.getBoundingClientRect().top - rect.top) + mouse.current.y;
-          box.style.setProperty("--mouse-x", `${boxX}px`);
-          box.style.setProperty("--mouse-y", `${boxY}px`);
+          const boxX = -(box.getBoundingClientRect().left - rect.left) + mouse.current.x;
+          const boxY = -(box.getBoundingClientRect().top - rect.top) + mouse.current.y;
+          box.style.setProperty('--mouse-x', `${boxX}px`);
+          box.style.setProperty('--mouse-y', `${boxY}px`);
         });
       }
     }
-  };
+  }, [boxes, mousePosition.x, mousePosition.y]);
+
+  useEffect(() => {
+    initContainer();
+    window.addEventListener('resize', initContainer);
+
+    return () => {
+      window.removeEventListener('resize', initContainer);
+    };
+  }, [boxes, initContainer]);
+
+  useEffect(() => {
+    onMouseMove();
+  }, [onMouseMove]);
 
   return (
     <div className={className} ref={containerRef}>
