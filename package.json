@@ -23,12 +23,21 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@typescript-eslint/eslint-plugin": "^8.58.0",
+    "@typescript-eslint/parser": "^8.58.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
-    "tailwindcss": "^4",
-    "typescript": "^5",
-    "prettier": "^2.8.8",
+    "eslint-config-prettier": "^10.1.8",
     "husky": "^8.0.0",
-    "lint-staged": "^14.0.0"
+    "lint-staged": "^14.0.0",
+    "prettier": "^2.8.8",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,md}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   }
 }
