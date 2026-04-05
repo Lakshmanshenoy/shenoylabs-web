@@ -1,3 +1,39 @@
+# Shenoy Labs — Website
+
+Personal product-studio website scaffold for Shenoy Labs.
+
+Quick start
+
+```bash
+# from the project root
+pnpm install
+pnpm dev
+```
+
+Available scripts
+
+- `pnpm dev` — runs Next.js dev server
+- `pnpm build` — builds for production
+- `pnpm start` — runs production server
+- `pnpm lint` — runs ESLint
+- `pnpm format` — runs Prettier to format files
+
+Layout & content
+
+- `app/` — Next.js App Router pages and routes
+- `components/` — shared UI components
+- `content/` — MDX articles and project writeups
+- `lib/` — (planned) calculator engines and shared logic
+
+Deploy
+
+This repo is configured to deploy on Vercel. See `vercel.json` for defaults.
+
+Contributing
+
+1. Create a feature branch `feature/...`
+2. Add changes and run `pnpm format` + `pnpm lint`
+3. Open a Pull Request
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
