@@ -4,15 +4,24 @@
 
 @layer base {
   :root {
-    --background: #ffffff;
-    --foreground: #171717;
+    --background: #FAFAF9;
+    --foreground: #111827;
+    --muted: #6B7280;
+    --primary: #1D4ED8;
+    --primary-hover: #3B82F6;
+    --border: #E5E7EB;
+    --card: #FFFFFF;
     --font-sans: var(--font-inter);
   }
 
   @media (prefers-color-scheme: dark) {
-    :root {
-      --background: #0a0a0a;
-      --foreground: #ededed;
+      :root {
+      --background: #0B1120;
+      --foreground: #F9FAFB;
+      --muted: #9CA3AF;
+      --primary: #1D4ED8;
+      --border: #1F2937;
+      --card: #0B1120;
     }
   }
 
@@ -21,6 +30,25 @@
     color: var(--foreground);
     font-family: var(--font-sans), system-ui, -apple-system, "Segoe UI", Roboto,
       "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  }
+
+  /* Default anchors inherit surrounding color; use utility classes for themed links */
+  a {
+    color: inherit;
+  }
+  /* Keep explicit primary utility available via classes */
+  a.text-primary,
+  .text-primary {
+    color: var(--primary);
+  }
+  a.text-primary:hover,
+  .text-primary:hover {
+    color: var(--primary-hover);
+  }
+
+  /* Ensure headings use the foreground token in all themes */
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--foreground) !important;
   }
 }
 
@@ -33,6 +61,26 @@
   padding-right: 1.5rem;
 }
 
-.prose {
-  @apply prose prose-zinc max-w-none;
+/* Skip link for keyboard users */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
 }
+.skip-link:focus,
+.skip-link:active {
+  left: 1rem;
+  top: 1rem;
+  width: auto;
+  height: auto;
+  padding: 0.5rem 0.75rem;
+  background: var(--card);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  z-index: 60;
+  border-radius: 6px;
+}
+

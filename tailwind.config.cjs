@@ -1,4 +1,5 @@
 /** @type {import('tailwindcss').Config} */
+/* eslint-disable @typescript-eslint/no-require-imports */
 module.exports = {
   content: [
     './app/**/*.{ts,tsx,js,jsx,mdx}',
@@ -11,9 +12,18 @@ module.exports = {
         sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui'],
       },
       colors: {
+        background: '#FAFAF9',
+        foreground: '#111827',
         primary: {
-          DEFAULT: '#4f46e5',
+          DEFAULT: '#1D4ED8',
+          400: '#3B82F6',
         },
+        muted: '#6B7280',
+        border: '#E5E7EB',
+        success: '#166534',
+        warning: '#B45309',
+        danger: '#B91C1C',
+        card: '#FFFFFF',
       },
     },
   },

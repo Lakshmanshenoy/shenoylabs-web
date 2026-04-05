@@ -1,28 +1,37 @@
 import Link from 'next/link';
 import ToolCard from '../components/ToolCard';
-import { Button } from '../components/ui/button';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-zinc-50">
-      <div className="mx-auto max-w-5xl px-6 py-20">
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-5xl px-6 py-16 sm:py-20 lg:py-28">
         <header className="text-center">
-          <h1 className="text-5xl font-extrabold tracking-tight text-zinc-900">Shenoy Labs</h1>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-zinc-600">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-foreground">
+            Shenoy Labs
+          </h1>
+          <p className="mx-auto mt-4 max-w-3xl text-base sm:text-lg md:text-xl text-muted leading-relaxed">
             Thoughtful tools, calculators, and projects built in public.
           </p>
-          <div className="mt-8 flex justify-center gap-4">
-            <Link href="/tools" legacyBehavior>
-              <Button>Try tools</Button>
+          <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+            <Link
+              href="/tools"
+              className="inline-flex w-full sm:w-auto items-center justify-center rounded-md text-sm font-medium h-12 px-6 bg-primary text-white hover:bg-primary-400"
+              style={{ minHeight: 48 }}
+            >
+              Try tools
             </Link>
-            <Link href="/projects" legacyBehavior>
-              <Button variant="outline">Projects</Button>
+            <Link
+              href="/projects"
+              className="inline-flex w-full sm:w-auto items-center justify-center rounded-md text-sm font-medium h-12 px-6 border border-border bg-white text-foreground hover:bg-background"
+              style={{ minHeight: 48 }}
+            >
+              Projects
             </Link>
           </div>
         </header>
 
         <section className="mt-14">
-          <h2 className="text-2xl font-semibold text-zinc-900">Featured Tools</h2>
+          <h2 className="text-2xl font-semibold text-foreground">Featured Tools</h2>
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <ToolCard
               title="Scientific Caffeine Calculator"
@@ -38,7 +47,7 @@ export default function Home() {
         </section>
 
         <section className="mt-12">
-          <h2 className="text-2xl font-semibold text-zinc-900">Projects</h2>
+          <h2 className="text-2xl font-semibold text-foreground">Projects</h2>
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <ToolCard
               title="Scientific Caffeine Calculator (Project)"
@@ -54,12 +63,12 @@ export default function Home() {
         </section>
 
         <section className="mt-12">
-          <h2 className="text-2xl font-semibold text-zinc-900">Latest Articles</h2>
+          <h2 className="text-2xl font-semibold text-foreground">Latest Articles</h2>
           <ul className="mt-4 space-y-3">
             <li>
               <Link
                 href="/articles/how-much-caffeine-in-cold-brew"
-                className="text-indigo-600 hover:underline"
+                className="text-indigo-300 hover:underline"
               >
                 How much caffeine is in cold brew?
               </Link>
