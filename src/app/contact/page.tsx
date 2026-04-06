@@ -1,0 +1,43 @@
+import type { Metadata } from "next";
+
+import { ContactForm } from "@/components/contact/contact-form";
+import { SectionContainer } from "@/components/shared/section-container";
+import { SectionHeader } from "@/components/shared/section-header";
+import { Card, CardContent } from "@/components/ui/card";
+
+export const metadata: Metadata = {
+  title: "Contact — Shenoy Labs",
+  description: "Reach out to Shenoy Labs for collaboration, consulting, and product discussions.",
+};
+
+export default function ContactPage() {
+  return (
+    <SectionContainer>
+      <SectionHeader
+        badge="Contact"
+        title="Let's Build Something Useful"
+        description="Share your idea, your current problem, or what you want to ship next. Messages are delivered directly by email."
+      />
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
+        <ContactForm />
+
+        <Card className="border border-border/80 bg-card/95">
+          <CardContent className="space-y-4 p-6 text-sm text-muted-foreground">
+            <h3 className="font-heading text-lg font-semibold text-foreground">
+              Expected Response
+            </h3>
+            <p>
+              I usually respond within 1-2 business days. For urgent requests,
+              mention deadlines in your subject line.
+            </p>
+            <p>
+              For support contributions and optional payments, visit the support
+              page.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </SectionContainer>
+  );
+}

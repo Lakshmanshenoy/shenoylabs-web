@@ -2,6 +2,8 @@ import Link from "next/link";
 
 const footerLinks = [
   { href: "/privacy-policy", label: "Privacy Policy" },
+  { href: "/terms-of-service", label: "Terms" },
+  { href: "/refund-policy", label: "Refund Policy" },
   { href: "/support", label: "Support" },
   { href: "/contact", label: "Contact" },
   { href: "https://github.com/Lakshmanshenoy", label: "GitHub" },
