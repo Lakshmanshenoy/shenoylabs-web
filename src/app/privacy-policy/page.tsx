@@ -1,6 +1,32 @@
+import type { Metadata } from "next";
+
 import { SectionContainer } from "@/components/shared/section-container";
 import { SectionHeader } from "@/components/shared/section-header";
 import { Card, CardContent } from "@/components/ui/card";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy — Shenoy Labs",
+  description:
+    "How Shenoy Labs handles form submissions, analytics, and communication data.",
+  alternates: {
+    canonical: "/privacy-policy",
+  },
+  openGraph: {
+    title: "Privacy Policy — Shenoy Labs",
+    description:
+      "How Shenoy Labs handles form submissions, analytics, and communication data.",
+    type: "website",
+    url: "/privacy-policy",
+    images: ["/og-default.svg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Privacy Policy — Shenoy Labs",
+    description:
+      "How Shenoy Labs handles form submissions, analytics, and communication data.",
+    images: ["/og-default.svg"],
+  },
+};
 
 export default function PrivacyPolicyPage() {
   return (

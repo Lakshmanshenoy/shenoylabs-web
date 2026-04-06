@@ -9,6 +9,11 @@ const scriptSrc = isDev
   : "'self' 'unsafe-inline' https://www.googletagmanager.com";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  compress: true,
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
   async headers() {
     return [
       {

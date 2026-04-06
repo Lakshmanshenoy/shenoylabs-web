@@ -17,17 +17,23 @@ export const metadata: Metadata = {
   title: "Projects — Shenoy Labs",
   description:
     "Shipped products, ongoing builds, and planned work by Lakshman Shenoy.",
+  alternates: {
+    canonical: "/projects",
+  },
   openGraph: {
     title: "Projects — Shenoy Labs",
     description:
       "Shipped products, ongoing builds, and planned work by Lakshman Shenoy.",
     type: "website",
+    url: "/projects",
+    images: ["/og-default.svg"],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Projects — Shenoy Labs",
     description:
       "Shipped products, ongoing builds, and planned work by Lakshman Shenoy.",
+    images: ["/og-default.svg"],
   },
 };
 

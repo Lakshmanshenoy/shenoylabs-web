@@ -7,6 +7,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export const metadata: Metadata = {
   title: "Support — Shenoy Labs",
   description: "Optional support channels for Shenoy Labs via Razorpay and UPI.",
+  alternates: {
+    canonical: "/support",
+  },
+  openGraph: {
+    title: "Support — Shenoy Labs",
+    description: "Optional support channels for Shenoy Labs via Razorpay and UPI.",
+    type: "website",
+    url: "/support",
+    images: ["/og-default.svg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Support — Shenoy Labs",
+    description: "Optional support channels for Shenoy Labs via Razorpay and UPI.",
+    images: ["/og-default.svg"],
+  },
 };
 
 export default function SupportPage() {

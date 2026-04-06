@@ -33,18 +33,24 @@ export async function generateMetadata({
     return {
       title: `${fm.title} — Shenoy Labs`,
       description: fm.excerpt,
+      alternates: {
+        canonical: `/articles/${slug}`,
+      },
       openGraph: {
         title: fm.title,
         description: fm.excerpt,
         type: "article",
+        url: `/articles/${slug}`,
         publishedTime: fm.date,
         authors: [fm.author],
         tags: fm.tags,
+        images: ["/og-default.svg"],
       },
       twitter: {
         card: "summary_large_image",
         title: fm.title,
         description: fm.excerpt,
+        images: ["/og-default.svg"],
       },
     };
   } catch {

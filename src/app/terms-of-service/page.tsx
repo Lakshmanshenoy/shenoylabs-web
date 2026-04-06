@@ -7,6 +7,24 @@ import { Card, CardContent } from "@/components/ui/card";
 export const metadata: Metadata = {
   title: "Terms of Service — Shenoy Labs",
   description: "Terms governing your use of Shenoy Labs content, products, and support channels.",
+  alternates: {
+    canonical: "/terms-of-service",
+  },
+  openGraph: {
+    title: "Terms of Service — Shenoy Labs",
+    description:
+      "Terms governing your use of Shenoy Labs content, products, and support channels.",
+    type: "website",
+    url: "/terms-of-service",
+    images: ["/og-default.svg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Terms of Service — Shenoy Labs",
+    description:
+      "Terms governing your use of Shenoy Labs content, products, and support channels.",
+    images: ["/og-default.svg"],
+  },
 };
 
 export default function TermsOfServicePage() {

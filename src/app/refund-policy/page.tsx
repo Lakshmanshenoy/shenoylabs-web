@@ -7,6 +7,22 @@ import { Card, CardContent } from "@/components/ui/card";
 export const metadata: Metadata = {
   title: "Refund Policy — Shenoy Labs",
   description: "Refund policy for optional support and paid Shenoy Labs offerings.",
+  alternates: {
+    canonical: "/refund-policy",
+  },
+  openGraph: {
+    title: "Refund Policy — Shenoy Labs",
+    description: "Refund policy for optional support and paid Shenoy Labs offerings.",
+    type: "website",
+    url: "/refund-policy",
+    images: ["/og-default.svg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Refund Policy — Shenoy Labs",
+    description: "Refund policy for optional support and paid Shenoy Labs offerings.",
+    images: ["/og-default.svg"],
+  },
 };
 
 export default function RefundPolicyPage() {

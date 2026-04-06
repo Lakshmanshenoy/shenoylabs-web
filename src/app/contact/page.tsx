@@ -8,6 +8,24 @@ import { Card, CardContent } from "@/components/ui/card";
 export const metadata: Metadata = {
   title: "Contact — Shenoy Labs",
   description: "Reach out to Shenoy Labs for collaboration, consulting, and product discussions.",
+  alternates: {
+    canonical: "/contact",
+  },
+  openGraph: {
+    title: "Contact — Shenoy Labs",
+    description:
+      "Reach out to Shenoy Labs for collaboration, consulting, and product discussions.",
+    type: "website",
+    url: "/contact",
+    images: ["/og-default.svg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Contact — Shenoy Labs",
+    description:
+      "Reach out to Shenoy Labs for collaboration, consulting, and product discussions.",
+    images: ["/og-default.svg"],
+  },
 };
 
 export default function ContactPage() {

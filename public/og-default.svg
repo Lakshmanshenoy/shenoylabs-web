@@ -1,0 +1,30 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FBFF"/>
+      <stop offset="1" stop-color="#EEF6FF"/>
+    </linearGradient>
+    <radialGradient id="blobA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(180 80) rotate(18) scale(380 280)">
+      <stop stop-color="#60A5FA" stop-opacity="0.26"/>
+      <stop offset="1" stop-color="#60A5FA" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="blobB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1090 40) rotate(172) scale(420 290)">
+      <stop stop-color="#93C5FD" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#93C5FD" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <ellipse cx="190" cy="90" rx="360" ry="250" fill="url(#blobA)"/>
+  <ellipse cx="1080" cy="40" rx="420" ry="280" fill="url(#blobB)"/>
+
+  <rect x="90" y="110" width="90" height="90" rx="22" fill="#60A5FA"/>
+  <text x="135" y="168" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700" fill="#0F172A">SL</text>
+
+  <text x="90" y="300" font-family="Manrope, Inter, Arial, sans-serif" font-size="70" font-weight="700" fill="#111827">Shenoy Labs</text>
+  <text x="90" y="360" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="500" fill="#334155">Premium hybrid product studio</text>
+  <text x="90" y="412" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="400" fill="#475569">Projects • Articles • Tools in progress</text>
+
+  <rect x="90" y="468" width="370" height="58" rx="16" fill="#FFFFFF" stroke="#BFDBFE"/>
+  <text x="275" y="506" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="600" fill="#1E3A8A">shenoylabs.com</text>
+</svg>
