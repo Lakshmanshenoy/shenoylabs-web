@@ -1,0 +1,47 @@
+---
+title: Research Platform
+description: An open research tool enabling interactive exploration of structured datasets with a clean editorial reading experience.
+date: 2025-12-01
+tags: [React, MDX, Visualisation]
+status: in-progress
+githubUrl: https://github.com/Lakshmanshenoy
+---
+
+## Overview
+
+The Research Platform is a content-first application for publishing long-form research with interactive data components embedded inline.
+
+Think of it as the intersection of a journal, a notebook, and a dashboard.
+
+## Motivation
+
+Research consumed on the web is either:
+1. Dense PDFs that ignore the medium
+2. Blog posts that strip all the rigour
+
+There is a gap for structured research that is readable *and* interactive — where the data is not a screenshot but a live component the reader can explore.
+
+## Architecture
+
+- **Content layer:** MDX files with named React component exports
+- **Charts:** Recharts for all data visualisations
+- **Reading experience:** Custom typography, table of contents, reading time, and progress indicator
+- **Search:** Client-side fuzzy search over frontmatter metadata
+
+## Design decisions
+
+### MDX for content
+
+MDX allows authors to embed interactive React components directly in prose. A chart, a calculator, a table — all live in the same file as the text.
+
+This keeps the content and its interactive elements tightly coupled, reducing drift.
+
+### Editorial reading experience
+
+Optimal line length (65–75 characters), generous leading, clear heading hierarchy, and sidenote annotations.
+
+Research should be a pleasure to read, not a chore.
+
+## Status
+
+Core reading experience complete. Interactive component system in progress. Expected to ship Q2 2026.

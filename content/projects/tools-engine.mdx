@@ -1,0 +1,65 @@
+---
+title: Tools Engine
+description: A client-side computation framework for privacy-safe interactive calculators and decision tools.
+date: 2025-10-10
+tags: [TypeScript, Web Workers, PWA]
+status: planning
+githubUrl: https://github.com/Lakshmanshenoy
+---
+
+## Overview
+
+Tools Engine is the foundational framework that all interactive tools on Shenoy Labs will run on.
+
+The constraint is strict: **no user data leaves the browser**. Every calculation runs client-side. No API calls, no logs, no fingerprinting.
+
+## Why this matters
+
+Every finance calculator, resume scorer, and readability analyser processes sensitive data. The user's salary, their CV, their writing.
+
+That data should never touch a server. Not because of regulation — because it is the right thing to do.
+
+## Architecture
+
+### Web Workers for computation
+
+Heavy calculations run in a Web Worker off the main thread. The UI stays responsive regardless of compute intensity.
+
+```ts
+// worker.ts
+self.onmessage = (event: MessageEvent<ComputeInput>) => {
+  const result = heavyComputation(event.data)
+  self.postMessage(result)
+}
+```
+
+### Declarative tool spec
+
+Each tool is defined as a pure JSON schema. The engine renders the form, runs the computation, and formats the output.
+
+```ts
+const emiCalculator: ToolSpec = {
+  id: 'loan-emi',
+  inputs: [
+    { id: 'principal', type: 'currency', label: 'Loan Amount' },
+    { id: 'rate', type: 'percentage', label: 'Interest Rate (annual)' },
+    { id: 'tenure', type: 'number', label: 'Tenure (months)' },
+  ],
+  compute: (inputs) => ({
+    emi: calculateEMI(inputs.principal, inputs.rate, inputs.tenure),
+  }),
+}
+```
+
+### Progressive Web App
+
+Tools are installable as a PWA. They work offline. Once the page loads, all tools are available without any network dependency.
+
+## Roadmap
+
+1. Core engine + Web Worker runner
+2. EMI and SIP calculators
+3. Resume scorer (offline ML model via ONNX)
+4. Full tool plugin API for community contributions
+
+Expected to begin development Q2 2026.

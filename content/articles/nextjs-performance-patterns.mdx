@@ -1,0 +1,103 @@
+---
+title: Next.js performance patterns that actually move the needle
+excerpt: A deep-dive into the RSC + streaming model, partial pre-rendering, and edge execution trade-offs.
+date: 2026-03-14
+category: Engineering
+tags: [nextjs, performance, rsc, streaming]
+author: Lakshman Shenoy
+---
+
+Performance is a product feature. Users do not wait — they leave.
+
+Here are the patterns I have applied to production Next.js apps that made a measurable difference.
+
+## 1. Treat the component tree as a waterfall
+
+The most common mistake is treating React Server Components as a free pass to fetch anywhere. They are not.
+
+```tsx
+// Bad — sequential fetches
+async function Page() {
+  const user = await getUser()
+  const posts = await getPosts(user.id) // waits for user
+  return <PostList posts={posts} />
+}
+```
+
+```tsx
+// Good — parallel fetches
+async function Page() {
+  const [user, posts] = await Promise.all([getUser(), getAllPosts()])
+  return <PostList posts={posts} user={user} />
+}
+```
+
+Every `await` in series adds latency. Parallelise aggressively.
+
+## 2. Stream expensive components
+
+Wrap slow UI in `<Suspense>` with a skeleton. The shell renders immediately; the slow content streams in.
+
+```tsx
+import { Suspense } from 'react'
+import { ArticleSkeleton } from '@/components/ui/skeleton'
+
+export default function ArticlePage() {
+  return (
+    <>
+      <ArticleHeader />
+      <Suspense fallback={<ArticleSkeleton />}>
+        <ArticleBody />
+      </Suspense>
+    </>
+  )
+}
+```
+
+This pattern converts a 1.8 s LCP into a 0.3 s perceived load time.
+
+## 3. Partial Pre-rendering
+
+PPR is the most significant routing change in Next.js 15+. The static shell is served from the edge; dynamic holes are filled via streaming.
+
+```tsx
+// next.config.ts
+experimental: {
+  ppr: true
+}
+```
+
+Combine this with `<Suspense>` boundaries and your static shell becomes a CDN response.
+
+## 4. Edge vs Node runtime trade-offs
+
+| | Edge | Node |
+|---|---|---|
+| Cold start | ~0 ms | ~100 ms |
+| Memory | 128 MB | 3 GB |
+| Node APIs | ✗ | ✓ |
+| Geo-awareness | ✓ | ✗ |
+
+Use Edge for lightweight middleware and auth checks. Use Node for anything touching the filesystem or heavy compute.
+
+## 5. Image discipline
+
+Every `<Image>` should declare `priority` only for above-the-fold images — typically just the hero. Everything below uses lazy loading automatically.
+
+Explicitly set sizes for responsive images:
+
+```tsx
+<Image
+  src="/hero.jpg"
+  sizes="(max-width: 768px) 100vw, 50vw"
+  fill
+  alt="Hero"
+  priority
+/>
+```
+
+This alone can reduce LCP by 40% on mobile.
+
+---
+
+*Profile first. The patterns above are high-leverage, but the highest-leverage thing is always: measure, then fix.*
