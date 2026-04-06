@@ -130,11 +130,44 @@
   box-shadow: 0 12px 32px -18px rgba(15, 23, 42, 0.35);
 }
 
+/* Scroll-reveal — sections start invisible, animate in when entering the viewport.
+   Used via the .reveal class + IntersectionObserver wired in site-shell. */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 520ms ease, transform 520ms ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger children inside a .reveal-group */
+.reveal-group > * {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 480ms ease, transform 480ms ease;
+}
+
+.reveal-group.visible > *:nth-child(1) { transition-delay: 0ms; }
+.reveal-group.visible > *:nth-child(2) { transition-delay: 60ms; }
+.reveal-group.visible > *:nth-child(3) { transition-delay: 120ms; }
+.reveal-group.visible > *:nth-child(4) { transition-delay: 180ms; }
+.reveal-group.visible > * { opacity: 1; transform: translateY(0); }
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .reveal,
+  .reveal-group > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
 }
