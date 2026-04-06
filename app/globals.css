@@ -4,12 +4,14 @@
 
 @layer base {
   :root {
-    --background: #FAFAF9;
-    --foreground: #111827;
-    --muted: #6B7280;
-    --primary: #1D4ED8;
-    --primary-hover: #3B82F6;
-    --border: #E5E7EB;
+    /* Light‑First Palette v2 (Shenoy Labs recommended) */
+    --background: #FCFCFD; /* Primary background */
+    --section-background: #F8FAFC; /* Alternate section background */
+    --foreground: #1F2937; /* Primary text */
+    --muted: #64748B; /* Secondary text */
+    --primary: #60A5FA; /* Primary accent (soft sky blue) */
+    --primary-hover: #93C5FD; /* Hover / CTA accent */
+    --border: #E2E8F0; /* Borders / dividers */
     --card: #FFFFFF;
     --font-sans: var(--font-inter);
   }
