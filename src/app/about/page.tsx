@@ -45,23 +45,21 @@ export default function AboutPage() {
       <SectionHeader
         badge="About"
         title="Lakshman Shenoy"
-        description="Builder. Founder. Researcher."
+        description="Thinker. Learner. Problem solver."
       />
 
       <div className="reveal mt-8 space-y-5 text-base leading-7 text-muted-foreground">
         <p>
-          I build useful software and write about what I learn along the way.
-          Shenoy Labs is the studio where that work lives — a hybrid platform
-          across projects, articles, and future interactive tools.
+          I’m someone who is constantly driven by curiosity — always learning, researching, and exploring new ways to solve problems thoughtfully.
         </p>
         <p>
-          My interest is in the intersection of product thinking and engineering
-          execution: understanding what to build, why it matters, and making it
-          real with care.
+          My interests span automation, finance, science & technology, health and fitness, and I enjoy going deep into subjects that help me better understand the world and build meaningful solutions. I’m particularly passionate about thorough research, systems thinking, and translating ideas into practical tools and projects.
         </p>
         <p>
-          I ship with a focus on clarity, trust, and long-term usefulness over
-          novelty.
+          Outside of work, I enjoy traveling to new places, trying different cuisines, and watching carefully selected movies, series, and anime that offer compelling stories and fresh perspectives.
+        </p>
+         <p>
+          Shenoy Labs is where these interests come together — a space to think deeply, create thoughtfully, and share ideas built in public.
         </p>
       </div>
 
@@ -94,7 +92,7 @@ export default function AboutPage() {
 
       <section className="space-y-4">
         <h2 className="font-heading text-xl font-semibold tracking-tight">
-          What I am building
+          What I am solving
         </h2>
         <p className="text-sm leading-7 text-muted-foreground">
           Projects, articles, and tools are published openly. If you want to

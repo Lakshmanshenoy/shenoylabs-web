@@ -5,7 +5,7 @@ import { SectionHeader } from "@/components/shared/section-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-  title: "Support — Shenoy Labs",
+  title: "Support the Creator — Shenoy Labs",
   description: "Optional support channels for Shenoy Labs via Razorpay and UPI.",
   alternates: {
     canonical: "/support",
@@ -30,7 +30,7 @@ export default function SupportPage() {
     <SectionContainer>
       <SectionHeader
         badge="Support"
-        title="Support The Studio"
+        title="Support the Creator"
         description="If the work helps you, optional support keeps experiments and content moving."
       />
 
@@ -42,7 +42,7 @@ export default function SupportPage() {
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <p>Payment link integration will be added here in production.</p>
             <div className="rounded-lg border border-dashed border-border px-4 py-3 text-foreground">
-              Placeholder: https://razorpay.me/shenoylabs
+              https://razorpay.me/@lakshmanshenoy
             </div>
           </CardContent>
         </Card>
@@ -54,7 +54,7 @@ export default function SupportPage() {
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <p>UPI ID and QR code placeholder for support contributions.</p>
             <div className="rounded-lg border border-dashed border-border px-4 py-3 text-foreground">
-              Placeholder: shenoylabs@upi
+              lakshmanshenoy@axisbank
             </div>
           </CardContent>
         </Card>

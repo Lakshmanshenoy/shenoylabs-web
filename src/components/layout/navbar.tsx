@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MenuIcon } from "lucide-react";
+import { MenuIcon, SearchIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -53,6 +53,15 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
+          <Link
+            href="/search"
+            aria-label="Search"
+            className={cn(
+              "ml-1 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
+            )}
+          >
+            <SearchIcon className="size-4" />
+          </Link>
         </nav>
 
         <div className="md:hidden">
@@ -75,6 +84,13 @@ export function Navbar() {
                     {link.label}
                   </Link>
                 ))}
+                <Link
+                  href="/search"
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                >
+                  <SearchIcon className="size-4" />
+                  Search
+                </Link>
               </nav>
             </SheetContent>
           </Sheet>

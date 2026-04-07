@@ -18,7 +18,7 @@ export function SupportCtaSection() {
 
         <div className="mx-auto flex max-w-2xl flex-col items-center gap-6">
           <span className="inline-flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <HeartIcon className="size-6" />
+            <HeartIcon className="size-6 text-red-500" />
           </span>
 
           <div className="space-y-3">
@@ -41,7 +41,7 @@ export function SupportCtaSection() {
               )}
             >
               Support the work
-              <HeartIcon className="size-4" />
+              <HeartIcon className="size-4 text-red-500" />
             </a>
             <a
               href="/about"

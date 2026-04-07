@@ -30,16 +30,17 @@ export function HeroSection() {
             </Badge>
 
             <h1 className="font-heading max-w-2xl text-4xl font-semibold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
-              Building products that
+              Solving problems that
               <span className="relative ml-2 text-primary">
-                actually ship.
+                matters.
               </span>
             </h1>
 
             <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Hi, I&apos;m Lakshman Shenoy — founder, builder, researcher. I
-              design and ship projects at the intersection of product, code, and
-              ideas worth sharing.
+              Hi, I&apos;m Lakshman Shenoy - Thinker. Learner. Problem solver.
+              I&apos;m someone who is constantly driven by curiosity — always
+              learning, researching, and exploring new ways to solve problems
+              thoughtfully.
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -50,7 +51,7 @@ export function HeroSection() {
                   "h-12 gap-2 px-7 shadow-sm shadow-primary/20 transition-shadow hover:shadow-md hover:shadow-primary/25",
                 )}
               >
-                View What I&apos;m Building
+                View What I&apos;m Working On
                 <ArrowRightIcon className="size-4" />
               </Link>
               <Link

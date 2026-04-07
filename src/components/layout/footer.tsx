@@ -31,7 +31,7 @@ const socialLinks = [
     ),
   },
   {
-    href: "https://x.com/lakshmanshenoy",
+    href: "https://x.com/shenoylakshman",
     label: "X / Twitter",
     icon: (
       <svg
@@ -73,7 +73,7 @@ export function Footer() {
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
-            Build. Learn. Ship better.
+            Think. Learn. Solve.
           </p>
         </div>
 

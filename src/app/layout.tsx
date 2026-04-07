@@ -59,7 +59,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${manrope.variable} h-full antialiased`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${inter.variable} ${manrope.variable} h-full antialiased`}>
       {/* suppressHydrationWarning prevents false positives from browser extensions
            that mutate body attributes (e.g. Grammarly) after server render. */}
       <body className="min-h-full" suppressHydrationWarning>
