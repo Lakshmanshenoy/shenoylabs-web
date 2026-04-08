@@ -24,8 +24,8 @@ export function FeaturedProjectsSection({ content }: Props) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <SectionHeader
             badge="Projects"
-            title="Featured work"
-            description="A selection of shipped products and ongoing builds."
+            title="Featured Projects"
+            description="Proof of work through practical systems, research-led builds, and useful tools."
           />
           <Link
             href="/projects"
@@ -34,7 +34,7 @@ export function FeaturedProjectsSection({ content }: Props) {
               "shrink-0 gap-1.5",
             )}
           >
-            All projects
+            View all projects
             <ExternalLinkIcon className="size-3.5" />
           </Link>
         </div>

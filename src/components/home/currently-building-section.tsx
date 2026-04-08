@@ -11,6 +11,12 @@ import type { CurrentlyExploringContent } from "@/lib/homepage-content";
 
 type Props = { content: CurrentlyExploringContent };
 
+const statusLabel = {
+  shipped: "Shipped",
+  "in-progress": "In Progress",
+  planned: "Planned",
+} as const;
+
 export function CurrentlyBuildingSection({ content }: Props) {
   return (
     <SectionContainer>
@@ -64,6 +70,28 @@ export function CurrentlyBuildingSection({ content }: Props) {
             </Card>
           ))}
         </div>
+
+        <Card className="reveal border border-border/80 bg-card/95">
+          <CardContent className="space-y-3 p-5 sm:p-6">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+              What&apos;s Next
+            </p>
+            <div className="space-y-2">
+              {content.nextItems.map((item) => (
+                <div
+                  key={item.title}
+                  className="flex flex-wrap items-center gap-2 text-sm"
+                >
+                  <Badge variant="outline" className="text-xs">
+                    {statusLabel[item.status]}
+                  </Badge>
+                  <span className="text-muted-foreground">{item.date}</span>
+                  <span className="text-foreground/90">{item.title}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </SectionContainer>
   );

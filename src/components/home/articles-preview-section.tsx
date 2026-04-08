@@ -45,8 +45,8 @@ export function ArticlesPreviewSection() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <SectionHeader
             badge="Articles"
-            title="Latest research & writing"
-            description="In-depth explorations of product, engineering, and founder strategy."
+            title="Research Notes & Articles"
+            description="In-depth explorations across product, engineering, systems thinking, and research."
           />
           <Link
             href="/articles"
@@ -55,7 +55,7 @@ export function ArticlesPreviewSection() {
               "shrink-0 gap-1.5",
             )}
           >
-            All articles
+            View all articles
             <ArrowRightIcon className="size-3.5" />
           </Link>
         </div>
@@ -84,7 +84,7 @@ export function ArticlesPreviewSection() {
                   {previewArticles[0].excerpt}
                 </p>
                 <p className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
-                  Read note
+                  Read Article
                   <ArrowRightIcon className="size-3.5" />
                 </p>
               </div>
@@ -119,7 +119,7 @@ export function ArticlesPreviewSection() {
                     {article.excerpt}
                   </p>
                   <p className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary">
-                    Read note
+                    Read Article
                     <ArrowRightIcon className="size-3.5" />
                   </p>
                 </CardContent>
