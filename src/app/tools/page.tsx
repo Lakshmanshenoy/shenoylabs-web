@@ -8,6 +8,7 @@ import { SectionHeader } from "@/components/shared/section-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAllTools } from "@/lib/tools-registry";
+import { buildBreadcrumbJsonLd } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -54,9 +55,20 @@ const roadmapTiles = [
 
 export default function ToolsPage() {
   const tools = getAllTools();
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Tools", path: "/tools" },
+  ]);
 
   return (
     <SectionContainer>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
+
       <SectionHeader
         badge="Tools"
         title="Future Tools Framework"

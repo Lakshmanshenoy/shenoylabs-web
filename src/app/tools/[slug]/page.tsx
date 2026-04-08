@@ -8,6 +8,7 @@ import { SectionContainer } from "@/components/shared/section-container";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { buildBreadcrumbJsonLd } from "@/lib/seo";
 import { Separator } from "@/components/ui/separator";
 import { getAllTools, getToolBySlug } from "@/lib/tools-registry";
 import { cn } from "@/lib/utils";
@@ -61,9 +62,36 @@ export default async function ToolDetailPage({
   if (!tool) notFound();
 
   const isPrototype = tool.status === "prototype";
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Tools", path: "/tools" },
+    { name: tool.title, path: `/tools/${tool.slug}` },
+  ]);
+  const softwareJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: tool.title,
+    description: tool.description,
+    applicationCategory: "WebApplication",
+    operatingSystem: "Any",
+    keywords: tool.tags.join(", "),
+  };
 
   return (
     <SectionContainer className="max-w-4xl">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(softwareJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
+
       <Link
         href="/tools"
         className={cn(

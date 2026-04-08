@@ -18,6 +18,7 @@ import {
   getRelatedArticlesForProject,
   getRelatedProjects,
 } from "@/lib/recommendations";
+import { buildBreadcrumbJsonLd } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 // ─── Static generation ────────────────────────────────────────────────────────
@@ -89,6 +90,11 @@ export default async function ProjectDetailPage({
   }
 
   const { frontmatter: fm, source } = item;
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Projects", path: "/projects" },
+    { name: fm.title, path: `/projects/${slug}` },
+  ]);
   const updates = getCurrentlyExploringContent().nextItems;
   const relatedProjects = getRelatedProjects(slug, 3);
   const relatedArticles = getRelatedArticlesForProject(slug, 3);
@@ -125,6 +131,12 @@ export default async function ProjectDetailPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
         }}
       />
 

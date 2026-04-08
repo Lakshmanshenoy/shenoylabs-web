@@ -6,6 +6,7 @@ import { ArticlesFilteredGrid } from "@/components/articles/articles-filtered-gr
 import { SectionContainer } from "@/components/shared/section-container";
 import { SectionHeader } from "@/components/shared/section-header";
 import { getAllArticles } from "@/lib/content";
+import { buildBreadcrumbJsonLd } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Articles — Shenoy Labs",
@@ -33,9 +34,20 @@ export const metadata: Metadata = {
 
 export default function ArticlesPage() {
   const articles = getAllArticles();
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Articles", path: "/articles" },
+  ]);
 
   return (
     <SectionContainer>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
+
       <SectionHeader
         badge="Articles"
         title="Research & writing"

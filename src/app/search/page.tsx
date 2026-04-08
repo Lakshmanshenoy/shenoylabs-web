@@ -11,6 +11,19 @@ export const metadata: Metadata = {
   title: "Search — Shenoy Labs",
   description: "Search across all articles, projects, and tools on Shenoy Labs.",
   alternates: { canonical: "/search" },
+  openGraph: {
+    title: "Search — Shenoy Labs",
+    description: "Search across all articles, projects, and tools on Shenoy Labs.",
+    type: "website",
+    url: "/search",
+    images: ["/og-default.svg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Search — Shenoy Labs",
+    description: "Search across all articles, projects, and tools on Shenoy Labs.",
+    images: ["/og-default.svg"],
+  },
   robots: { index: false },
 };
 
