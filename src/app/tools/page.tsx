@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRightIcon, ClockIcon, WrenchIcon } from "lucide-react";
 
 import { SectionContainer } from "@/components/shared/section-container";
@@ -73,6 +74,15 @@ export default function ToolsPage() {
                 : "border-primary/30",
             )}
           >
+            <div className="overflow-hidden rounded-t-xl border-b border-border/70">
+              <Image
+                src={tool.previewImage}
+                alt={tool.previewAlt}
+                width={1200}
+                height={675}
+                className="h-auto w-full"
+              />
+            </div>
             <CardHeader className="pb-2">
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <Badge variant="outline" className="text-xs">

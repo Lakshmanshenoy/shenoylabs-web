@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRightIcon, SparklesIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -84,6 +85,17 @@ export function HeroSection({ content }: Props) {
                 aria-hidden
                 className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/10 blur-2xl"
               />
+              {content.visualImage && (
+                <div className="mb-4 overflow-hidden rounded-xl border border-border/70">
+                  <Image
+                    src={content.visualImage}
+                    alt={content.visualAlt ?? "Hero preview visual"}
+                    width={1200}
+                    height={800}
+                    className="h-auto w-full"
+                  />
+                </div>
+              )}
               <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
                 What I do
               </p>

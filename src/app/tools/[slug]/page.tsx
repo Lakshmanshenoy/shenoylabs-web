@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 
 import { LocalComputeLab } from "@/components/tools/local-compute-lab";
@@ -38,13 +39,13 @@ export async function generateMetadata({
       description: tool.description,
       type: "website",
       url: `/tools/${slug}`,
-      images: ["/og-default.svg"],
+      images: [tool.previewImage],
     },
     twitter: {
       card: "summary_large_image",
       title: `${tool.title} — Shenoy Labs`,
       description: tool.description,
-      images: ["/og-default.svg"],
+      images: [tool.previewImage],
     },
   };
 }
@@ -74,6 +75,16 @@ export default async function ToolDetailPage({
       </Link>
 
       <header className="space-y-4">
+        <div className="overflow-hidden rounded-xl border border-border/70">
+          <Image
+            src={tool.previewImage}
+            alt={tool.previewAlt}
+            width={1200}
+            height={675}
+            className="h-auto w-full"
+            priority
+          />
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">{tool.category}</Badge>
           <Badge variant={isPrototype ? "default" : "secondary"}>

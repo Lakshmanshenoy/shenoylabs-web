@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRightIcon, BookOpenIcon } from "lucide-react";
 
 import { SectionContainer } from "@/components/shared/section-container";
@@ -6,39 +7,16 @@ import { SectionHeader } from "@/components/shared/section-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getAllArticles } from "@/lib/content";
 import { cn } from "@/lib/utils";
 
-const previewArticles = [
-  {
-    slug: "building-in-public",
-    title: "Why building in public is the best career move you haven't made",
-    excerpt:
-      "Transparency about your work creates compounding credibility faster than any marketing strategy.",
-    category: "Founder",
-    readingTime: "6 min",
-    date: "Mar 28, 2026",
-  },
-  {
-    slug: "nextjs-performance-patterns",
-    title: "Next.js performance patterns that actually move the needle",
-    excerpt:
-      "A deep-dive into the RSC + streaming model, partial pre-rendering, and edge execution trade-offs.",
-    category: "Engineering",
-    readingTime: "12 min",
-    date: "Mar 14, 2026",
-  },
-  {
-    slug: "product-research-on-a-budget",
-    title: "Lean product research without a UX team",
-    excerpt:
-      "The minimal toolkit I use to validate ideas before writing a single line of code.",
-    category: "Product",
-    readingTime: "8 min",
-    date: "Feb 22, 2026",
-  },
-];
-
 export function ArticlesPreviewSection() {
+  const previewArticles = getAllArticles().slice(0, 3);
+
+  if (!previewArticles.length) return null;
+
+  const lead = previewArticles[0];
+
   return (
     <SectionContainer className="bg-secondary/50">
       <div className="flex flex-col gap-10">
@@ -61,27 +39,42 @@ export function ArticlesPreviewSection() {
         </div>
 
         {/* Featured article — wide card — reveal on scroll */}
-        <Link href={`/articles/${previewArticles[0].slug}`} className="group block">
+        <Link href={`/articles/${lead.slug}`} className="group block">
           <Card className="soft-lift border border-border/80 bg-card/95 transition-colors group-hover:border-primary/30">
             <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start sm:gap-8">
+              {lead.frontmatter.coverImage && (
+                <div className="w-full overflow-hidden rounded-xl border border-border/70 sm:w-72">
+                  <Image
+                    src={lead.frontmatter.coverImage}
+                    alt={lead.frontmatter.coverAlt ?? `${lead.frontmatter.title} cover image`}
+                    width={1200}
+                    height={675}
+                    className="h-auto w-full"
+                  />
+                </div>
+              )}
               <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <BookOpenIcon className="size-5" />
               </div>
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className="text-xs">
-                    {previewArticles[0].category}
+                    {lead.frontmatter.category}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
-                    {previewArticles[0].readingTime} read ·{" "}
-                    {previewArticles[0].date}
+                    {lead.readingTime} read ·{" "}
+                    {new Date(lead.frontmatter.date).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
                   </span>
                 </div>
                 <h3 className="font-heading text-lg font-semibold leading-snug group-hover:text-primary transition-colors">
-                  {previewArticles[0].title}
+                  {lead.frontmatter.title}
                 </h3>
                 <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                  {previewArticles[0].excerpt}
+                  {lead.frontmatter.excerpt}
                 </p>
                 <p className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
                   Read Article
@@ -101,22 +94,40 @@ export function ArticlesPreviewSection() {
               className="group block"
             >
               <Card className="soft-lift h-full border border-border/80 bg-card/95 transition-colors group-hover:border-primary/30">
+                {article.frontmatter.coverImage && (
+                  <div className="overflow-hidden rounded-t-xl border-b border-border/70">
+                    <Image
+                      src={article.frontmatter.coverImage}
+                      alt={
+                        article.frontmatter.coverAlt ??
+                        `${article.frontmatter.title} cover image`
+                      }
+                      width={1200}
+                      height={675}
+                      className="h-auto w-full"
+                    />
+                  </div>
+                )}
                 <CardHeader>
                   <div className="mb-1 flex flex-wrap items-center gap-2">
                     <Badge variant="outline" className="text-xs">
-                      {article.category}
+                      {article.frontmatter.category}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {article.readingTime} read · {article.date}
+                      {article.readingTime} read ·{" "}
+                      {new Date(article.frontmatter.date).toLocaleDateString(
+                        "en-US",
+                        { year: "numeric", month: "short", day: "numeric" },
+                      )}
                     </span>
                   </div>
                   <CardTitle className="text-base font-semibold leading-snug group-hover:text-primary transition-colors">
-                    {article.title}
+                    {article.frontmatter.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <p className="text-sm leading-relaxed text-muted-foreground">
-                    {article.excerpt}
+                    {article.frontmatter.excerpt}
                   </p>
                   <p className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary">
                     Read Article

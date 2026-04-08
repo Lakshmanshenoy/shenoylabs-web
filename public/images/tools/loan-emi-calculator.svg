@@ -1,0 +1,6 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="675" fill="#f8fafc"/>
+  <rect x="96" y="98" width="1008" height="479" rx="24" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="146" y="214" fill="#0f172a" font-family="Georgia, serif" font-size="50" font-weight="700">Loan EMI Calculator</text>
+  <text x="146" y="268" fill="#475569" font-family="Arial, sans-serif" font-size="28">Monthly installment planning visual.</text>
+</svg>

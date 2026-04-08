@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,20 @@ export function ArticlesFilteredGrid({ articles }: Props) {
             className="group block"
           >
             <Card className="soft-lift h-full border border-border/80 bg-card/95 transition-colors group-hover:border-primary/30">
+              {article.frontmatter.coverImage && (
+                <div className="overflow-hidden rounded-t-xl border-b border-border/70">
+                  <Image
+                    src={article.frontmatter.coverImage}
+                    alt={
+                      article.frontmatter.coverAlt ??
+                      `${article.frontmatter.title} cover image`
+                    }
+                    width={1200}
+                    height={675}
+                    className="h-auto w-full"
+                  />
+                </div>
+              )}
               <CardHeader>
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className="text-xs">

@@ -1,0 +1,12 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g2" x1="0" y1="0" x2="1200" y2="675" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ecfeff" />
+      <stop offset="1" stop-color="#dbeafe" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" fill="url(#g2)" />
+  <rect x="88" y="92" width="1024" height="491" rx="24" fill="#ffffff" stroke="#bae6fd" />
+  <text x="140" y="220" fill="#0f172a" font-family="Georgia, serif" font-size="50" font-weight="700">Next.js Performance Patterns</text>
+  <text x="140" y="276" fill="#334155" font-family="Arial, sans-serif" font-size="28">Streaming, RSC, and real-world speed wins.</text>
+</svg>

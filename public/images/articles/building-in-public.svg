@@ -1,0 +1,12 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1200" y2="675" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f8fafc" />
+      <stop offset="1" stop-color="#e2e8f0" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" fill="url(#g1)" />
+  <rect x="80" y="96" width="1040" height="483" rx="24" fill="#ffffff" stroke="#cbd5e1" />
+  <text x="140" y="220" fill="#0f172a" font-family="Georgia, serif" font-size="52" font-weight="700">Building In Public</text>
+  <text x="140" y="274" fill="#475569" font-family="Arial, sans-serif" font-size="28">Credibility compounds through transparent work.</text>
+</svg>

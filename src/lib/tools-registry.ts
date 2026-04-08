@@ -8,6 +8,8 @@ export type ToolRoadmapItem = {
   eta: string;
   status: ToolStatus;
   privacyNote: string;
+  previewImage: string;
+  previewAlt: string;
 };
 
 export const toolsRegistry: ToolRoadmapItem[] = [
@@ -20,6 +22,8 @@ export const toolsRegistry: ToolRoadmapItem[] = [
     eta: "Q2 2026",
     status: "coming-soon",
     privacyNote: "Inputs stay in your browser and are never stored server-side.",
+    previewImage: "/images/tools/loan-emi-calculator.svg",
+    previewAlt: "Loan EMI calculator preview graphic",
   },
   {
     slug: "sip-returns-planner",
@@ -30,6 +34,8 @@ export const toolsRegistry: ToolRoadmapItem[] = [
     eta: "Q2 2026",
     status: "coming-soon",
     privacyNote: "No personal financial data is persisted.",
+    previewImage: "/images/tools/sip-returns-planner.svg",
+    previewAlt: "SIP returns planner preview graphic",
   },
   {
     slug: "resume-scorer",
@@ -40,6 +46,8 @@ export const toolsRegistry: ToolRoadmapItem[] = [
     eta: "Q3 2026",
     status: "coming-soon",
     privacyNote: "Text analysis is processed client-side for privacy by design.",
+    previewImage: "/images/tools/resume-scorer.svg",
+    previewAlt: "Resume scorer preview graphic",
   },
   {
     slug: "readability-analyzer",
@@ -50,6 +58,8 @@ export const toolsRegistry: ToolRoadmapItem[] = [
     eta: "Q3 2026",
     status: "coming-soon",
     privacyNote: "Draft text remains in the browser session only.",
+    previewImage: "/images/tools/readability-analyzer.svg",
+    previewAlt: "Readability analyzer preview graphic",
   },
   {
     slug: "local-compute-lab",
@@ -60,6 +70,8 @@ export const toolsRegistry: ToolRoadmapItem[] = [
     eta: "Now",
     status: "prototype",
     privacyNote: "Computation runs locally and clears on refresh.",
+    previewImage: "/images/tools/local-compute-lab.svg",
+    previewAlt: "Local compute lab preview graphic",
   },
 ];
 

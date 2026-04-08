@@ -12,6 +12,8 @@
   },
   "statusLine": "Currently researching caffeine performance systems",
   "tagline": "Automation · Finance · Science · Health",
+  "visualImage": "/images/home/hero-visual.svg",
+  "visualAlt": "Hero visual showing current focus and featured preview cards",
   "whatIDo": [
     { "icon": "🔬", "label": "Research notes with practical depth" },
     { "icon": "🛠", "label": "Projects and tools built in public" },

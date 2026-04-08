@@ -1,0 +1,12 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g3" x1="0" y1="0" x2="1200" y2="675" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fefce8" />
+      <stop offset="1" stop-color="#ffedd5" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" fill="url(#g3)" />
+  <rect x="84" y="96" width="1032" height="483" rx="24" fill="#ffffff" stroke="#fde68a" />
+  <text x="140" y="220" fill="#0f172a" font-family="Georgia, serif" font-size="48" font-weight="700">Lean Product Research</text>
+  <text x="140" y="276" fill="#475569" font-family="Arial, sans-serif" font-size="28">Validate ideas before writing code.</text>
+</svg>

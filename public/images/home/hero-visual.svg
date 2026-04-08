@@ -1,0 +1,15 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="h1" x1="0" y1="0" x2="1200" y2="800" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#e2e8f0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#h1)"/>
+  <rect x="110" y="96" width="980" height="608" rx="28" fill="#ffffff" stroke="#cbd5e1"/>
+  <rect x="170" y="170" width="320" height="150" rx="14" fill="#f1f5f9" stroke="#dbeafe"/>
+  <rect x="522" y="170" width="508" height="150" rx="14" fill="#f8fafc" stroke="#cbd5e1"/>
+  <rect x="170" y="348" width="860" height="290" rx="14" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="200" y="248" fill="#0f172a" font-family="Arial, sans-serif" font-size="28" font-weight="600">Current focus</text>
+  <text x="552" y="248" fill="#0f172a" font-family="Arial, sans-serif" font-size="28" font-weight="600">Featured previews</text>
+</svg>

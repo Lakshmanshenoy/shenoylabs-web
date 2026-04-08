@@ -6,6 +6,8 @@
       "problem": "People struggle to interpret basic health markers and daily wellness signals in a structured way.",
       "whyItMatters": "Clear, simple tools can improve consistency in habits and decision-making without adding cognitive load.",
       "tags": ["Health", "Research", "Decision Tools"],
+      "thumbnail": "/images/projects/project-alpha.svg",
+      "thumbnailAlt": "Research and health tools featured project thumbnail",
       "status": "Shipped",
       "statusColor": "bg-emerald-400"
     },
@@ -15,6 +17,8 @@
       "problem": "Teams and individuals waste time repeating low-leverage workflows across operations and planning.",
       "whyItMatters": "Automation frameworks free up attention for higher-order thinking and creative work.",
       "tags": ["Automation", "Workflows", "Systems Thinking"],
+      "thumbnail": "/images/projects/research-platform.svg",
+      "thumbnailAlt": "Automation systems featured project thumbnail",
       "status": "In Progress",
       "statusColor": "bg-amber-400"
     },
@@ -24,6 +28,8 @@
       "problem": "Financial decisions are often made with fragmented assumptions and no consistent analytical framework.",
       "whyItMatters": "Structured models create better trade-offs, better clarity, and fewer avoidable mistakes.",
       "tags": ["Finance", "Analysis", "Frameworks"],
+      "thumbnail": "/images/projects/tools-engine.svg",
+      "thumbnailAlt": "Finance and analysis frameworks featured project thumbnail",
       "status": "Planning",
       "statusColor": "bg-sky-400"
     }

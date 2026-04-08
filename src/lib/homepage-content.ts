@@ -20,6 +20,8 @@ export type HeroContent = {
   tagline: string;
   whatIDo: { icon: string; label: string }[];
   credentialFootnote: string;
+  visualImage?: string;
+  visualAlt?: string;
 };
 
 export type FeaturedProject = {
@@ -28,6 +30,8 @@ export type FeaturedProject = {
   problem: string;
   whyItMatters: string;
   tags: string[];
+  thumbnail?: string;
+  thumbnailAlt?: string;
   status: string;
   statusColor: string;
 };

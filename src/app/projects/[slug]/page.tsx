@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { compileMDX } from "next-mdx-remote/rsc";
 
@@ -49,13 +50,13 @@ export async function generateMetadata({
         description: fm.description,
         type: "website",
         url: `/projects/${slug}`,
-        images: ["/og-default.svg"],
+        images: [fm.coverImage ?? "/og-default.svg"],
       },
       twitter: {
         card: "summary_large_image",
         title: fm.title,
         description: fm.description,
-        images: ["/og-default.svg"],
+        images: [fm.coverImage ?? "/og-default.svg"],
       },
     };
   } catch {
@@ -144,6 +145,18 @@ export default async function ProjectDetailPage({
 
       {/* Project header */}
       <header className="space-y-4">
+        {fm.coverImage && (
+          <div className="overflow-hidden rounded-xl border border-border/70">
+            <Image
+              src={fm.coverImage}
+              alt={fm.coverAlt ?? `${fm.title} project thumbnail`}
+              width={1200}
+              height={675}
+              className="h-auto w-full"
+              priority
+            />
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <span

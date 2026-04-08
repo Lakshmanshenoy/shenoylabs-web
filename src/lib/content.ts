@@ -15,6 +15,8 @@ export type ArticleFrontmatter = {
   category: string;
   tags: string[];
   author: string;
+  coverImage?: string;
+  coverAlt?: string;
 };
 
 export type ProjectFrontmatter = {
@@ -25,6 +27,8 @@ export type ProjectFrontmatter = {
   status: "shipped" | "in-progress" | "planning";
   githubUrl?: string;
   liveUrl?: string;
+  coverImage?: string;
+  coverAlt?: string;
 };
 
 export type ContentItem<T> = {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 
 import { SectionContainer } from "@/components/shared/section-container";
 import { SectionHeader } from "@/components/shared/section-header";
@@ -66,6 +67,20 @@ export default function ProjectsPage() {
               className="group block"
             >
               <Card className="soft-lift h-full border border-border/80 bg-card/95 transition-colors group-hover:border-primary/30">
+                {project.frontmatter.coverImage && (
+                  <div className="overflow-hidden rounded-t-xl border-b border-border/70">
+                    <Image
+                      src={project.frontmatter.coverImage}
+                      alt={
+                        project.frontmatter.coverAlt ??
+                        `${project.frontmatter.title} thumbnail`
+                      }
+                      width={1200}
+                      height={675}
+                      className="h-auto w-full"
+                    />
+                  </div>
+                )}
                 <CardHeader className="pb-2">
                   <div className="mb-2 flex items-center gap-2">
                     <span
