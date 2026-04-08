@@ -1,0 +1,35 @@
+{
+  "dynamicLine": "Currently researching caffeine performance systems",
+  "pillars": [
+    "Science & Health",
+    "Automation",
+    "Finance",
+    "Travel & Culture"
+  ],
+  "changelog": [
+    {
+      "date": "Apr 2026",
+      "title": "Phase 6 — Future Tools Framework",
+      "description": "Built the /tools route architecture, tools registry, client-side compute framework, and dynamic /tools/[slug] pages.",
+      "status": "shipped"
+    },
+    {
+      "date": "Apr 2026",
+      "title": "Phase 5 — SEO, Analytics & Performance",
+      "description": "Google Analytics, sitemap, robots.txt, canonical URLs, Open Graph metadata, and OG preview image across all routes.",
+      "status": "shipped"
+    },
+    {
+      "date": "Apr 2026",
+      "title": "Phase 4 — Support, Contact & Legal",
+      "description": "Built /contact with secure spam-protected form, /support with Razorpay/UPI, and all legal pages.",
+      "status": "shipped"
+    },
+    {
+      "date": "Q3 2026",
+      "title": "Finance & productivity tools — first release",
+      "description": "Loan EMI calculator and SIP returns planner shipping as the first real interactive tools.",
+      "status": "planned"
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { compileMDX } from "next-mdx-remote/rsc";
 
 import { SectionContainer } from "@/components/shared/section-container";
 import { SectionHeader } from "@/components/shared/section-header";
@@ -7,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { getPageContent } from "@/lib/content";
+import { getMDXComponents } from "@/lib/mdx-components";
 
 export const metadata: Metadata = {
   title: "About — Shenoy Labs",
@@ -39,7 +42,13 @@ const focusAreas = [
   { label: "Tools", description: "Privacy-safe calculators and decision aids" },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const page = getPageContent("about");
+  const { content: prose } = await compileMDX({
+    source: page.source,
+    components: getMDXComponents(),
+  });
+
   return (
     <SectionContainer className="max-w-3xl">
       <SectionHeader
@@ -48,19 +57,8 @@ export default function AboutPage() {
         description="Thinker. Learner. Problem solver."
       />
 
-      <div className="reveal mt-8 space-y-5 text-base leading-7 text-muted-foreground">
-        <p>
-          I’m someone who is constantly driven by curiosity — always learning, researching, and exploring new ways to solve problems thoughtfully.
-        </p>
-        <p>
-          My interests span automation, finance, science & technology, health and fitness, and I enjoy going deep into subjects that help me better understand the world and build meaningful solutions. I’m particularly passionate about thorough research, systems thinking, and translating ideas into practical tools and projects.
-        </p>
-        <p>
-          Outside of work, I enjoy traveling to new places, trying different cuisines, and watching carefully selected movies, series, and anime that offer compelling stories and fresh perspectives.
-        </p>
-         <p>
-          Shenoy Labs is where these interests come together — a space to think deeply, create thoughtfully, and share ideas built in public.
-        </p>
+      <div className="reveal prose prose-neutral dark:prose-invert mt-8 max-w-none text-muted-foreground">
+        {prose}
       </div>
 
       <Separator className="my-8" />

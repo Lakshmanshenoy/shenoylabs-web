@@ -3,8 +3,11 @@ import { HeartIcon } from "lucide-react";
 import { SectionContainer } from "@/components/shared/section-container";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { SupportCopyContent } from "@/lib/homepage-content";
 
-export function SupportCtaSection() {
+type Props = { content: SupportCopyContent };
+
+export function SupportCtaSection({ content }: Props) {
   return (
     <SectionContainer className="bg-secondary/50">
       <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-accent/5 px-8 py-12 text-center sm:py-16">
@@ -23,12 +26,10 @@ export function SupportCtaSection() {
 
           <div className="space-y-3">
             <h2 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
-              If my work has helped you, consider supporting it
+              {content.heading}
             </h2>
             <p className="text-base leading-relaxed text-muted-foreground">
-              Shenoy Labs is built entirely in public — no VC, no paywalls. If
-              an article, tool, or project saved you time or gave you a new
-              idea, a small contribution keeps this running.
+              {content.body}
             </p>
           </div>
 
@@ -54,9 +55,7 @@ export function SupportCtaSection() {
             </a>
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            100% optional · No subscriptions · One-time or recurring
-          </p>
+          <p className="text-xs text-muted-foreground">{content.footnote}</p>
         </div>
       </div>
     </SectionContainer>

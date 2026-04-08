@@ -13,38 +13,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import type { FeaturedProjectsContent } from "@/lib/homepage-content";
 
-const featuredProjects = [
-  {
-    slug: "project-one",
-    title: "Project Alpha",
-    description:
-      "A full-stack application that solves a real product problem from end to end. Built with speed, scalability, and polish in mind.",
-    tags: ["Next.js", "TypeScript", "Postgres"],
-    status: "Shipped",
-    statusColor: "bg-emerald-400",
-  },
-  {
-    slug: "project-two",
-    title: "Research Platform",
-    description:
-      "An open research tool enabling interactive exploration of structured datasets with a clean editorial reading experience.",
-    tags: ["React", "MDX", "Visualisation"],
-    status: "In Progress",
-    statusColor: "bg-amber-400",
-  },
-  {
-    slug: "project-three",
-    title: "Tools Engine",
-    description:
-      "A client-side computation framework for privacy-safe interactive calculators and decision tools.",
-    tags: ["TypeScript", "Web Workers", "PWA"],
-    status: "Planning",
-    statusColor: "bg-sky-400",
-  },
-];
+type Props = { content: FeaturedProjectsContent };
 
-export function FeaturedProjectsSection() {
+export function FeaturedProjectsSection({ content }: Props) {
   return (
     <SectionContainer className="bg-secondary/50">
       <div className="flex flex-col gap-10">
@@ -67,7 +40,7 @@ export function FeaturedProjectsSection() {
         </div>
 
         <div className="reveal-group grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {featuredProjects.map((project) => (
+          {content.projects.map((project) => (
             <Link
               key={project.slug}
               href={`/projects/${project.slug}`}

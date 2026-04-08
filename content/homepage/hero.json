@@ -1,0 +1,11 @@
+{
+  "statusLine": "Currently exploring new ideas and tools",
+  "tagline": "Projects · Articles · Research",
+  "whatIDo": [
+    { "icon": "🚀", "label": "Ship full-stack products end-to-end" },
+    { "icon": "🔬", "label": "Publish research and in-depth articles" },
+    { "icon": "🛠", "label": "Build interactive tools and calculators" },
+    { "icon": "📣", "label": "Share learnings publicly, every week" }
+  ],
+  "credentialFootnote": "Premium · Editorial · Trustworthy"
+}

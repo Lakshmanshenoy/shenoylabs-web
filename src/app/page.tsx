@@ -6,6 +6,12 @@ import { FeaturedProjectsSection } from "@/components/home/featured-projects-sec
 import { HeroSection } from "@/components/home/hero-section";
 import { SupportCtaSection } from "@/components/home/support-cta-section";
 import { ToolsRoadmapSection } from "@/components/home/tools-roadmap-section";
+import {
+  getHeroContent,
+  getFeaturedProjectsContent,
+  getCurrentlyExploringContent,
+  getSupportCopyContent,
+} from "@/lib/homepage-content";
 
 export const metadata: Metadata = {
   title: "Shenoy Labs",
@@ -16,14 +22,19 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
+  const hero = getHeroContent();
+  const featuredProjects = getFeaturedProjectsContent();
+  const currentlyExploring = getCurrentlyExploringContent();
+  const supportCopy = getSupportCopyContent();
+
   return (
     <>
-      <HeroSection />
-      <FeaturedProjectsSection />
+      <HeroSection content={hero} />
+      <FeaturedProjectsSection content={featuredProjects} />
       <ToolsRoadmapSection />
       <ArticlesPreviewSection />
-      <CurrentlyBuildingSection />
-      <SupportCtaSection />
+      <CurrentlyBuildingSection content={currentlyExploring} />
+      <SupportCtaSection content={supportCopy} />
     </>
   );
 }

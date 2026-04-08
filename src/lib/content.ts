@@ -85,3 +85,19 @@ export function getAllProjects(): ContentItem<ProjectFrontmatter>[] {
 export function getProject(slug: string): ContentItem<ProjectFrontmatter> {
   return parseItem<ProjectFrontmatter>("projects", `${slug}.mdx`);
 }
+
+// ─── Static pages ─────────────────────────────────────────────────────────────
+
+export type PageFrontmatter = Record<string, string>;
+
+export function getPageContent(slug: string): ContentItem<PageFrontmatter> {
+  const filePath = path.join(CONTENT_DIR, "pages", `${slug}.mdx`);
+  const raw = fs.readFileSync(filePath, "utf8");
+  const { data, content } = matter(raw);
+  return {
+    slug,
+    frontmatter: data as PageFrontmatter,
+    readingTime: "",
+    source: content,
+  };
+}

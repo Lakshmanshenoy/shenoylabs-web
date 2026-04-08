@@ -4,8 +4,11 @@ import { ArrowRightIcon, SparklesIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { HeroContent } from "@/lib/homepage-content";
 
-export function HeroSection() {
+type Props = { content: HeroContent };
+
+export function HeroSection({ content }: Props) {
   return (
     <section className="relative overflow-hidden border-b border-border/60">
       {/* Ambient background blobs */}
@@ -69,10 +72,10 @@ export function HeroSection() {
             <div className="flex flex-wrap items-center gap-4 pt-2 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <span className="inline-block size-2 rounded-full bg-emerald-400" />
-                Currently building new tools
+                {content.statusLine}
               </span>
               <span className="hidden sm:block">·</span>
-              <span>Projects · Articles · Research</span>
+              <span>{content.tagline}</span>
             </div>
           </div>
 
@@ -83,12 +86,7 @@ export function HeroSection() {
                 What I do
               </p>
               <ul className="mt-4 space-y-3">
-                {[
-                  { icon: "🚀", label: "Ship full-stack products end-to-end" },
-                  { icon: "🔬", label: "Publish research and in-depth articles" },
-                  { icon: "🛠", label: "Build interactive tools and calculators" },
-                  { icon: "📣", label: "Share learnings publicly, every week" },
-                ].map(({ icon, label }) => (
+                {content.whatIDo.map(({ icon, label }) => (
                   <li key={label} className="flex items-start gap-3 text-sm">
                     <span className="mt-0.5 text-base leading-none">{icon}</span>
                     <span className="text-foreground/80">{label}</span>
@@ -97,7 +95,7 @@ export function HeroSection() {
               </ul>
               <div className="mt-5 border-t border-border/60 pt-5">
                 <p className="text-xs text-muted-foreground">
-                  Premium · Editorial · Trustworthy
+                  {content.credentialFootnote}
                 </p>
               </div>
             </div>
