@@ -156,6 +156,19 @@
 .reveal-group.visible > *:nth-child(4) { transition-delay: 180ms; }
 .reveal-group.visible > * { opacity: 1; transform: translateY(0); }
 
+/* Render optimization for below-the-fold sections to improve first paint.
+   Content is skipped until needed, while preserving layout via intrinsic size. */
+.below-fold {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 1100px;
+}
+
+.footer-reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: enter-up 480ms ease-out 120ms forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
@@ -169,6 +182,12 @@
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
+  }
+
+  .footer-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
   }
 }
 

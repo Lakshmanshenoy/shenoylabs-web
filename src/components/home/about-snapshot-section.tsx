@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 export function AboutSnapshotSection() {
   return (
-    <SectionContainer>
+    <SectionContainer className="below-fold">
       <div className="flex flex-col gap-8">
         <SectionHeader
           badge="About"

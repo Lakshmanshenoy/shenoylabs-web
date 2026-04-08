@@ -19,7 +19,7 @@ const statusLabel = {
 
 export function CurrentlyBuildingSection({ content }: Props) {
   return (
-    <SectionContainer>
+    <SectionContainer className="below-fold">
       <div className="flex flex-col gap-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <SectionHeader

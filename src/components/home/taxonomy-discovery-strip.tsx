@@ -6,7 +6,7 @@ import { PRIMARY_CATEGORIES } from "@/lib/taxonomy";
 
 export function TaxonomyDiscoveryStrip() {
   return (
-    <SectionContainer className="py-8">
+    <SectionContainer className="below-fold py-8">
       <div className="rounded-xl border border-border/80 bg-card/95 p-4">
         <p className="text-xs uppercase tracking-wider text-muted-foreground">
           Explore by topics

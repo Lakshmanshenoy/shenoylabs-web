@@ -9,7 +9,7 @@ type Props = { content: SupportCopyContent };
 
 export function SupportCtaSection({ content }: Props) {
   return (
-    <SectionContainer className="bg-secondary/50">
+    <SectionContainer className="below-fold bg-secondary/50">
       <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-accent/5 px-8 py-12 text-center sm:py-16">
         {/* Ambient glow */}
         <div

@@ -32,11 +32,11 @@ export default function Home() {
   return (
     <>
       <HeroSection content={hero} />
-      <TaxonomyDiscoveryStrip />
       <FeaturedProjectsSection content={featuredProjects} />
-      <CurrentlyBuildingSection content={currentlyExploring} />
       <ArticlesPreviewSection />
+      <CurrentlyBuildingSection content={currentlyExploring} />
       <AboutSnapshotSection />
+      <TaxonomyDiscoveryStrip />
       <ToolsRoadmapSection />
       <SupportCtaSection content={supportCopy} />
     </>

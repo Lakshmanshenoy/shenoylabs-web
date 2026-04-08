@@ -18,7 +18,7 @@ export function ArticlesPreviewSection() {
   const lead = previewArticles[0];
 
   return (
-    <SectionContainer className="bg-secondary/50">
+    <SectionContainer className="below-fold bg-secondary/50">
       <div className="flex flex-col gap-10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <SectionHeader

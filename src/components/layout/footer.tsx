@@ -62,7 +62,7 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/80 bg-card">
+    <footer className="footer-reveal border-t border-border/80 bg-card">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
