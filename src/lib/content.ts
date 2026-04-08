@@ -4,6 +4,8 @@ import path from "path";
 import matter from "gray-matter";
 import readingTime from "reading-time";
 
+import type { DepthLevel, PrimaryCategory } from "@/lib/taxonomy";
+
 const CONTENT_DIR = path.join(process.cwd(), "content");
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -13,8 +15,10 @@ export type ArticleFrontmatter = {
   excerpt: string;
   date: string;
   category: string;
+  primaryCategory: PrimaryCategory;
   tags: string[];
   author: string;
+  depthLevel?: DepthLevel;
   coverImage?: string;
   coverAlt?: string;
 };
@@ -23,7 +27,9 @@ export type ProjectFrontmatter = {
   title: string;
   description: string;
   date: string;
+  primaryCategory: PrimaryCategory;
   tags: string[];
+  depthLevel?: DepthLevel;
   status: "shipped" | "in-progress" | "planning";
   githubUrl?: string;
   liveUrl?: string;

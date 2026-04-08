@@ -22,13 +22,13 @@ export function ArticlesFilteredGrid({ articles }: Props) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const categories = Array.from(
-    new Set(articles.map((a) => a.frontmatter.category)),
+    new Set(articles.map((a) => a.frontmatter.primaryCategory)),
   ).sort();
 
   const filtered =
     activeCategory === null
       ? articles
-      : articles.filter((a) => a.frontmatter.category === activeCategory);
+      : articles.filter((a) => a.frontmatter.primaryCategory === activeCategory);
 
   return (
     <div className="space-y-6">
@@ -81,7 +81,7 @@ export function ArticlesFilteredGrid({ articles }: Props) {
               <CardHeader>
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className="text-xs">
-                    {article.frontmatter.category}
+                    {article.frontmatter.primaryCategory}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
                     {article.readingTime}

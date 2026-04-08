@@ -92,6 +92,9 @@ export default function ProjectsPage() {
                     <span className="text-xs text-muted-foreground">
                       {status.label}
                     </span>
+                    <Badge variant="outline" className="text-[10px]">
+                      {project.frontmatter.primaryCategory}
+                    </Badge>
                   </div>
                   <CardTitle className="text-base font-semibold leading-snug transition-colors group-hover:text-primary">
                     {project.frontmatter.title}

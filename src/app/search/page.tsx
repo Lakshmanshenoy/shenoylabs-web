@@ -14,7 +14,12 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-export default function SearchPage() {
+export default async function SearchPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}) {
+  const params = await searchParams;
   const articles = getAllArticles();
   const projects = getAllProjects();
 
@@ -24,7 +29,7 @@ export default function SearchPage() {
       title: a.frontmatter.title,
       excerpt: a.frontmatter.excerpt,
       href: `/articles/${a.slug}`,
-      category: a.frontmatter.category,
+      category: a.frontmatter.primaryCategory,
       tags: a.frontmatter.tags,
     })),
     ...projects.map((p) => ({
@@ -32,6 +37,7 @@ export default function SearchPage() {
       title: p.frontmatter.title,
       excerpt: p.frontmatter.description,
       href: `/projects/${p.slug}`,
+      category: p.frontmatter.primaryCategory,
       tags: p.frontmatter.tags,
     })),
     ...toolsRegistry.map((t) => ({
@@ -39,7 +45,8 @@ export default function SearchPage() {
       title: t.title,
       excerpt: t.description,
       href: `/tools/${t.slug}`,
-      category: t.category,
+      category: t.primaryCategory,
+      tags: t.tags,
     })),
   ];
 
@@ -51,7 +58,7 @@ export default function SearchPage() {
         description="Find articles, projects, and tools across the site."
       />
       <div className="mt-8">
-        <SearchClient index={index} />
+        <SearchClient index={index} initialCategory={params.category} />
       </div>
     </SectionContainer>
   );

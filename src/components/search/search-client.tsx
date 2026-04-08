@@ -13,7 +13,7 @@ export type SearchItem = {
   title: string;
   excerpt: string;
   href: string;
-  category?: string;
+  category: string;
   tags?: string[];
 };
 
@@ -25,26 +25,38 @@ const typeLabel: Record<SearchItem["type"], string> = {
 
 type Props = {
   index: SearchItem[];
+  initialCategory?: string;
 };
 
-export function SearchClient({ index }: Props) {
+export function SearchClient({ index, initialCategory }: Props) {
   const [query, setQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState(initialCategory ?? "All");
+
+  const categories = useMemo(
+    () => ["All", ...Array.from(new Set(index.map((item) => item.category))).sort()],
+    [index],
+  );
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return [];
     return index.filter((item) => {
+      const categoryMatch =
+        activeCategory === "All" || item.category === activeCategory;
+      if (!categoryMatch) return false;
+
+      if (!q) return true;
+
       const haystack = [
         item.title,
         item.excerpt,
-        item.category ?? "",
+        item.category,
         ...(item.tags ?? []),
       ]
         .join(" ")
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [query, index]);
+  }, [query, index, activeCategory]);
 
   return (
     <div className="space-y-6">
@@ -63,14 +75,31 @@ export function SearchClient({ index }: Props) {
         />
       </div>
 
+      <div className="flex flex-wrap gap-2">
+        {categories.map((category) => (
+          <button
+            key={category}
+            type="button"
+            onClick={() => setActiveCategory(category)}
+            className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+              activeCategory === category
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
+            }`}
+          >
+            {category}
+          </button>
+        ))}
+      </div>
+
       {/* Results */}
-      {query.trim() === "" && (
+      {query.trim() === "" && activeCategory === "All" && (
         <p className="py-8 text-center text-sm text-muted-foreground">
           Start typing to search across all articles, projects, and tools.
         </p>
       )}
 
-      {query.trim() !== "" && results.length === 0 && (
+      {(query.trim() !== "" || activeCategory !== "All") && results.length === 0 && (
         <p className="py-8 text-center text-sm text-muted-foreground">
           No results found for &ldquo;{query}&rdquo;.
         </p>

@@ -59,7 +59,7 @@ export function ArticlesPreviewSection() {
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline" className="text-xs">
-                    {lead.frontmatter.category}
+                    {lead.frontmatter.primaryCategory}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
                     {lead.readingTime} read ·{" "}
@@ -111,7 +111,7 @@ export function ArticlesPreviewSection() {
                 <CardHeader>
                   <div className="mb-1 flex flex-wrap items-center gap-2">
                     <Badge variant="outline" className="text-xs">
-                      {article.frontmatter.category}
+                      {article.frontmatter.primaryCategory}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
                       {article.readingTime} read ·{" "}

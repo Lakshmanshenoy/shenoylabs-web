@@ -26,7 +26,10 @@ export function getRelatedArticles(currentSlug: string, limit = 3) {
   return candidates
     .map((candidate) => {
       const categoryBoost =
-        candidate.frontmatter.category === current.frontmatter.category ? 3 : 0;
+        candidate.frontmatter.primaryCategory ===
+        current.frontmatter.primaryCategory
+          ? 3
+          : 0;
       const tagScore = overlapScore(
         current.frontmatter.tags,
         candidate.frontmatter.tags,
@@ -74,7 +77,12 @@ export function getRelatedProjects(projectSlug: string, limit = 3) {
     .filter((p) => p.slug !== projectSlug)
     .map((project) => ({
       project,
-      score: overlapScore(current.frontmatter.tags, project.frontmatter.tags),
+      score:
+        overlapScore(current.frontmatter.tags, project.frontmatter.tags) +
+        (current.frontmatter.primaryCategory ===
+        project.frontmatter.primaryCategory
+          ? 2
+          : 0),
     }))
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)

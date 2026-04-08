@@ -87,6 +87,7 @@ export default async function ToolDetailPage({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">{tool.category}</Badge>
+          <Badge variant="secondary">{tool.primaryCategory}</Badge>
           <Badge variant={isPrototype ? "default" : "secondary"}>
             {isPrototype ? "Framework preview" : "Coming soon"}
           </Badge>

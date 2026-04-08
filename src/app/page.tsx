@@ -6,6 +6,7 @@ import { CurrentlyBuildingSection } from "@/components/home/currently-building-s
 import { FeaturedProjectsSection } from "@/components/home/featured-projects-section";
 import { HeroSection } from "@/components/home/hero-section";
 import { SupportCtaSection } from "@/components/home/support-cta-section";
+import { TaxonomyDiscoveryStrip } from "@/components/home/taxonomy-discovery-strip";
 import { ToolsRoadmapSection } from "@/components/home/tools-roadmap-section";
 import {
   getHeroContent,
@@ -31,6 +32,7 @@ export default function Home() {
   return (
     <>
       <HeroSection content={hero} />
+      <TaxonomyDiscoveryStrip />
       <FeaturedProjectsSection content={featuredProjects} />
       <CurrentlyBuildingSection content={currentlyExploring} />
       <ArticlesPreviewSection />

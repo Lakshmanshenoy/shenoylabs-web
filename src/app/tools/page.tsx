@@ -88,6 +88,9 @@ export default function ToolsPage() {
                 <Badge variant="outline" className="text-xs">
                   {tool.category}
                 </Badge>
+                <Badge variant="secondary" className="text-[10px]">
+                  {tool.primaryCategory}
+                </Badge>
                 <Badge variant={tool.status === "prototype" ? "default" : "secondary"} className="text-[10px]">
                   {tool.status === "prototype" ? "Framework preview" : "Coming soon"}
                 </Badge>

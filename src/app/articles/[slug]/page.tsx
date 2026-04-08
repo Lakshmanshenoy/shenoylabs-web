@@ -155,7 +155,7 @@ export default async function ArticleDetailPage({
           </div>
         )}
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline">{fm.category}</Badge>
+          <Badge variant="outline">{fm.primaryCategory}</Badge>
           <span className="text-sm text-muted-foreground">
             {readingTime} ·{" "}
             {new Date(fm.date).toLocaleDateString("en-US", {
