@@ -35,23 +35,23 @@ export function SupportCtaSection({ content }: Props) {
 
           <div className="flex flex-wrap justify-center gap-3">
             <a
-              href="/support"
+              href={content.primaryCtaHref}
               className={cn(
                 buttonVariants({ size: "lg" }),
                 "h-12 gap-2 px-7 shadow-sm shadow-primary/20 transition-shadow hover:shadow-md hover:shadow-primary/25",
               )}
             >
-              Support the work
+              {content.primaryCtaLabel}
               <HeartIcon className="size-4 text-red-500" />
             </a>
             <a
-              href="/about"
+              href={content.secondaryCtaHref}
               className={cn(
                 buttonVariants({ variant: "outline", size: "lg" }),
                 "h-12 px-7",
               )}
             >
-              Learn more about me
+              {content.secondaryCtaLabel}
             </a>
           </div>
 

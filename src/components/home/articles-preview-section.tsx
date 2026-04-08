@@ -83,6 +83,10 @@ export function ArticlesPreviewSection() {
                 <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
                   {previewArticles[0].excerpt}
                 </p>
+                <p className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+                  Read note
+                  <ArrowRightIcon className="size-3.5" />
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -113,6 +117,10 @@ export function ArticlesPreviewSection() {
                 <CardContent className="pt-0">
                   <p className="text-sm leading-relaxed text-muted-foreground">
                     {article.excerpt}
+                  </p>
+                  <p className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+                    Read note
+                    <ArrowRightIcon className="size-3.5" />
                   </p>
                 </CardContent>
               </Card>

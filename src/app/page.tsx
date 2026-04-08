@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { AboutSnapshotSection } from "@/components/home/about-snapshot-section";
 import { ArticlesPreviewSection } from "@/components/home/articles-preview-section";
 import { CurrentlyBuildingSection } from "@/components/home/currently-building-section";
 import { FeaturedProjectsSection } from "@/components/home/featured-projects-section";
@@ -31,9 +32,10 @@ export default function Home() {
     <>
       <HeroSection content={hero} />
       <FeaturedProjectsSection content={featuredProjects} />
-      <ToolsRoadmapSection />
-      <ArticlesPreviewSection />
       <CurrentlyBuildingSection content={currentlyExploring} />
+      <ArticlesPreviewSection />
+      <AboutSnapshotSection />
+      <ToolsRoadmapSection />
       <SupportCtaSection content={supportCopy} />
     </>
   );

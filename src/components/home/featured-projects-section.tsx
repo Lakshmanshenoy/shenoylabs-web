@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLinkIcon } from "lucide-react";
+import { ArrowRightIcon, ExternalLinkIcon } from "lucide-react";
 
 import { SectionContainer } from "@/components/shared/section-container";
 import { SectionHeader } from "@/components/shared/section-header";
@@ -46,8 +46,8 @@ export function FeaturedProjectsSection({ content }: Props) {
               href={`/projects/${project.slug}`}
               className="group block"
             >
-              <Card className="soft-lift h-full border border-border/80 bg-card/95 transition-colors group-hover:border-primary/30">
-                <CardHeader className="pb-2">
+                <Card className="soft-lift h-full border border-border/80 bg-card/95 transition-colors group-hover:border-primary/30">
+                  <CardHeader className="pb-2">
                   <div className="mb-2 flex items-center gap-2">
                     <span
                       className={cn(
@@ -63,10 +63,14 @@ export function FeaturedProjectsSection({ content }: Props) {
                     {project.title}
                   </CardTitle>
                   <CardDescription className="leading-relaxed">
-                    {project.description}
+                    {project.problem}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
+                  <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
+                    <span className="font-medium text-foreground/90">Why it matters:</span>{" "}
+                    {project.whyItMatters}
+                  </p>
                   <div className="flex flex-wrap gap-1.5">
                     {project.tags.map((tag) => (
                       <Badge
@@ -78,6 +82,10 @@ export function FeaturedProjectsSection({ content }: Props) {
                       </Badge>
                     ))}
                   </div>
+                  <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-colors group-hover:text-primary/80">
+                    View Project
+                    <ArrowRightIcon className="size-3.5" />
+                  </p>
                 </CardContent>
               </Card>
             </Link>

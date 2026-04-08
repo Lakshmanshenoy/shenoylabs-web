@@ -33,38 +33,36 @@ export function HeroSection({ content }: Props) {
             </Badge>
 
             <h1 className="font-heading max-w-2xl text-4xl font-semibold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
-              Solving problems that
-              <span className="relative ml-2 text-primary">
-                matters.
-              </span>
+              {content.headline}
             </h1>
 
+            <p className="font-heading text-xl font-semibold tracking-tight text-foreground/90 sm:text-2xl">
+              {content.identityLine}
+            </p>
+
             <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
-              Hi, I&apos;m Lakshman Shenoy - Thinker. Learner. Problem solver.
-              I&apos;m someone who is constantly driven by curiosity — always
-              learning, researching, and exploring new ways to solve problems
-              thoughtfully.
+              {content.subheadline}
             </p>
 
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <Link
-                href="/currently-building"
+                href={content.primaryCta.href}
                 className={cn(
                   buttonVariants({ size: "lg" }),
                   "h-12 gap-2 px-7 shadow-sm shadow-primary/20 transition-shadow hover:shadow-md hover:shadow-primary/25",
                 )}
               >
-                View What I&apos;m Working On
+                {content.primaryCta.label}
                 <ArrowRightIcon className="size-4" />
               </Link>
               <Link
-                href="/about"
+                href={content.secondaryCta.href}
                 className={cn(
                   buttonVariants({ variant: "outline", size: "lg" }),
                   "h-12 px-7",
                 )}
               >
-                About Me
+                {content.secondaryCta.label}
               </Link>
             </div>
 
@@ -79,9 +77,13 @@ export function HeroSection({ content }: Props) {
             </div>
           </div>
 
-          {/* Right: credibility card */}
+          {/* Right: premium visual + floating cards */}
           <div className="w-full max-w-sm shrink-0 lg:w-96">
-            <div className="soft-lift rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
+            <div className="soft-lift relative overflow-hidden rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary/10 blur-2xl"
+              />
               <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
                 What I do
               </p>
@@ -97,6 +99,15 @@ export function HeroSection({ content }: Props) {
                 <p className="text-xs text-muted-foreground">
                   {content.credentialFootnote}
                 </p>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                <div className="rounded-lg border border-border/70 bg-secondary/50 p-3 text-xs text-muted-foreground">
+                  Featured Preview: Research & Health Tools
+                </div>
+                <div className="rounded-lg border border-border/70 bg-secondary/50 p-3 text-xs text-muted-foreground">
+                  Current Focus: {content.statusLine}
+                </div>
               </div>
             </div>
           </div>

@@ -11,6 +11,11 @@ function readJson<T>(filename: string): T {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type HeroContent = {
+  headline: string;
+  identityLine: string;
+  subheadline: string;
+  primaryCta: { label: string; href: string };
+  secondaryCta: { label: string; href: string };
   statusLine: string;
   tagline: string;
   whatIDo: { icon: string; label: string }[];
@@ -20,7 +25,8 @@ export type HeroContent = {
 export type FeaturedProject = {
   slug: string;
   title: string;
-  description: string;
+  problem: string;
+  whyItMatters: string;
   tags: string[];
   status: string;
   statusColor: string;
@@ -40,12 +46,17 @@ export type ChangelogEntry = {
 export type CurrentlyExploringContent = {
   dynamicLine: string;
   pillars: string[];
-  changelog: ChangelogEntry[];
+  explorationCards: string[];
+  nextItems: ChangelogEntry[];
 };
 
 export type SupportCopyContent = {
   heading: string;
   body: string;
+  primaryCtaLabel: string;
+  primaryCtaHref: string;
+  secondaryCtaLabel: string;
+  secondaryCtaHref: string;
   footnote: string;
 };
 

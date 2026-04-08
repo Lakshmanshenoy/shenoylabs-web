@@ -1,11 +1,22 @@
 {
-  "statusLine": "Currently exploring new ideas and tools",
-  "tagline": "Projects · Articles · Research",
+  "headline": "Thoughtful ideas, projects, and tools shaped through curiosity and research.",
+  "identityLine": "Thinker. Learner. Problem Solver.",
+  "subheadline": "Exploring automation, finance, science, technology, health, and systems thinking — one thoughtful project at a time.",
+  "primaryCta": {
+    "label": "View What I’m Building",
+    "href": "/currently-building"
+  },
+  "secondaryCta": {
+    "label": "Explore Research Notes",
+    "href": "/articles"
+  },
+  "statusLine": "Currently researching caffeine performance systems",
+  "tagline": "Automation · Finance · Science · Health",
   "whatIDo": [
-    { "icon": "🚀", "label": "Ship full-stack products end-to-end" },
-    { "icon": "🔬", "label": "Publish research and in-depth articles" },
-    { "icon": "🛠", "label": "Build interactive tools and calculators" },
-    { "icon": "📣", "label": "Share learnings publicly, every week" }
+    { "icon": "🔬", "label": "Research notes with practical depth" },
+    { "icon": "🛠", "label": "Projects and tools built in public" },
+    { "icon": "📈", "label": "Frameworks for thinking and execution" },
+    { "icon": "🧭", "label": "Curiosity-led exploration across disciplines" }
   ],
   "credentialFootnote": "Premium · Editorial · Trustworthy"
 }

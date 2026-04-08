@@ -2,25 +2,28 @@
   "projects": [
     {
       "slug": "project-alpha",
-      "title": "Project Alpha",
-      "description": "A full-stack application that solves a real product problem from end to end. Built with speed, scalability, and polish in mind.",
-      "tags": ["Next.js", "TypeScript", "Postgres"],
+      "title": "Research & Health Tools",
+      "problem": "People struggle to interpret basic health markers and daily wellness signals in a structured way.",
+      "whyItMatters": "Clear, simple tools can improve consistency in habits and decision-making without adding cognitive load.",
+      "tags": ["Health", "Research", "Decision Tools"],
       "status": "Shipped",
       "statusColor": "bg-emerald-400"
     },
     {
       "slug": "research-platform",
-      "title": "Research Platform",
-      "description": "An open research tool enabling interactive exploration of structured datasets with a clean editorial reading experience.",
-      "tags": ["React", "MDX", "Visualisation"],
+      "title": "Automation Systems",
+      "problem": "Teams and individuals waste time repeating low-leverage workflows across operations and planning.",
+      "whyItMatters": "Automation frameworks free up attention for higher-order thinking and creative work.",
+      "tags": ["Automation", "Workflows", "Systems Thinking"],
       "status": "In Progress",
       "statusColor": "bg-amber-400"
     },
     {
       "slug": "tools-engine",
-      "title": "Tools Engine",
-      "description": "A client-side computation framework for privacy-safe interactive calculators and decision tools.",
-      "tags": ["TypeScript", "Web Workers", "PWA"],
+      "title": "Finance & Analysis Frameworks",
+      "problem": "Financial decisions are often made with fragmented assumptions and no consistent analytical framework.",
+      "whyItMatters": "Structured models create better trade-offs, better clarity, and fewer avoidable mistakes.",
+      "tags": ["Finance", "Analysis", "Frameworks"],
       "status": "Planning",
       "statusColor": "bg-sky-400"
     }

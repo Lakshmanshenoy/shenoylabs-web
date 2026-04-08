@@ -1,34 +1,37 @@
 {
   "dynamicLine": "Currently researching caffeine performance systems",
   "pillars": [
-    "Science & Health",
-    "Automation",
-    "Finance",
-    "Travel & Culture"
+    "Science, health & biomarkers",
+    "Finance & systems thinking",
+    "Automation & workflows",
+    "Travel, food & culture",
+    "Selective films, series & anime"
   ],
-  "changelog": [
+  "explorationCards": [
+    "Scientific calculators & health markers",
+    "Automation workflows & systems thinking",
+    "Finance research frameworks",
+    "Performance, caffeine & optimization",
+    "Places explored & cuisines discovered",
+    "Thought-provoking films, series & anime"
+  ],
+  "nextItems": [
     {
       "date": "Apr 2026",
-      "title": "Phase 6 — Future Tools Framework",
-      "description": "Built the /tools route architecture, tools registry, client-side compute framework, and dynamic /tools/[slug] pages.",
+      "title": "Future tools framework in active refinement",
+      "description": "Hardening local-first calculation architecture and planning production-grade utilities.",
       "status": "shipped"
     },
     {
-      "date": "Apr 2026",
-      "title": "Phase 5 — SEO, Analytics & Performance",
-      "description": "Google Analytics, sitemap, robots.txt, canonical URLs, Open Graph metadata, and OG preview image across all routes.",
-      "status": "shipped"
-    },
-    {
-      "date": "Apr 2026",
-      "title": "Phase 4 — Support, Contact & Legal",
-      "description": "Built /contact with secure spam-protected form, /support with Razorpay/UPI, and all legal pages.",
-      "status": "shipped"
+      "date": "Now",
+      "title": "Drafting deeper research notes on performance systems",
+      "description": "Upcoming essays on caffeine strategy, execution loops, and personal operating systems.",
+      "status": "in-progress"
     },
     {
       "date": "Q3 2026",
-      "title": "Finance & productivity tools — first release",
-      "description": "Loan EMI calculator and SIP returns planner shipping as the first real interactive tools.",
+      "title": "Finance and productivity tools — first public release",
+      "description": "Launching the first set of practical tools for everyday analytical decisions.",
       "status": "planned"
     }
   ]
