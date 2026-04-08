@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { InteractionCtaPanel } from "@/components/engagement/interaction-cta-panel";
+import { NewsletterPlaceholder } from "@/components/engagement/newsletter-placeholder";
 import { ArticlesFilteredGrid } from "@/components/articles/articles-filtered-grid";
 import { SectionContainer } from "@/components/shared/section-container";
 import { SectionHeader } from "@/components/shared/section-header";
@@ -42,6 +44,11 @@ export default function ArticlesPage() {
 
       <div className="mt-10">
         <ArticlesFilteredGrid articles={articles} />
+      </div>
+
+      <div className="mt-10 space-y-4">
+        <NewsletterPlaceholder />
+        <InteractionCtaPanel />
       </div>
     </SectionContainer>
   );

@@ -3,12 +3,21 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { compileMDX } from "next-mdx-remote/rsc";
 
+import { InteractionCtaPanel } from "@/components/engagement/interaction-cta-panel";
+import { LatestUpdatesStrip } from "@/components/engagement/latest-updates-strip";
+import { NewsletterPlaceholder } from "@/components/engagement/newsletter-placeholder";
 import { SectionContainer } from "@/components/shared/section-container";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getAllArticles, getArticle } from "@/lib/content";
+import { getCurrentlyExploringContent } from "@/lib/homepage-content";
 import { getMDXComponents } from "@/lib/mdx-components";
+import {
+  getRecommendedNextReads,
+  getRelatedArticles,
+  getRelatedProjectsForArticle,
+} from "@/lib/recommendations";
 import { cn } from "@/lib/utils";
 
 // ─── Static generation ────────────────────────────────────────────────────────
@@ -75,6 +84,10 @@ export default async function ArticleDetailPage({
   }
 
   const { frontmatter: fm, readingTime, source } = item;
+  const updates = getCurrentlyExploringContent().nextItems;
+  const recommendedReads = getRecommendedNextReads(slug, 3);
+  const relatedArticles = getRelatedArticles(slug, 3);
+  const relatedProjects = getRelatedProjectsForArticle(slug, 3);
 
   const { content } = await compileMDX({
     source,
@@ -121,6 +134,10 @@ export default async function ArticleDetailPage({
       >
         ← All articles
       </Link>
+
+      <div className="mb-8">
+        <LatestUpdatesStrip updates={updates} />
+      </div>
 
       {/* Article header */}
       <header className="space-y-4">
@@ -171,6 +188,76 @@ export default async function ArticleDetailPage({
           })}
         </p>
       </footer>
+
+      <Separator className="my-8" />
+
+      <section className="space-y-3">
+        <h2 className="font-heading text-xl font-semibold tracking-tight">
+          Recommended next reads
+        </h2>
+        <div className="grid gap-2">
+          {recommendedReads.map((article) => (
+            <Link
+              key={article.slug}
+              href={`/articles/${article.slug}`}
+              className="rounded-lg border border-border/70 px-3 py-2 text-sm transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              {article.frontmatter.title}
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {relatedArticles.length > 0 && (
+        <>
+          <Separator className="my-8" />
+          <section className="space-y-3">
+            <h2 className="font-heading text-xl font-semibold tracking-tight">
+              Related articles
+            </h2>
+            <div className="grid gap-2">
+              {relatedArticles.map((article) => (
+                <Link
+                  key={article.slug}
+                  href={`/articles/${article.slug}`}
+                  className="rounded-lg border border-border/70 px-3 py-2 text-sm transition-colors hover:border-primary/30 hover:text-primary"
+                >
+                  {article.frontmatter.title}
+                </Link>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
+
+      {relatedProjects.length > 0 && (
+        <>
+          <Separator className="my-8" />
+          <section className="space-y-3">
+            <h2 className="font-heading text-xl font-semibold tracking-tight">
+              Related projects
+            </h2>
+            <div className="grid gap-2">
+              {relatedProjects.map((project) => (
+                <Link
+                  key={project.slug}
+                  href={`/projects/${project.slug}`}
+                  className="rounded-lg border border-border/70 px-3 py-2 text-sm transition-colors hover:border-primary/30 hover:text-primary"
+                >
+                  {project.frontmatter.title}
+                </Link>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
+
+      <Separator className="my-8" />
+      <NewsletterPlaceholder />
+
+      <div className="mt-6">
+        <InteractionCtaPanel />
+      </div>
     </SectionContainer>
   );
 }
