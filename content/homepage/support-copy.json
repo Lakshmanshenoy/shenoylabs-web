@@ -1,9 +1,9 @@
 {
   "heading": "Support & Mission",
-  "body": "Support thoughtful tools, research, and projects built in public.",
+  "body": "Support thoughtful research, writing, and projects built in public.",
   "primaryCtaLabel": "Support Shenoy Labs",
   "primaryCtaHref": "/support",
-  "secondaryCtaLabel": "View Roadmap",
-  "secondaryCtaHref": "/tools",
+  "secondaryCtaLabel": "View Projects",
+  "secondaryCtaHref": "/projects",
   "footnote": "Built with curiosity, depth, and long-term usefulness in mind"
 }

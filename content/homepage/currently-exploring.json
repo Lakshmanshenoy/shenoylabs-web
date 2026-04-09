@@ -18,8 +18,8 @@
   "nextItems": [
     {
       "date": "Apr 2026",
-      "title": "Future tools framework in active refinement",
-      "description": "Hardening local-first calculation architecture and planning production-grade utilities.",
+      "title": "Project and article system refined",
+      "description": "Tightened the publishing flow, cleaned up public routes, and made the site feel more focused.",
       "status": "shipped"
     },
     {
@@ -30,8 +30,8 @@
     },
     {
       "date": "Q3 2026",
-      "title": "Finance and productivity tools — first public release",
-      "description": "Launching the first set of practical tools for everyday analytical decisions.",
+      "title": "More long-form project case studies",
+      "description": "Expanding the archive with clearer writeups on shipped work, decisions, and lessons learned.",
       "status": "planned"
     }
   ]

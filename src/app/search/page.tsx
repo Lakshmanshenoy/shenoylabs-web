@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; q?: string }>;
 }) {
   const params = await searchParams;
   const articles = getAllArticles();
@@ -62,7 +62,11 @@ export default async function SearchPage({
         description="Find articles and projects across the site."
       />
       <div className="mt-8">
-        <SearchClient index={index} initialCategory={params.category} />
+        <SearchClient
+          index={index}
+          initialCategory={params.category}
+          initialQuery={params.q}
+        />
       </div>
     </SectionContainer>
   );

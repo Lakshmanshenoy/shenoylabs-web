@@ -25,10 +25,11 @@ const typeLabel: Record<SearchItem["type"], string> = {
 type Props = {
   index: SearchItem[];
   initialCategory?: string;
+  initialQuery?: string;
 };
 
-export function SearchClient({ index, initialCategory }: Props) {
-  const [query, setQuery] = useState("");
+export function SearchClient({ index, initialCategory, initialQuery }: Props) {
+  const [query, setQuery] = useState(initialQuery ?? "");
   const [activeCategory, setActiveCategory] = useState(initialCategory ?? "All");
 
   const categories = useMemo(

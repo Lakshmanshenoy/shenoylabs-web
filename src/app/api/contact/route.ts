@@ -68,14 +68,19 @@ export async function POST(request: Request) {
 
     // Basic anti-spam: hidden field and unrealistically fast submit windows.
     if (website) {
-      return Response.json<ContactResponseBody>(
-        { ok: true, message: "Message received." },
+      const response: ContactResponseBody = { ok: true, message: "Message received." };
+      return Response.json(
+        response,
         { status: 200 },
       );
     }
     if (!submittedAt || Date.now() - submittedAt < 1200) {
-      return Response.json<ContactResponseBody>(
-        { ok: false, message: "Please wait a moment before submitting." },
+      const response: ContactResponseBody = {
+        ok: false,
+        message: "Please wait a moment before submitting.",
+      };
+      return Response.json(
+        response,
         { status: 400 },
       );
     }
@@ -89,8 +94,12 @@ export async function POST(request: Request) {
       message.length < 20 ||
       message.length > 4000
     ) {
-      return Response.json<ContactResponseBody>(
-        { ok: false, message: "Please check your input and try again." },
+      const response: ContactResponseBody = {
+        ok: false,
+        message: "Please check your input and try again.",
+      };
+      return Response.json(
+        response,
         { status: 400 },
       );
     }
@@ -98,8 +107,12 @@ export async function POST(request: Request) {
     const requestHeaders = await headers();
     const ip = getClientIpFromHeaders(requestHeaders);
     if (rateLimited(ip)) {
-      return Response.json<ContactResponseBody>(
-        { ok: false, message: "Too many attempts. Please retry shortly." },
+      const response: ContactResponseBody = {
+        ok: false,
+        message: "Too many attempts. Please retry shortly.",
+      };
+      return Response.json(
+        response,
         { status: 429 },
       );
     }
@@ -109,13 +122,14 @@ export async function POST(request: Request) {
     const fromEmail = process.env.CONTACT_FROM_EMAIL;
 
     if (!resendApiKey || !fromEmail) {
-      return Response.json<ContactResponseBody>(
-        {
-          ok: false,
-          message:
-            `Contact form delivery is not configured yet. Please email ${siteConfig.contactEmail} directly.`,
-          fallbackToEmail: true,
-        },
+      const response: ContactResponseBody = {
+        ok: false,
+        message:
+          `Contact form delivery is not configured yet. Please email ${siteConfig.contactEmail} directly.`,
+        fallbackToEmail: true,
+      };
+      return Response.json(
+        response,
         { status: 200 },
       );
     }
@@ -145,19 +159,31 @@ export async function POST(request: Request) {
     });
 
     if (!resendResponse.ok) {
-      return Response.json<ContactResponseBody>(
-        { ok: false, message: "Email provider rejected the request." },
+      const response: ContactResponseBody = {
+        ok: false,
+        message: "Email provider rejected the request.",
+      };
+      return Response.json(
+        response,
         { status: 502 },
       );
     }
 
-    return Response.json<ContactResponseBody>(
-      { ok: true, message: "Message sent. I will get back to you soon." },
+    const response: ContactResponseBody = {
+      ok: true,
+      message: "Message sent. I will get back to you soon.",
+    };
+    return Response.json(
+      response,
       { status: 200 },
     );
   } catch {
-    return Response.json<ContactResponseBody>(
-      { ok: false, message: "Invalid payload or unexpected server error." },
+    const response: ContactResponseBody = {
+      ok: false,
+      message: "Invalid payload or unexpected server error.",
+    };
+    return Response.json(
+      response,
       { status: 400 },
     );
   }

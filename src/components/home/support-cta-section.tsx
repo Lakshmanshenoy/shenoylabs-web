@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { HeartIcon } from "lucide-react";
 
 import { SectionContainer } from "@/components/shared/section-container";
@@ -34,7 +35,7 @@ export function SupportCtaSection({ content }: Props) {
           </div>
 
           <div className="flex flex-wrap justify-center gap-3">
-            <a
+            <Link
               href={content.primaryCtaHref}
               className={cn(
                 buttonVariants({ size: "lg" }),
@@ -43,8 +44,8 @@ export function SupportCtaSection({ content }: Props) {
             >
               {content.primaryCtaLabel}
               <HeartIcon className="size-4 text-red-500" />
-            </a>
-            <a
+            </Link>
+            <Link
               href={content.secondaryCtaHref}
               className={cn(
                 buttonVariants({ variant: "outline", size: "lg" }),
@@ -52,7 +53,7 @@ export function SupportCtaSection({ content }: Props) {
               )}
             >
               {content.secondaryCtaLabel}
-            </a>
+            </Link>
           </div>
 
           <p className="text-xs text-muted-foreground">{content.footnote}</p>

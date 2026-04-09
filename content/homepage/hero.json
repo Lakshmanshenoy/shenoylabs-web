@@ -1,10 +1,10 @@
 {
-  "headline": "Thoughtful ideas, projects, and tools shaped through curiosity and research.",
+  "headline": "Thoughtful ideas and projects shaped through curiosity and research.",
   "identityLine": "Thinker. Learner. Problem Solver.",
   "subheadline": "Exploring automation, finance, science, technology, health, and systems thinking — one thoughtful project at a time.",
   "primaryCta": {
-    "label": "View What I’m Building",
-    "href": "/currently-building"
+    "label": "View Projects",
+    "href": "/projects"
   },
   "secondaryCta": {
     "label": "Explore Research Notes",
@@ -16,7 +16,7 @@
   "visualAlt": "Hero visual showing current focus and featured preview cards",
   "whatIDo": [
     { "icon": "🔬", "label": "Research notes with practical depth" },
-    { "icon": "🛠", "label": "Projects and tools built in public" },
+    { "icon": "🛠", "label": "Projects built in public" },
     { "icon": "📈", "label": "Frameworks for thinking and execution" },
     { "icon": "🧭", "label": "Curiosity-led exploration across disciplines" }
   ],

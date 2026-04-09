@@ -1,21 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Manrope } from "next/font/google";
 
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { SiteShell } from "@/components/layout/site-shell";
 import { siteConfig } from "@/lib/site";
 
 import "./globals.css";
-
-const inter = Inter({
-  variable: "--font-sans",
-  subsets: ["latin"],
-});
-
-const manrope = Manrope({
-  variable: "--font-heading",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -59,7 +48,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" className={`${inter.variable} ${manrope.variable} h-full antialiased`}>
+    <html lang="en" data-scroll-behavior="smooth" className="h-full antialiased">
       {/* suppressHydrationWarning prevents false positives from browser extensions
            that mutate body attributes (e.g. Grammarly) after server render. */}
       <body className="min-h-full" suppressHydrationWarning>
