@@ -5,14 +5,12 @@ import { notFound } from "next/navigation";
 import { compileMDX } from "next-mdx-remote/rsc";
 
 import { InteractionCtaPanel } from "@/components/engagement/interaction-cta-panel";
-import { LatestUpdatesStrip } from "@/components/engagement/latest-updates-strip";
 import { NewsletterPlaceholder } from "@/components/engagement/newsletter-placeholder";
 import { SectionContainer } from "@/components/shared/section-container";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getAllProjects, getProject } from "@/lib/content";
-import { getCurrentlyExploringContent } from "@/lib/homepage-content";
 import { getMDXComponents } from "@/lib/mdx-components";
 import {
   getRelatedArticlesForProject,
@@ -95,7 +93,6 @@ export default async function ProjectDetailPage({
     { name: "Projects", path: "/projects" },
     { name: fm.title, path: `/projects/${slug}` },
   ]);
-  const updates = getCurrentlyExploringContent().nextItems;
   const relatedProjects = getRelatedProjects(slug, 3);
   const relatedArticles = getRelatedArticlesForProject(slug, 3);
 
@@ -150,11 +147,6 @@ export default async function ProjectDetailPage({
       >
         ← All projects
       </Link>
-
-      <div className="mb-8">
-        <LatestUpdatesStrip updates={updates} />
-      </div>
-
       {/* Project header */}
       <header className="space-y-4">
         {fm.coverImage && (
@@ -278,9 +270,8 @@ export default async function ProjectDetailPage({
       )}
 
       <Separator className="my-8" />
-      <NewsletterPlaceholder />
-
-      <div className="mt-6">
+      <div className="grid gap-4 md:grid-cols-2">
+        <NewsletterPlaceholder />
         <InteractionCtaPanel />
       </div>
     </SectionContainer>

@@ -5,14 +5,12 @@ import { notFound } from "next/navigation";
 import { compileMDX } from "next-mdx-remote/rsc";
 
 import { InteractionCtaPanel } from "@/components/engagement/interaction-cta-panel";
-import { LatestUpdatesStrip } from "@/components/engagement/latest-updates-strip";
 import { NewsletterPlaceholder } from "@/components/engagement/newsletter-placeholder";
 import { SectionContainer } from "@/components/shared/section-container";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getAllArticles, getArticle } from "@/lib/content";
-import { getCurrentlyExploringContent } from "@/lib/homepage-content";
 import { getMDXComponents } from "@/lib/mdx-components";
 import {
   getRecommendedNextReads,
@@ -91,7 +89,6 @@ export default async function ArticleDetailPage({
     { name: "Articles", path: "/articles" },
     { name: fm.title, path: `/articles/${slug}` },
   ]);
-  const updates = getCurrentlyExploringContent().nextItems;
   const recommendedReads = getRecommendedNextReads(slug, 3);
   const relatedArticles = getRelatedArticles(slug, 3);
   const relatedProjects = getRelatedProjectsForArticle(slug, 3);
@@ -147,11 +144,6 @@ export default async function ArticleDetailPage({
       >
         ← All articles
       </Link>
-
-      <div className="mb-8">
-        <LatestUpdatesStrip updates={updates} />
-      </div>
-
       {/* Article header */}
       <header className="space-y-4">
         {fm.coverImage && (
@@ -278,9 +270,8 @@ export default async function ArticleDetailPage({
       )}
 
       <Separator className="my-8" />
-      <NewsletterPlaceholder />
-
-      <div className="mt-6">
+      <div className="grid gap-4 md:grid-cols-2">
+        <NewsletterPlaceholder />
         <InteractionCtaPanel />
       </div>
     </SectionContainer>

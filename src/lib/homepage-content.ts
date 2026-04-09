@@ -40,20 +40,6 @@ export type FeaturedProjectsContent = {
   projects: FeaturedProject[];
 };
 
-export type ChangelogEntry = {
-  date: string;
-  title: string;
-  description: string;
-  status: "shipped" | "in-progress" | "planned";
-};
-
-export type CurrentlyExploringContent = {
-  dynamicLine: string;
-  pillars: string[];
-  explorationCards: string[];
-  nextItems: ChangelogEntry[];
-};
-
 export type SupportCopyContent = {
   heading: string;
   body: string;
@@ -72,10 +58,6 @@ export function getHeroContent(): HeroContent {
 
 export function getFeaturedProjectsContent(): FeaturedProjectsContent {
   return readJson<FeaturedProjectsContent>("featured-projects.json");
-}
-
-export function getCurrentlyExploringContent(): CurrentlyExploringContent {
-  return readJson<CurrentlyExploringContent>("currently-exploring.json");
 }
 
 export function getSupportCopyContent(): SupportCopyContent {

@@ -50,32 +50,30 @@
 
 :root {
   --font-sans:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+    "Segoe UI", Roboto, Helvetica, Arial, system-ui, -apple-system, sans-serif;
   --font-heading:
-    Manrope, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+    "Segoe UI", Roboto, Helvetica, Arial, system-ui, -apple-system, sans-serif;
   --font-mono:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
   --background: #fcfcfd;
-  --foreground: #1f2937;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #1f2937;
+  --card-foreground: #0f172a;
   --popover: #ffffff;
-  --popover-foreground: #1f2937;
-  --primary: #60a5fa;
+  --popover-foreground: #0f172a;
+  --primary: #3b82f6;
   --primary-foreground: #0f172a;
   --secondary: #f8fafc;
-  --secondary-foreground: #1f2937;
+  --secondary-foreground: #0f172a;
   --muted: #f8fafc;
-  --muted-foreground: #64748b;
-  --accent: #93c5fd;
+  --muted-foreground: #475569;
+  --accent: #bfdbfe;
   --accent-foreground: #0f172a;
   --destructive: #ef4444;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #60a5fa;
+  --border: #cbd5e1;
+  --input: #cbd5e1;
+  --ring: #3b82f6;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -93,47 +91,62 @@
 }
 
 .dark {
-  --background: #0b1220;
-  --foreground: #e5e7eb;
-  --card: #111827;
-  --card-foreground: #e5e7eb;
-  --popover: #111827;
-  --popover-foreground: #e5e7eb;
-  --primary: #93c5fd;
+  --background: #0f172a;
+  --foreground: #f8fafc;
+  --card: #111c2f;
+  --card-foreground: #f8fafc;
+  --popover: #111c2f;
+  --popover-foreground: #f8fafc;
+  --primary: #7dd3fc;
   --primary-foreground: #0f172a;
-  --secondary: #111827;
-  --secondary-foreground: #e5e7eb;
-  --muted: #1f2937;
-  --muted-foreground: #94a3b8;
+  --secondary: #162338;
+  --secondary-foreground: #f8fafc;
+  --muted: #1b2a41;
+  --muted-foreground: #cbd5e1;
   --accent: #1e293b;
-  --accent-foreground: #e5e7eb;
+  --accent-foreground: #f8fafc;
   --destructive: #f87171;
   --border: #334155;
   --input: #334155;
-  --ring: #93c5fd;
+  --ring: #7dd3fc;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    @apply font-sans;
+    scroll-behavior: smooth;
+    background-color: var(--background);
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
   body {
     @apply bg-background text-foreground;
+    font-size: 1.0625rem;
+    line-height: 1.72;
+    font-weight: 400;
     background-image:
       radial-gradient(circle at 0% 0%, rgba(96, 165, 250, 0.12), transparent 38%),
       radial-gradient(circle at 100% 0%, rgba(147, 197, 253, 0.1), transparent 40%);
     text-rendering: optimizeLegibility;
-  }
-  html {
-    @apply font-sans;
-    scroll-behavior: smooth;
-    color-scheme: light dark;
+    -webkit-font-smoothing: auto;
+    -moz-osx-font-smoothing: auto;
   }
   h1,
   h2,
   h3,
   h4 {
     @apply font-heading text-foreground;
+    letter-spacing: -0.02em;
+    font-weight: 650;
+  }
+  p,
+  li {
+    color: color-mix(in srgb, var(--foreground) 90%, transparent);
   }
 }
 
@@ -225,7 +238,7 @@
 /* ── MDX prose styles ─────────────────────────────────────────────────────── */
 /* Applied to <article className="prose-custom"> on article/project detail pages */
 .prose-custom {
-  @apply text-base leading-7 text-foreground;
+  @apply text-[1.0625rem] leading-8 text-foreground;
 
   & h1 {
     @apply mt-10 mb-4 font-heading text-2xl font-semibold tracking-tight sm:text-3xl;

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { SiteShell } from "@/components/layout/site-shell";
@@ -48,7 +49,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" className="h-full antialiased">
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      className="h-full antialiased"
+      suppressHydrationWarning
+    >
+      <head>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {`
+            try {
+              var stored = window.localStorage.getItem("theme");
+              var theme = stored === "dark" || stored === "light"
+                ? stored
+                : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+              document.documentElement.classList.toggle("dark", theme === "dark");
+              document.documentElement.style.colorScheme = theme;
+            } catch (_) {}
+          `}
+        </Script>
+      </head>
       {/* suppressHydrationWarning prevents false positives from browser extensions
            that mutate body attributes (e.g. Grammarly) after server render. */}
       <body className="min-h-full" suppressHydrationWarning>
