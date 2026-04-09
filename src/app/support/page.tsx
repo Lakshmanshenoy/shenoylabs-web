@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-
-import { RazorpayButtonEmbed } from "@/components/support/razorpay-button-embed";
+import Link from "next/link";
 import { SectionContainer } from "@/components/shared/section-container";
 import { SectionHeader } from "@/components/shared/section-header";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Support the Creator — Shenoy Labs",
@@ -28,9 +29,7 @@ export const metadata: Metadata = {
 };
 
 export default function SupportPage() {
-  const razorpayButtonId =
-    process.env.RAZORPAY_PAYMENT_BUTTON_ID ??
-    process.env.NEXT_PUBLIC_RAZORPAY_PAYMENT_BUTTON_ID;
+  const razorpayLink = "https://razorpay.me/@lakshmanshenoy";
 
   return (
     <SectionContainer className="max-w-5xl">
@@ -40,34 +39,52 @@ export default function SupportPage() {
         description="If the work helps you, optional support keeps experiments and content moving."
       />
 
-      <div className="mt-8 grid gap-5 md:grid-cols-2 md:items-start">
-        <Card className="mx-auto w-full max-w-md border border-border/80 bg-card/95">
+      <div className="mt-8 grid gap-5 md:grid-cols-2 md:items-stretch">
+        <Card className="mx-auto flex w-full max-w-md flex-col border border-border/80 bg-card/95 md:min-h-[420px]">
           <CardHeader>
             <CardTitle className="font-heading text-xl">Razorpay</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>Support via Razorpay using secure checkout.</p>
-            {razorpayButtonId ? (
-              <div className="rounded-lg border border-border/80 bg-secondary/20 px-4 py-4">
-                <RazorpayButtonEmbed buttonId={razorpayButtonId} />
-              </div>
-            ) : (
-              <div className="rounded-lg border border-dashed border-border px-4 py-3 text-foreground">
-                Set `RAZORPAY_PAYMENT_BUTTON_ID` or `NEXT_PUBLIC_RAZORPAY_PAYMENT_BUTTON_ID` to render the Razorpay checkout button.
-              </div>
-            )}
-            <a
-              href="https://razorpay.me/@lakshmanshenoy"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex text-sm font-medium text-primary hover:underline"
-            >
-              Open direct Razorpay payment link
-            </a>
+          <CardContent className="flex flex-1 flex-col text-sm text-muted-foreground">
+            <div className="space-y-3">
+              <p>Support via Razorpay using secure checkout.</p>
+            </div>
+            <div className="flex flex-1 items-center justify-center py-6">
+              <Link
+                href={razorpayLink}
+                target="_blank"
+                rel="noreferrer"
+                className={cn(
+                  buttonVariants({ size: "lg" }),
+                  "h-[84px] w-full max-w-[340px] justify-between rounded-2xl border-0 bg-[#072654] px-5 text-white shadow-sm transition-colors hover:bg-[#0b2f68] sm:min-w-[340px]",
+                )}
+              >
+                <span className="flex items-center gap-3">
+                  <Image
+                    src="/images/support/razorpay-mark.svg"
+                    alt="Razorpay"
+                    width={36}
+                    height={36}
+                    className="size-9 rounded-lg"
+                  />
+                  <span className="flex flex-col items-start">
+                    <span className="text-xs font-medium uppercase tracking-[0.18em] text-white/70">
+                      Secure checkout
+                    </span>
+                    <span className="text-base font-semibold text-white">
+                      Pay with Razorpay
+                    </span>
+                  </span>
+                </span>
+                <span className="text-base text-white/80">↗</span>
+              </Link>
+            </div>
+            <p className="text-center text-xs text-muted-foreground">
+              Opens Razorpay-hosted secure checkout in a new tab.
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="mx-auto w-full max-w-md border border-border/80 bg-card/95">
+        <Card className="mx-auto w-full max-w-md border border-border/80 bg-card/95 md:min-h-[420px]">
           <CardHeader>
             <CardTitle className="font-heading text-xl">UPI</CardTitle>
           </CardHeader>
