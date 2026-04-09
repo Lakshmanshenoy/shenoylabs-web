@@ -12,7 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { RevealGroup } from "@/components/ui/reveal-client";
 import type { ArticleFrontmatter, ContentItem } from "@/lib/content";
 
 type Props = {
@@ -57,7 +56,7 @@ export function ArticlesFilteredGrid({ articles }: Props) {
       </div>
 
       {/* Articles grid */}
-        <RevealGroup className="reveal-group grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="reveal-group grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((article) => (
           <Link
             key={article.slug}
@@ -76,7 +75,6 @@ export function ArticlesFilteredGrid({ articles }: Props) {
                     width={1200}
                     height={675}
                     className="h-auto w-full"
-                    loading="eager"
                   />
                 </div>
               )}
@@ -107,7 +105,7 @@ export function ArticlesFilteredGrid({ articles }: Props) {
             </Card>
           </Link>
         ))}
-      </RevealGroup>
+      </div>
 
       {filtered.length === 0 && (
         <p className="py-10 text-center text-sm text-muted-foreground">

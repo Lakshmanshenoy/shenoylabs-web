@@ -84,7 +84,6 @@ export default function SupportPage() {
                 width={768}
                 height={768}
                 className="h-auto w-full rounded-md"
-                loading="eager"
                 sizes="(max-width: 768px) 100vw, 360px"
               />
             </div>

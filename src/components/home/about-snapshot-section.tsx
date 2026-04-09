@@ -5,7 +5,6 @@ import { SectionContainer } from "@/components/shared/section-container";
 import { SectionHeader } from "@/components/shared/section-header";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Reveal } from "@/components/ui/reveal";
 import { cn } from "@/lib/utils";
 
 export function AboutSnapshotSection() {
@@ -18,9 +17,8 @@ export function AboutSnapshotSection() {
           description="I explore automation, finance, science, technology, health, systems thinking, travel, cuisine, and selective media — then turn insights into practical tools and writing."
         />
 
-        <Reveal className="reveal">
-          <Card className="reveal border border-border/80 bg-card/95">
-            <CardContent className="space-y-4 p-6">
+        <Card className="reveal border border-border/80 bg-card/95">
+          <CardContent className="space-y-4 p-6">
             <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
               Shenoy Labs is my long-term space for thoughtful experimentation,
               structured research, and useful work shared in public. The goal is
@@ -37,8 +35,7 @@ export function AboutSnapshotSection() {
               </Link>
             </div>
           </CardContent>
-          </Card>
-        </Reveal>
+        </Card>
       </div>
     </SectionContainer>
   );

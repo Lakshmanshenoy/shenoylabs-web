@@ -13,7 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { RevealGroup } from "@/components/ui/reveal";
 import { cn } from "@/lib/utils";
 import type { FeaturedProjectsContent } from "@/lib/homepage-content";
 
@@ -41,7 +40,7 @@ export function FeaturedProjectsSection({ content }: Props) {
           </Link>
         </div>
 
-        <RevealGroup className="reveal-group grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="reveal-group grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {content.projects.map((project) => (
             <Link
               key={project.slug}
@@ -57,7 +56,6 @@ export function FeaturedProjectsSection({ content }: Props) {
                         width={1200}
                         height={675}
                         className="h-auto w-full"
-                        loading="eager"
                       />
                     </div>
                   )}
@@ -104,7 +102,7 @@ export function FeaturedProjectsSection({ content }: Props) {
               </Card>
             </Link>
           ))}
-        </RevealGroup>
+        </div>
       </div>
     </SectionContainer>
   );
