@@ -58,7 +58,7 @@ export default function ArticlesPage() {
         <ArticlesFilteredGrid articles={articles} />
       </div>
 
-      <div className="mt-10 space-y-4">
+      <div className="mt-10 grid gap-4 md:grid-cols-2 md:items-stretch">
         <NewsletterPlaceholder />
         <InteractionCtaPanel />
       </div>

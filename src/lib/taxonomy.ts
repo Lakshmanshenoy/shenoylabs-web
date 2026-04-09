@@ -1,6 +1,5 @@
 export const PRIMARY_CATEGORIES = [
   "Research",
-  "Tools",
   "Automation",
   "Finance",
   "Health",

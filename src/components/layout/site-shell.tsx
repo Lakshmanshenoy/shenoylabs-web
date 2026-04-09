@@ -14,32 +14,48 @@ export function SiteShell({ children }: SiteShellProps) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Reset and re-observe on every route change so reveal animations
-    // fire correctly without requiring a full page refresh.
-    const targets = document.querySelectorAll<HTMLElement>(
-      ".reveal, .reveal-group",
-    );
+    // Wait until full page load before mutating reveal classes. This avoids
+    // racing with hydration on streaming route content.
+    let observer: IntersectionObserver | null = null;
+    let rafId: number | null = null;
 
-    if (!targets.length) return;
+    const startReveal = () => {
+      const targets = document.querySelectorAll<HTMLElement>(
+        ".reveal, .reveal-group",
+      );
 
-    // Remove "visible" from any elements that got it on a previous route
-    targets.forEach((el) => el.classList.remove("visible"));
+      if (!targets.length) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("visible");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.12 },
-    );
+      targets.forEach((el) => el.classList.remove("visible"));
 
-    targets.forEach((el) => observer.observe(el));
+      observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              rafId = requestAnimationFrame(() => {
+                entry.target.classList.add("visible");
+                observer?.unobserve(entry.target);
+              });
+            }
+          });
+        },
+        { threshold: 0.12 },
+      );
 
-    return () => observer.disconnect();
+      targets.forEach((el) => observer?.observe(el));
+    };
+
+    if (document.readyState === "complete") {
+      startReveal();
+    } else {
+      window.addEventListener("load", startReveal, { once: true });
+    }
+
+    return () => {
+      window.removeEventListener("load", startReveal);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      observer?.disconnect();
+    };
   }, [pathname]);
 
   return (

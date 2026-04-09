@@ -3,7 +3,6 @@ import Link from "next/link";
 const navLinks = [
   { href: "/projects", label: "Projects" },
   { href: "/articles", label: "Articles" },
-  { href: "/tools", label: "Tools" },
   { href: "/about", label: "About" },
 ];
 
@@ -68,8 +67,7 @@ export function Footer() {
           <div>
             <h2 className="font-heading text-lg font-semibold">Shenoy Labs</h2>
             <p className="mt-2 max-w-lg text-sm text-muted-foreground">
-              Premium hybrid product studio across projects, research, and
-              future interactive tools.
+              Hybrid product studio across projects, research, and practical systems.
             </p>
           </div>
           <p className="text-sm text-muted-foreground">

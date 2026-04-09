@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Image from "next/image";
+import Script from "next/script";
 
 import { SectionContainer } from "@/components/shared/section-container";
 import { SectionHeader } from "@/components/shared/section-header";
@@ -26,6 +28,8 @@ export const metadata: Metadata = {
 };
 
 export default function SupportPage() {
+  const razorpayButtonId = process.env.NEXT_PUBLIC_RAZORPAY_PAYMENT_BUTTON_ID;
+
   return (
     <SectionContainer>
       <SectionHeader
@@ -40,10 +44,30 @@ export default function SupportPage() {
             <CardTitle className="font-heading text-xl">Razorpay</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>Payment link integration will be added here in production.</p>
-            <div className="rounded-lg border border-dashed border-border px-4 py-3 text-foreground">
-              https://razorpay.me/@lakshmanshenoy
-            </div>
+            <p>Support via Razorpay using secure checkout.</p>
+            {razorpayButtonId ? (
+              <div className="rounded-lg border border-border/80 bg-secondary/20 px-4 py-4">
+                <form>
+                  <Script
+                    src="https://checkout.razorpay.com/v1/payment-button.js"
+                    data-payment_button_id={razorpayButtonId}
+                    async
+                  />
+                </form>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-dashed border-border px-4 py-3 text-foreground">
+                Set NEXT_PUBLIC_RAZORPAY_PAYMENT_BUTTON_ID to render the Razorpay checkout button.
+              </div>
+            )}
+            <a
+              href="https://razorpay.me/@lakshmanshenoy"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex text-sm font-medium text-primary hover:underline"
+            >
+              Open direct Razorpay payment link
+            </a>
           </CardContent>
         </Card>
 
@@ -52,9 +76,19 @@ export default function SupportPage() {
             <CardTitle className="font-heading text-xl">UPI</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>UPI ID and QR code placeholder for support contributions.</p>
+            <p>Scan the QR code or use the UPI ID below for direct support contributions.</p>
+            <div className="overflow-hidden rounded-lg border border-border/80 bg-background p-3">
+              <Image
+                src="/images/support/upi-qr.png"
+                alt="UPI QR code for lakshmanshenoy@upi"
+                width={768}
+                height={768}
+                className="h-auto w-full rounded-md"
+                sizes="(max-width: 768px) 100vw, 360px"
+              />
+            </div>
             <div className="rounded-lg border border-dashed border-border px-4 py-3 text-foreground">
-              lakshmanshenoy@axisbank
+              lakshmanshenoy@upi
             </div>
           </CardContent>
         </Card>

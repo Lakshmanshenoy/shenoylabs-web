@@ -10,8 +10,8 @@
     "label": "Explore Research Notes",
     "href": "/articles"
   },
-  "statusLine": "Currently researching caffeine performance systems",
-  "tagline": "Automation · Finance · Science · Health",
+  "statusLine": "",
+  "tagline": "",
   "visualImage": "/images/home/hero-visual.svg",
   "visualAlt": "Hero visual showing current focus and featured preview cards",
   "whatIDo": [
@@ -20,5 +20,5 @@
     { "icon": "📈", "label": "Frameworks for thinking and execution" },
     { "icon": "🧭", "label": "Curiosity-led exploration across disciplines" }
   ],
-  "credentialFootnote": "Premium · Editorial · Trustworthy"
+  "credentialFootnote": ""
 }

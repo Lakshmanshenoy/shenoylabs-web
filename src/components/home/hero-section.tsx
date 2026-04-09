@@ -68,14 +68,20 @@ export function HeroSection({ content }: Props) {
             </div>
 
             {/* Social proof strip */}
-            <div className="flex flex-wrap items-center gap-4 pt-2 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <span className="inline-block size-2 rounded-full bg-emerald-400" />
-                {content.statusLine}
-              </span>
-              <span className="hidden sm:block">·</span>
-              <span>{content.tagline}</span>
-            </div>
+            {content.statusLine || content.tagline ? (
+              <div className="flex flex-wrap items-center gap-4 pt-2 text-sm text-muted-foreground">
+                {content.statusLine ? (
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block size-2 rounded-full bg-emerald-400" />
+                    {content.statusLine}
+                  </span>
+                ) : null}
+                {content.statusLine && content.tagline ? (
+                  <span className="hidden sm:block">·</span>
+                ) : null}
+                {content.tagline ? <span>{content.tagline}</span> : null}
+              </div>
+            ) : null}
           </div>
 
           {/* Right: premium visual + floating cards */}
@@ -109,20 +115,13 @@ export function HeroSection({ content }: Props) {
                   </li>
                 ))}
               </ul>
-              <div className="mt-5 border-t border-border/60 pt-5">
-                <p className="text-xs text-muted-foreground">
-                  {content.credentialFootnote}
-                </p>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                <div className="rounded-lg border border-border/70 bg-secondary/50 p-3 text-xs text-muted-foreground">
-                  Featured Preview: Research & Health Tools
+              {content.credentialFootnote ? (
+                <div className="mt-5 border-t border-border/60 pt-5">
+                  <p className="text-xs text-muted-foreground">
+                    {content.credentialFootnote}
+                  </p>
                 </div>
-                <div className="rounded-lg border border-border/70 bg-secondary/50 p-3 text-xs text-muted-foreground">
-                  Current Focus: {content.statusLine}
-                </div>
-              </div>
+              ) : null}
             </div>
           </div>
         </div>

@@ -94,10 +94,10 @@ export async function POST(request: Request) {
     }
 
     const resendApiKey = process.env.RESEND_API_KEY;
-    const toEmail = process.env.CONTACT_TO_EMAIL;
+    const toEmail = process.env.CONTACT_TO_EMAIL || "shenoylabs@gmail.com";
     const fromEmail = process.env.CONTACT_FROM_EMAIL;
 
-    if (!resendApiKey || !toEmail || !fromEmail) {
+    if (!resendApiKey || !fromEmail) {
       return Response.json(
         {
           ok: false,

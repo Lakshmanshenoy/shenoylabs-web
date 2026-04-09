@@ -5,15 +5,14 @@ import type { SearchItem } from "@/components/search/search-client";
 import { SectionContainer } from "@/components/shared/section-container";
 import { SectionHeader } from "@/components/shared/section-header";
 import { getAllArticles, getAllProjects } from "@/lib/content";
-import { toolsRegistry } from "@/lib/tools-registry";
 
 export const metadata: Metadata = {
   title: "Search — Shenoy Labs",
-  description: "Search across all articles, projects, and tools on Shenoy Labs.",
+  description: "Search across all articles and projects on Shenoy Labs.",
   alternates: { canonical: "/search" },
   openGraph: {
     title: "Search — Shenoy Labs",
-    description: "Search across all articles, projects, and tools on Shenoy Labs.",
+    description: "Search across all articles and projects on Shenoy Labs.",
     type: "website",
     url: "/search",
     images: ["/og-default.svg"],
@@ -21,7 +20,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Search — Shenoy Labs",
-    description: "Search across all articles, projects, and tools on Shenoy Labs.",
+    description: "Search across all articles and projects on Shenoy Labs.",
     images: ["/og-default.svg"],
   },
   robots: { index: false },
@@ -53,14 +52,6 @@ export default async function SearchPage({
       category: p.frontmatter.primaryCategory,
       tags: p.frontmatter.tags,
     })),
-    ...toolsRegistry.map((t) => ({
-      type: "tool" as const,
-      title: t.title,
-      excerpt: t.description,
-      href: `/tools/${t.slug}`,
-      category: t.primaryCategory,
-      tags: t.tags,
-    })),
   ];
 
   return (
@@ -68,7 +59,7 @@ export default async function SearchPage({
       <SectionHeader
         badge="Search"
         title="Search Shenoy Labs"
-        description="Find articles, projects, and tools across the site."
+        description="Find articles and projects across the site."
       />
       <div className="mt-8">
         <SearchClient index={index} initialCategory={params.category} />

@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
 export type SearchItem = {
-  type: "article" | "project" | "tool";
+  type: "article" | "project";
   title: string;
   excerpt: string;
   href: string;
@@ -20,7 +20,6 @@ export type SearchItem = {
 const typeLabel: Record<SearchItem["type"], string> = {
   article: "Article",
   project: "Project",
-  tool: "Tool",
 };
 
 type Props = {
@@ -66,7 +65,7 @@ export function SearchClient({ index, initialCategory }: Props) {
         <Input
           autoFocus
           type="search"
-          placeholder="Search articles, projects, tools…"
+          placeholder="Search articles and projects…"
           value={query}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setQuery(e.target.value)
@@ -95,7 +94,7 @@ export function SearchClient({ index, initialCategory }: Props) {
       {/* Results */}
       {query.trim() === "" && activeCategory === "All" && (
         <p className="py-8 text-center text-sm text-muted-foreground">
-          Start typing to search across all articles, projects, and tools.
+          Start typing to search across articles and projects.
         </p>
       )}
 

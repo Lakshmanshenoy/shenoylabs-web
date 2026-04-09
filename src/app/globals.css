@@ -83,6 +83,27 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+.dark {
+  --background: #0b1220;
+  --foreground: #e5e7eb;
+  --card: #111827;
+  --card-foreground: #e5e7eb;
+  --popover: #111827;
+  --popover-foreground: #e5e7eb;
+  --primary: #93c5fd;
+  --primary-foreground: #0f172a;
+  --secondary: #111827;
+  --secondary-foreground: #e5e7eb;
+  --muted: #1f2937;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #e5e7eb;
+  --destructive: #f87171;
+  --border: #334155;
+  --input: #334155;
+  --ring: #93c5fd;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -97,6 +118,7 @@
   html {
     @apply font-sans;
     scroll-behavior: smooth;
+    color-scheme: light dark;
   }
   h1,
   h2,

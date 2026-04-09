@@ -2,7 +2,6 @@ import type { MetadataRoute } from "next";
 
 import { getAllArticles, getAllProjects } from "@/lib/content";
 import { siteConfig } from "@/lib/site";
-import { getAllTools } from "@/lib/tools-registry";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -20,12 +19,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.9,
-    },
-    {
-      url: `${siteConfig.url}/tools`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.8,
     },
     {
       url: `${siteConfig.url}/contact`,
@@ -73,12 +66,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  const toolRoutes: MetadataRoute.Sitemap = getAllTools().map((item) => ({
-    url: `${siteConfig.url}/tools/${item.slug}`,
-    lastModified: now,
-    changeFrequency: "monthly",
-    priority: item.status === "prototype" ? 0.7 : 0.5,
-  }));
-
-  return [...staticRoutes, ...articleRoutes, ...projectRoutes, ...toolRoutes];
+  return [...staticRoutes, ...articleRoutes, ...projectRoutes];
 }

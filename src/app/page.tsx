@@ -2,16 +2,13 @@ import type { Metadata } from "next";
 
 import { AboutSnapshotSection } from "@/components/home/about-snapshot-section";
 import { ArticlesPreviewSection } from "@/components/home/articles-preview-section";
-import { CurrentlyBuildingSection } from "@/components/home/currently-building-section";
 import { FeaturedProjectsSection } from "@/components/home/featured-projects-section";
 import { HeroSection } from "@/components/home/hero-section";
 import { SupportCtaSection } from "@/components/home/support-cta-section";
 import { TaxonomyDiscoveryStrip } from "@/components/home/taxonomy-discovery-strip";
-import { ToolsRoadmapSection } from "@/components/home/tools-roadmap-section";
 import {
   getHeroContent,
   getFeaturedProjectsContent,
-  getCurrentlyExploringContent,
   getSupportCopyContent,
 } from "@/lib/homepage-content";
 
@@ -26,7 +23,6 @@ export const metadata: Metadata = {
 export default function Home() {
   const hero = getHeroContent();
   const featuredProjects = getFeaturedProjectsContent();
-  const currentlyExploring = getCurrentlyExploringContent();
   const supportCopy = getSupportCopyContent();
 
   return (
@@ -34,10 +30,8 @@ export default function Home() {
       <HeroSection content={hero} />
       <FeaturedProjectsSection content={featuredProjects} />
       <ArticlesPreviewSection />
-      <CurrentlyBuildingSection content={currentlyExploring} />
       <AboutSnapshotSection />
       <TaxonomyDiscoveryStrip />
-      <ToolsRoadmapSection />
       <SupportCtaSection content={supportCopy} />
     </>
   );
