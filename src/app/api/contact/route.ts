@@ -38,6 +38,52 @@ function getClientIpFromHeaders(headerStore: Headers) {
   return "unknown";
 }
 
+function getTrustedHosts(headerStore: Headers) {
+  const trustedHosts = new Set<string>();
+
+  const configuredHost = (() => {
+    try {
+      return new URL(siteConfig.url).host;
+    } catch {
+      return null;
+    }
+  })();
+
+  if (configuredHost) trustedHosts.add(configuredHost);
+
+  const forwardedHost = headerStore.get("x-forwarded-host");
+  const host = headerStore.get("host");
+
+  if (forwardedHost) trustedHosts.add(forwardedHost.trim());
+  if (host) trustedHosts.add(host.trim());
+
+  return trustedHosts;
+}
+
+function hostFromUrl(value: string | null) {
+  if (!value) return null;
+  try {
+    return new URL(value).host;
+  } catch {
+    return null;
+  }
+}
+
+function isAllowedRequestSource(headerStore: Headers) {
+  const trustedHosts = getTrustedHosts(headerStore);
+  const originHost = hostFromUrl(headerStore.get("origin"));
+  const refererHost = hostFromUrl(headerStore.get("referer"));
+  const fetchSite = headerStore.get("sec-fetch-site");
+
+  if (fetchSite === "cross-site") return false;
+  if (originHost) return trustedHosts.has(originHost);
+  if (refererHost) return trustedHosts.has(refererHost);
+
+  // Some non-browser clients omit origin metadata entirely. We allow those
+  // requests so same-origin server actions and local tooling keep working.
+  return true;
+}
+
 function rateLimited(key: string) {
   const now = Date.now();
   const last = limiter.get(key) ?? 0;
@@ -105,6 +151,17 @@ export async function POST(request: Request) {
     }
 
     const requestHeaders = await headers();
+    if (!isAllowedRequestSource(requestHeaders)) {
+      const response: ContactResponseBody = {
+        ok: false,
+        message: "Cross-site submissions are not allowed.",
+      };
+      return Response.json(
+        response,
+        { status: 403 },
+      );
+    }
+
     const ip = getClientIpFromHeaders(requestHeaders);
     if (rateLimited(ip)) {
       const response: ContactResponseBody = {
