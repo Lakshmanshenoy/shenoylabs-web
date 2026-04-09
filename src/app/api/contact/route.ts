@@ -1,5 +1,7 @@
 import { headers } from "next/headers";
 
+import { siteConfig } from "@/lib/site";
+
 export const dynamic = "force-dynamic";
 
 type ContactRequestBody = {
@@ -94,7 +96,7 @@ export async function POST(request: Request) {
     }
 
     const resendApiKey = process.env.RESEND_API_KEY;
-    const toEmail = process.env.CONTACT_TO_EMAIL || "shenoylabs@gmail.com";
+    const toEmail = process.env.CONTACT_TO_EMAIL || siteConfig.contactEmail;
     const fromEmail = process.env.CONTACT_FROM_EMAIL;
 
     if (!resendApiKey || !fromEmail) {
@@ -102,7 +104,7 @@ export async function POST(request: Request) {
         {
           ok: false,
           message:
-            "Contact email delivery is not configured yet. Please reach out via support page details.",
+            `Contact form delivery is not configured yet. Please email ${siteConfig.contactEmail} directly.`,
         },
         { status: 503 },
       );

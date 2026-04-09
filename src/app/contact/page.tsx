@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { ContactForm } from "@/components/contact/contact-form";
 import { SectionContainer } from "@/components/shared/section-container";
 import { SectionHeader } from "@/components/shared/section-header";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { siteConfig } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact — Shenoy Labs",
@@ -29,6 +32,8 @@ export const metadata: Metadata = {
 };
 
 export default function ContactPage() {
+  const mailtoHref = `mailto:${siteConfig.contactEmail}`;
+
   return (
     <SectionContainer>
       <SectionHeader
@@ -53,6 +58,15 @@ export default function ContactPage() {
               For support contributions and optional payments, visit the support
               page.
             </p>
+            <div className="rounded-xl border border-dashed border-border/80 bg-secondary/30 p-4">
+              <p className="text-sm text-foreground">
+                Prefer email directly or need a fallback?
+              </p>
+              <p className="mt-2 break-all">{siteConfig.contactEmail}</p>
+              <Link href={mailtoHref} className={buttonVariants({ variant: "outline", size: "sm" }) + " mt-3"}>
+                Email directly
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
