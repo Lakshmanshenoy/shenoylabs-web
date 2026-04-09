@@ -35,6 +35,7 @@ function BrandMark() {
 
 export function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/80 bg-background/85 backdrop-blur-md">
@@ -64,7 +65,7 @@ export function Navbar() {
 
           <div className="flex items-center gap-1 md:hidden">
             <ThemeToggle />
-            <Sheet>
+            <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <SheetTrigger render={<Button variant="ghost" size="icon" />}>
                 <MenuIcon />
                 <span className="sr-only">Open menu</span>
@@ -74,7 +75,11 @@ export function Navbar() {
                   <SheetTitle>Navigation</SheetTitle>
                 </SheetHeader>
                 <div className="px-3 pt-3">
-                  <form action="/search" className="relative">
+                  <form
+                    action="/search"
+                    className="relative"
+                    onSubmit={() => setIsMenuOpen(false)}
+                  >
                     <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       name="q"
@@ -88,6 +93,7 @@ export function Navbar() {
                     <Link
                       key={link.href}
                       href={link.href}
+                      onClick={() => setIsMenuOpen(false)}
                       className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                     >
                       {link.label}

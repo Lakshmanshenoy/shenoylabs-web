@@ -28,18 +28,20 @@ export const metadata: Metadata = {
 };
 
 export default function SupportPage() {
-  const razorpayButtonId = process.env.NEXT_PUBLIC_RAZORPAY_PAYMENT_BUTTON_ID;
+  const razorpayButtonId =
+    process.env.RAZORPAY_PAYMENT_BUTTON_ID ??
+    process.env.NEXT_PUBLIC_RAZORPAY_PAYMENT_BUTTON_ID;
 
   return (
-    <SectionContainer>
+    <SectionContainer className="max-w-5xl">
       <SectionHeader
         badge="Support"
         title="Support the Creator"
         description="If the work helps you, optional support keeps experiments and content moving."
       />
 
-      <div className="mt-8 grid gap-6 md:grid-cols-2">
-        <Card className="border border-border/80 bg-card/95">
+      <div className="mt-8 grid gap-5 md:grid-cols-2 md:items-start">
+        <Card className="mx-auto w-full max-w-md border border-border/80 bg-card/95">
           <CardHeader>
             <CardTitle className="font-heading text-xl">Razorpay</CardTitle>
           </CardHeader>
@@ -57,7 +59,7 @@ export default function SupportPage() {
               </div>
             ) : (
               <div className="rounded-lg border border-dashed border-border px-4 py-3 text-foreground">
-                Set NEXT_PUBLIC_RAZORPAY_PAYMENT_BUTTON_ID to render the Razorpay checkout button.
+                Set `RAZORPAY_PAYMENT_BUTTON_ID` or `NEXT_PUBLIC_RAZORPAY_PAYMENT_BUTTON_ID` to render the Razorpay checkout button.
               </div>
             )}
             <a
@@ -71,13 +73,13 @@ export default function SupportPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-border/80 bg-card/95">
+        <Card className="mx-auto w-full max-w-md border border-border/80 bg-card/95">
           <CardHeader>
             <CardTitle className="font-heading text-xl">UPI</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <p>Scan the QR code or use the UPI ID below for direct support contributions.</p>
-            <div className="overflow-hidden rounded-lg border border-border/80 bg-background p-3">
+            <div className="mx-auto max-w-[240px] overflow-hidden rounded-lg border border-border/80 bg-background p-3">
               <Image
                 src="/images/support/upi-qr.png"
                 alt="UPI QR code for lakshmanshenoy@upi"
