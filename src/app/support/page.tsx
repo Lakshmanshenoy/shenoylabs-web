@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Script from "next/script";
 
+import { RazorpayButtonEmbed } from "@/components/support/razorpay-button-embed";
 import { SectionContainer } from "@/components/shared/section-container";
 import { SectionHeader } from "@/components/shared/section-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,13 +49,7 @@ export default function SupportPage() {
             <p>Support via Razorpay using secure checkout.</p>
             {razorpayButtonId ? (
               <div className="rounded-lg border border-border/80 bg-secondary/20 px-4 py-4">
-                <form>
-                  <Script
-                    src="https://checkout.razorpay.com/v1/payment-button.js"
-                    data-payment_button_id={razorpayButtonId}
-                    async
-                  />
-                </form>
+                <RazorpayButtonEmbed buttonId={razorpayButtonId} />
               </div>
             ) : (
               <div className="rounded-lg border border-dashed border-border px-4 py-3 text-foreground">
