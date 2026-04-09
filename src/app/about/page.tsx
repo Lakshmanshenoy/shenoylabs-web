@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getPageContent } from "@/lib/content";
 import { getMDXComponents } from "@/lib/mdx-components";
+import { RevealGroup, Reveal } from "@/components/ui/reveal";
 
 export const metadata: Metadata = {
   title: "About — Shenoy Labs",
@@ -57,9 +58,9 @@ export default async function AboutPage() {
         description="Thinker. Learner. Problem solver."
       />
 
-      <div className="reveal prose prose-neutral dark:prose-invert mt-8 max-w-none text-muted-foreground">
+      <Reveal className="reveal prose prose-neutral dark:prose-invert mt-8 max-w-none text-muted-foreground">
         {prose}
-      </div>
+      </Reveal>
 
       <Separator className="my-8" />
 
@@ -67,7 +68,7 @@ export default async function AboutPage() {
         <h2 className="font-heading text-xl font-semibold tracking-tight">
           Focus areas
         </h2>
-        <div className="reveal-group grid gap-3 sm:grid-cols-2">
+        <RevealGroup className="reveal-group grid gap-3 sm:grid-cols-2">
           {focusAreas.map((area) => (
             <Card
               key={area.label}
@@ -83,7 +84,7 @@ export default async function AboutPage() {
               </CardContent>
             </Card>
           ))}
-        </div>
+          </RevealGroup>
       </section>
 
       <Separator className="my-8" />

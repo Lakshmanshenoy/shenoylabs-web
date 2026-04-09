@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { RevealGroup, Reveal } from "@/components/ui/reveal";
 import type { CurrentlyExploringContent } from "@/lib/homepage-content";
 
 type Props = { content: CurrentlyExploringContent };
@@ -39,8 +40,9 @@ export function CurrentlyBuildingSection({ content }: Props) {
           </Link>
         </div>
 
-        <Card className="reveal border border-border/80 bg-card/95">
-          <CardContent className="p-5 sm:p-6">
+        <Reveal className="reveal">
+          <Card className="reveal border border-border/80 bg-card/95">
+            <CardContent className="p-5 sm:p-6">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">
               Dynamic Line
             </p>
@@ -56,9 +58,10 @@ export function CurrentlyBuildingSection({ content }: Props) {
               ))}
             </div>
           </CardContent>
-        </Card>
+          </Card>
+        </Reveal>
 
-        <div className="reveal-group -mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
+        <RevealGroup className="reveal-group -mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0">
           {content.explorationCards.map((item) => (
             <Card
               key={item}
@@ -69,10 +72,11 @@ export function CurrentlyBuildingSection({ content }: Props) {
               </CardContent>
             </Card>
           ))}
-        </div>
+        </RevealGroup>
 
-        <Card className="reveal border border-border/80 bg-card/95">
-          <CardContent className="space-y-3 p-5 sm:p-6">
+        <Reveal className="reveal">
+          <Card className="reveal border border-border/80 bg-card/95">
+            <CardContent className="space-y-3 p-5 sm:p-6">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">
               What&apos;s Next
             </p>
@@ -91,7 +95,8 @@ export function CurrentlyBuildingSection({ content }: Props) {
               ))}
             </div>
           </CardContent>
-        </Card>
+          </Card>
+        </Reveal>
       </div>
     </SectionContainer>
   );

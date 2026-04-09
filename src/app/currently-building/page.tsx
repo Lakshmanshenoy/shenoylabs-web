@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { Reveal } from "@/components/ui/reveal";
 
 export const metadata: Metadata = {
   title: "Currently Building — Shenoy Labs",
@@ -117,8 +118,9 @@ export default function CurrentlyBuildingPage() {
             <h2 className="font-heading text-xl font-semibold tracking-tight">
               {heading}
             </h2>
-            <Card className="reveal border border-border/80 bg-card/95">
-              <CardContent className="p-0">
+            <Reveal className="reveal">
+              <Card className="reveal border border-border/80 bg-card/95">
+                <CardContent className="p-0">
                 {items.map((item, index) => {
                   const cfg =
                     statusConfig[item.status as keyof typeof statusConfig];
@@ -160,7 +162,8 @@ export default function CurrentlyBuildingPage() {
                   );
                 })}
               </CardContent>
-            </Card>
+              </Card>
+            </Reveal>
           </section>
         ))}
       </div>

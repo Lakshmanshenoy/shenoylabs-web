@@ -14,6 +14,7 @@ import {
 import { getAllProjects } from "@/lib/content";
 import { buildBreadcrumbJsonLd } from "@/lib/seo";
 import { cn } from "@/lib/utils";
+import { RevealGroup } from "@/components/ui/reveal";
 
 export const metadata: Metadata = {
   title: "Projects — Shenoy Labs",
@@ -67,7 +68,7 @@ export default function ProjectsPage() {
         description="Shipped products, active builds, and future plans — all in one place."
       />
 
-      <div className="reveal-group mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <RevealGroup className="reveal-group mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {projects.map((project) => {
           const status =
             statusConfig[project.frontmatter.status] ??
@@ -90,6 +91,7 @@ export default function ProjectsPage() {
                       width={1200}
                       height={675}
                       className="h-auto w-full"
+                      loading="eager"
                     />
                   </div>
                 )}
@@ -132,7 +134,7 @@ export default function ProjectsPage() {
             </Link>
           );
         })}
-      </div>
+      </RevealGroup>
     </SectionContainer>
   );
 }

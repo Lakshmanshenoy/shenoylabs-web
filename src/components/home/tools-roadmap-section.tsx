@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { RevealGroup } from "@/components/ui/reveal";
 
 const toolPlaceholders = [
   {
@@ -61,7 +62,7 @@ export function ToolsRoadmapSection() {
           </Link>
         </div>
 
-        <div className="reveal-group grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <RevealGroup className="reveal-group grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {toolPlaceholders.map((tool) => (
             <Card
               key={tool.title}
@@ -98,7 +99,7 @@ export function ToolsRoadmapSection() {
               </div>
             </Card>
           ))}
-        </div>
+        </RevealGroup>
       </div>
     </SectionContainer>
   );
