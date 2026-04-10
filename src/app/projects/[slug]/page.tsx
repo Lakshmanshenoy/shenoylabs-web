@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import { compileMDX } from "next-mdx-remote/rsc";
 
 import { InteractionCtaPanel } from "@/components/engagement/interaction-cta-panel";
-import { NewsletterPlaceholder } from "@/components/engagement/newsletter-placeholder";
 import { SectionContainer } from "@/components/shared/section-container";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -270,8 +269,7 @@ export default async function ProjectDetailPage({
       )}
 
       <Separator className="my-8" />
-      <div className="grid gap-4 md:grid-cols-2">
-        <NewsletterPlaceholder />
+      <div className="mx-auto max-w-2xl">
         <InteractionCtaPanel />
       </div>
     </SectionContainer>

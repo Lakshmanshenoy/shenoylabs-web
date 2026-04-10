@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
 import { InteractionCtaPanel } from "@/components/engagement/interaction-cta-panel";
-import { NewsletterPlaceholder } from "@/components/engagement/newsletter-placeholder";
 import { ArticlesFilteredGrid } from "@/components/articles/articles-filtered-grid";
 import { SectionContainer } from "@/components/shared/section-container";
 import { SectionHeader } from "@/components/shared/section-header";
@@ -58,8 +57,7 @@ export default function ArticlesPage() {
         <ArticlesFilteredGrid articles={articles} />
       </div>
 
-      <div className="mt-10 grid gap-4 md:grid-cols-2 md:items-stretch">
-        <NewsletterPlaceholder />
+      <div className="mx-auto mt-12 max-w-2xl">
         <InteractionCtaPanel />
       </div>
     </SectionContainer>
