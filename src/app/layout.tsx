@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
+import CookieBanner from "@/components/consent/cookie-banner";
 import { SiteShell } from "@/components/layout/site-shell";
 import { siteConfig } from "@/lib/site";
 
@@ -72,6 +73,7 @@ export default function RootLayout({
       {/* suppressHydrationWarning prevents false positives from browser extensions
            that mutate body attributes (e.g. Grammarly) after server render. */}
       <body className="min-h-full" suppressHydrationWarning>
+        <CookieBanner />
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
         <SiteShell>{children}</SiteShell>
       </body>
