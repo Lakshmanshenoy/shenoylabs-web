@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { MoonIcon, SunIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,7 @@ function resolveThemeFromDocument(): Theme {
   return document.documentElement.classList.contains("dark") ? "dark" : "light";
 }
 
-function subscribeToHydration() {
-  return () => {};
-}
-
 export function ThemeToggle() {
-  const mounted = useSyncExternalStore(subscribeToHydration, () => true, () => false);
   const [theme, setTheme] = useState<Theme>("light");
   const isDark = theme === "dark";
 
@@ -62,13 +57,11 @@ export function ThemeToggle() {
       type="button"
       variant="ghost"
       size="icon"
-      aria-label={mounted ? (isDark ? "Switch to light mode" : "Switch to dark mode") : "Toggle theme"}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       onClick={toggleTheme}
       className="text-muted-foreground"
     >
-      {!mounted ? (
-        <MoonIcon className="size-4" />
-      ) : isDark ? (
+      {isDark ? (
         <SunIcon className="size-4" />
       ) : (
         <MoonIcon className="size-4" />

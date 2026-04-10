@@ -5,8 +5,13 @@ const isDev = process.env.NODE_ENV === "development";
 // React requires eval() in development for callstack reconstruction.
 // In production the directive is omitted so the strict CSP applies fully.
 const scriptSrc = isDev
-  ? "'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com"
-  : "'self' 'unsafe-inline' https://www.googletagmanager.com";
+  ? "'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://challenges.cloudflare.com"
+  : "'self' 'unsafe-inline' https://www.googletagmanager.com https://challenges.cloudflare.com";
+
+const connectSrc =
+  "'self' https://www.google-analytics.com https://region1.google-analytics.com https://challenges.cloudflare.com";
+
+const frameSrc = "'self' https://challenges.cloudflare.com";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
@@ -21,7 +26,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Content-Security-Policy",
-            value: `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`,
+            value: `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src ${connectSrc}; frame-src ${frameSrc}; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`,
           },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
