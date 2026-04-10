@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-const TURNSTILE_TEST_SITE_KEY = "1x00000000000000000000AA";
+// Forces an interactive challenge in development so the widget is visibly shown.
+const TURNSTILE_TEST_SITE_KEY = "3x00000000000000000000FF";
 
 function subscribeToHydration() {
   return () => {};

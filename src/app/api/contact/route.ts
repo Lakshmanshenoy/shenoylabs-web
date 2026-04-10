@@ -82,6 +82,14 @@ function getTrustedHosts(headerStore: Headers) {
   if (forwardedHost) trustedHosts.add(forwardedHost.trim());
   if (host) trustedHosts.add(host.trim());
 
+  // Also add port-stripped versions so "localhost" matches "localhost:3000".
+  for (const h of [...trustedHosts]) {
+    const withoutPort = h.split(":")[0];
+    if (withoutPort && withoutPort !== h) {
+      trustedHosts.add(withoutPort);
+    }
+  }
+
   return trustedHosts;
 }
 

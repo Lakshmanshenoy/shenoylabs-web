@@ -14,9 +14,11 @@ function resolveThemeFromDocument(): Theme {
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("light");
-  const isDark = theme === "dark";
+  const [mounted, setMounted] = useState(false);
+  const isDark = mounted && theme === "dark";
 
   useEffect(() => {
+    setMounted(true);
     const media = window.matchMedia("(prefers-color-scheme: dark)");
 
     const syncTheme = () => {
