@@ -1,3 +1,4 @@
+import { createHash, randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 
 import { siteConfig } from "@/lib/site";
@@ -22,11 +23,17 @@ type ContactResponseBody = {
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const limiter = new Map<string, number>();
+const verifiedTurnstileTokens = new Map<string, number>();
 const RATE_LIMIT_WINDOW_MS = 45_000;
+const TURNSTILE_TOKEN_WINDOW_MS = 5 * 60 * 1000;
+const TURNSTILE_EXPECTED_ACTION = "contact_form";
 
 type TurnstileVerifyResponse = {
   success: boolean;
+  action?: string;
+  challenge_ts?: string;
   "error-codes"?: string[];
+  hostname?: string;
 };
 
 function asText(value: unknown) {
@@ -107,8 +114,44 @@ function rateLimited(key: string) {
   return false;
 }
 
-async function verifyTurnstileToken(token: string, ip: string) {
+function pruneExpiredEntries(store: Map<string, number>, windowMs: number, now: number) {
+  for (const [key, timestamp] of store.entries()) {
+    if (now - timestamp > windowMs) {
+      store.delete(key);
+    }
+  }
+}
+
+function hashTurnstileToken(token: string) {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+function markTurnstileTokenAsUsed(token: string, timestamp = Date.now()) {
+  verifiedTurnstileTokens.set(hashTurnstileToken(token), timestamp);
+
+  if (verifiedTurnstileTokens.size > 1000) {
+    pruneExpiredEntries(verifiedTurnstileTokens, TURNSTILE_TOKEN_WINDOW_MS, timestamp);
+  }
+}
+
+function hasSeenTurnstileToken(token: string, now = Date.now()) {
+  pruneExpiredEntries(verifiedTurnstileTokens, TURNSTILE_TOKEN_WINDOW_MS, now);
+  return verifiedTurnstileTokens.has(hashTurnstileToken(token));
+}
+
+function logContactSecurityEvent(event: string, details: Record<string, unknown>) {
+  console.warn(
+    JSON.stringify({
+      scope: "contact-form",
+      event,
+      ...details,
+    }),
+  );
+}
+
+async function verifyTurnstileToken(token: string, ip: string, trustedHosts: Set<string>) {
   const secret = process.env.TURNSTILE_SECRET_KEY;
+  const now = Date.now();
 
   if (!secret) {
     return {
@@ -118,10 +161,31 @@ async function verifyTurnstileToken(token: string, ip: string) {
     } as const;
   }
 
+  if (token.length > 2048) {
+    return {
+      ok: false,
+      status: 400,
+      message: "Verification failed. Please retry.",
+    } as const;
+  }
+
+  if (hasSeenTurnstileToken(token, now)) {
+    logContactSecurityEvent("turnstile_replay_blocked", {
+      ip,
+      reason: "local-replay-cache",
+    });
+    return {
+      ok: false,
+      status: 400,
+      message: "Verification expired. Please try again.",
+    } as const;
+  }
+
   try {
     const formData = new URLSearchParams();
     formData.set("secret", secret);
     formData.set("response", token);
+    formData.set("idempotency_key", randomUUID());
     if (ip && ip !== "unknown") {
       formData.set("remoteip", ip);
     }
@@ -145,15 +209,55 @@ async function verifyTurnstileToken(token: string, ip: string) {
 
     const verification = (await verifyResponse.json()) as TurnstileVerifyResponse;
     if (!verification.success) {
+      const errorCodes = verification["error-codes"] ?? [];
+      logContactSecurityEvent("turnstile_verification_failed", {
+        ip,
+        errorCodes,
+      });
+
       return {
         ok: false,
-        status: 400,
-        message: "Verification failed. Please retry and submit again.",
+        status: errorCodes.includes("invalid-input-secret") ? 503 : 400,
+        message: errorCodes.includes("timeout-or-duplicate")
+          ? "Verification expired. Please try again."
+          : "Verification failed. Please retry and submit again.",
       } as const;
     }
 
+    if (verification.action !== TURNSTILE_EXPECTED_ACTION) {
+      logContactSecurityEvent("turnstile_action_mismatch", {
+        ip,
+        expectedAction: TURNSTILE_EXPECTED_ACTION,
+        receivedAction: verification.action ?? null,
+      });
+      return {
+        ok: false,
+        status: 400,
+        message: "Verification failed. Please retry.",
+      } as const;
+    }
+
+    if (verification.hostname && !trustedHosts.has(verification.hostname)) {
+      logContactSecurityEvent("turnstile_hostname_mismatch", {
+        ip,
+        hostname: verification.hostname,
+        trustedHosts: Array.from(trustedHosts),
+      });
+      return {
+        ok: false,
+        status: 400,
+        message: "Verification failed. Please retry.",
+      } as const;
+    }
+
+    markTurnstileTokenAsUsed(token, now);
+
     return { ok: true } as const;
   } catch {
+    logContactSecurityEvent("turnstile_verification_error", {
+      ip,
+      reason: "network-or-timeout",
+    });
     return {
       ok: false,
       status: 502,
@@ -213,6 +317,7 @@ export async function POST(request: Request) {
     }
 
     const requestHeaders = await headers();
+    const trustedHosts = getTrustedHosts(requestHeaders);
     if (!isAllowedRequestSource(requestHeaders)) {
       const response: ContactResponseBody = {
         ok: false,
@@ -247,7 +352,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const turnstileVerification = await verifyTurnstileToken(captchaToken, ip);
+    const turnstileVerification = await verifyTurnstileToken(captchaToken, ip, trustedHosts);
     if (!turnstileVerification.ok) {
       const response: ContactResponseBody = {
         ok: false,
@@ -301,6 +406,11 @@ export async function POST(request: Request) {
     });
 
     if (!resendResponse.ok) {
+      logContactSecurityEvent("contact_delivery_rejected", {
+        ip,
+        provider: "resend",
+        status: resendResponse.status,
+      });
       const response: ContactResponseBody = {
         ok: false,
         message: "Email provider rejected the request.",

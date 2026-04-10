@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Turnstile } from "@marsidev/react-turnstile";
+import { useMemo, useRef, useState } from "react";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,29 +31,85 @@ export function ContactForm() {
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
   const startedAt = useMemo(() => Date.now(), []);
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const turnstileRef = useRef<TurnstileInstance | null>(null);
+  const pendingVerificationRef = useRef<{
+    resolve: (token: string) => void;
+    reject: (reason?: unknown) => void;
+    timeoutId: ReturnType<typeof setTimeout>;
+  } | null>(null);
 
-  async function onSubmit(formData: FormData) {
-    if (!captchaToken) {
+  function resolvePendingVerification(token: string) {
+    const pendingVerification = pendingVerificationRef.current;
+    if (!pendingVerification) {
+      return;
+    }
+
+    clearTimeout(pendingVerification.timeoutId);
+    pendingVerification.resolve(token);
+    pendingVerificationRef.current = null;
+  }
+
+  function rejectPendingVerification(message: string) {
+    const pendingVerification = pendingVerificationRef.current;
+    if (!pendingVerification) {
       setSubmitState({
         status: "error",
-        message: "Please complete verification and try again.",
+        message,
       });
       return;
     }
 
-    const payload: ContactPayload = {
-      name: String(formData.get("name") ?? "").trim(),
-      email: String(formData.get("email") ?? "").trim(),
-      subject: String(formData.get("subject") ?? "").trim(),
-      message: String(formData.get("message") ?? "").trim(),
-      captchaToken,
-      website: String(formData.get("website") ?? "").trim(),
-      submittedAt: startedAt,
-    };
+    clearTimeout(pendingVerification.timeoutId);
+    pendingVerification.reject(new Error(message));
+    pendingVerificationRef.current = null;
+  }
 
+  async function getVerificationToken(formData: FormData) {
+    const responseFieldToken = String(formData.get("cf-turnstile-response") ?? "").trim();
+    const currentToken = turnstileRef.current?.getResponse() || captchaToken || responseFieldToken;
+
+    if (currentToken) {
+      return currentToken;
+    }
+
+    if (!turnstileSiteKey || !turnstileRef.current) {
+      throw new Error("Verification is temporarily unavailable. Please try again shortly.");
+    }
+
+    turnstileRef.current.reset();
+
+    const token = await new Promise<string>((resolve, reject) => {
+      pendingVerificationRef.current = {
+        resolve,
+        reject,
+        timeoutId: setTimeout(() => {
+          pendingVerificationRef.current = null;
+          reject(new Error("Verification timed out. Please try again."));
+        }, 12_000),
+      };
+
+      turnstileRef.current?.execute();
+    });
+
+    return token;
+  }
+
+  async function onSubmit(formData: FormData) {
     try {
       setIsPending(true);
       setSubmitState({ status: "idle" });
+
+      const token = await getVerificationToken(formData);
+
+      const payload: ContactPayload = {
+        name: String(formData.get("name") ?? "").trim(),
+        email: String(formData.get("email") ?? "").trim(),
+        subject: String(formData.get("subject") ?? "").trim(),
+        message: String(formData.get("message") ?? "").trim(),
+        captchaToken: token,
+        website: String(formData.get("website") ?? "").trim(),
+        submittedAt: startedAt,
+      };
 
       const res = await fetch("/api/contact", {
         method: "POST",
@@ -78,11 +134,15 @@ export function ContactForm() {
         message: data.message ?? "Thanks. Your message has been delivered.",
       });
       setCaptchaToken("");
-    } catch {
+      turnstileRef.current?.reset();
+    } catch (error) {
       setSubmitState({
         status: "error",
-        message: "Network issue. Please try again in a minute.",
+        message:
+          error instanceof Error ? error.message : "Network issue. Please try again in a minute.",
       });
+      setCaptchaToken("");
+      turnstileRef.current?.reset();
     } finally {
       setIsPending(false);
     }
@@ -145,19 +205,30 @@ export function ContactForm() {
 
       {turnstileSiteKey ? (
         <Turnstile
+          ref={turnstileRef}
           siteKey={turnstileSiteKey}
+          options={{
+            action: "contact_form",
+            appearance: "execute",
+            execution: "execute",
+            refreshExpired: "auto",
+          }}
           onSuccess={(token) => {
             setCaptchaToken(token);
+            resolvePendingVerification(token);
           }}
           onExpire={() => {
             setCaptchaToken("");
+            rejectPendingVerification("Verification expired. Please try again.");
+            turnstileRef.current?.reset();
           }}
           onError={() => {
             setCaptchaToken("");
-            setSubmitState({
-              status: "error",
-              message: "Verification failed. Please retry.",
-            });
+            rejectPendingVerification("Verification failed. Please retry.");
+          }}
+          onTimeout={() => {
+            setCaptchaToken("");
+            rejectPendingVerification("Verification timed out. Please try again.");
           }}
         />
       ) : (
