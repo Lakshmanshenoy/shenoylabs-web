@@ -21,12 +21,24 @@ type ContactResponseBody = {
   fallbackToEmail?: boolean;
 };
 
+type TurnstileVerificationResult =
+  | {
+      ok: true;
+    }
+  | {
+      ok: false;
+      status: number;
+      message: string;
+      fallbackToEmail?: boolean;
+    };
+
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const limiter = new Map<string, number>();
 const verifiedTurnstileTokens = new Map<string, number>();
 const RATE_LIMIT_WINDOW_MS = 45_000;
 const TURNSTILE_TOKEN_WINDOW_MS = 5 * 60 * 1000;
 const TURNSTILE_EXPECTED_ACTION = "contact_form";
+const TURNSTILE_TEST_SECRET_KEY = "1x0000000000000000000000000000000AA";
 
 type TurnstileVerifyResponse = {
   success: boolean;
@@ -80,6 +92,18 @@ function hostFromUrl(value: string | null) {
   } catch {
     return null;
   }
+}
+
+function isLocalHostname(hostname: string | null) {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0";
+}
+
+function shouldUseTurnstileTestKeys(trustedHosts: Set<string>) {
+  if (process.env.NODE_ENV === "production") {
+    return false;
+  }
+
+  return Array.from(trustedHosts).some((host) => isLocalHostname(host.split(":")[0] ?? null));
 }
 
 function isAllowedRequestSource(headerStore: Headers) {
@@ -149,16 +173,29 @@ function logContactSecurityEvent(event: string, details: Record<string, unknown>
   );
 }
 
+function verificationFallbackResult(message: string): TurnstileVerificationResult {
+  return {
+    ok: false,
+    status: 200,
+    message,
+    fallbackToEmail: true,
+  };
+}
+
+function getVerificationFallbackMessage() {
+  return `Verification is temporarily unavailable. Please email ${siteConfig.contactEmail} directly.`;
+}
+
 async function verifyTurnstileToken(token: string, ip: string, trustedHosts: Set<string>) {
-  const secret = process.env.TURNSTILE_SECRET_KEY;
+  const useTestKeys = shouldUseTurnstileTestKeys(trustedHosts);
+  const secret = useTestKeys ? TURNSTILE_TEST_SECRET_KEY : process.env.TURNSTILE_SECRET_KEY;
   const now = Date.now();
 
   if (!secret) {
-    return {
-      ok: false,
-      status: 503,
-      message: "Verification is not configured on the server.",
-    } as const;
+    logContactSecurityEvent("turnstile_missing_secret", {
+      ip,
+    });
+    return verificationFallbackResult(getVerificationFallbackMessage());
   }
 
   if (token.length > 2048) {
@@ -169,7 +206,7 @@ async function verifyTurnstileToken(token: string, ip: string, trustedHosts: Set
     } as const;
   }
 
-  if (hasSeenTurnstileToken(token, now)) {
+  if (!useTestKeys && hasSeenTurnstileToken(token, now)) {
     logContactSecurityEvent("turnstile_replay_blocked", {
       ip,
       reason: "local-replay-cache",
@@ -200,11 +237,11 @@ async function verifyTurnstileToken(token: string, ip: string, trustedHosts: Set
     });
 
     if (!verifyResponse.ok) {
-      return {
-        ok: false,
-        status: 502,
-        message: "Verification provider is unavailable. Please try again.",
-      } as const;
+      logContactSecurityEvent("turnstile_provider_unavailable", {
+        ip,
+        status: verifyResponse.status,
+      });
+      return verificationFallbackResult(getVerificationFallbackMessage());
     }
 
     const verification = (await verifyResponse.json()) as TurnstileVerifyResponse;
@@ -217,14 +254,27 @@ async function verifyTurnstileToken(token: string, ip: string, trustedHosts: Set
 
       return {
         ok: false,
-        status: errorCodes.includes("invalid-input-secret") ? 503 : 400,
+        status:
+          errorCodes.includes("invalid-input-secret") ||
+          errorCodes.includes("missing-input-secret") ||
+          errorCodes.includes("internal-error")
+            ? 200
+            : 400,
+        fallbackToEmail:
+          errorCodes.includes("invalid-input-secret") ||
+          errorCodes.includes("missing-input-secret") ||
+          errorCodes.includes("internal-error"),
         message: errorCodes.includes("timeout-or-duplicate")
           ? "Verification expired. Please try again."
+          : errorCodes.includes("invalid-input-secret") ||
+              errorCodes.includes("missing-input-secret") ||
+              errorCodes.includes("internal-error")
+            ? getVerificationFallbackMessage()
           : "Verification failed. Please retry and submit again.",
       } as const;
     }
 
-    if (verification.action !== TURNSTILE_EXPECTED_ACTION) {
+    if (!useTestKeys && verification.action !== TURNSTILE_EXPECTED_ACTION) {
       logContactSecurityEvent("turnstile_action_mismatch", {
         ip,
         expectedAction: TURNSTILE_EXPECTED_ACTION,
@@ -250,7 +300,9 @@ async function verifyTurnstileToken(token: string, ip: string, trustedHosts: Set
       } as const;
     }
 
-    markTurnstileTokenAsUsed(token, now);
+    if (!useTestKeys) {
+      markTurnstileTokenAsUsed(token, now);
+    }
 
     return { ok: true } as const;
   } catch {
@@ -258,11 +310,7 @@ async function verifyTurnstileToken(token: string, ip: string, trustedHosts: Set
       ip,
       reason: "network-or-timeout",
     });
-    return {
-      ok: false,
-      status: 502,
-      message: "Verification timed out. Please retry.",
-    } as const;
+    return verificationFallbackResult(getVerificationFallbackMessage());
   }
 }
 
@@ -357,6 +405,7 @@ export async function POST(request: Request) {
       const response: ContactResponseBody = {
         ok: false,
         message: turnstileVerification.message,
+        fallbackToEmail: turnstileVerification.fallbackToEmail,
       };
       return Response.json(
         response,

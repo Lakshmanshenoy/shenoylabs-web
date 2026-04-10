@@ -174,31 +174,23 @@
   box-shadow: 0 12px 32px -18px rgba(15, 23, 42, 0.35);
 }
 
-/* Scroll-reveal — sections start invisible, animate in when entering the viewport.
-   Used via the .reveal class + IntersectionObserver wired in site-shell. */
+/* Lightweight CSS-only entry animation. Avoids client-side class mutations
+   that were causing hydration mismatches in development. */
 .reveal {
-  opacity: 0;
-  transform: translateY(18px);
-  transition: opacity 520ms ease, transform 520ms ease;
-}
-
-.reveal.visible {
-  opacity: 1;
-  transform: translateY(0);
+  animation: enter-up 520ms ease-out both;
 }
 
 /* Stagger children inside a .reveal-group */
 .reveal-group > * {
   opacity: 0;
   transform: translateY(14px);
-  transition: opacity 480ms ease, transform 480ms ease;
+  animation: enter-up 480ms ease-out forwards;
 }
 
-.reveal-group.visible > *:nth-child(1) { transition-delay: 0ms; }
-.reveal-group.visible > *:nth-child(2) { transition-delay: 60ms; }
-.reveal-group.visible > *:nth-child(3) { transition-delay: 120ms; }
-.reveal-group.visible > *:nth-child(4) { transition-delay: 180ms; }
-.reveal-group.visible > * { opacity: 1; transform: translateY(0); }
+.reveal-group > *:nth-child(1) { animation-delay: 0ms; }
+.reveal-group > *:nth-child(2) { animation-delay: 60ms; }
+.reveal-group > *:nth-child(3) { animation-delay: 120ms; }
+.reveal-group > *:nth-child(4) { animation-delay: 180ms; }
 
 /* Render optimization for below-the-fold sections to improve first paint.
    Content is skipped until needed, while preserving layout via intrinsic size. */

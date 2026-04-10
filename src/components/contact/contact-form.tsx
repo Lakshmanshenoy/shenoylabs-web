@@ -1,14 +1,25 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
+const TURNSTILE_TEST_SITE_KEY = "1x00000000000000000000AA";
+
+function subscribeToHydration() {
+  return () => {};
+}
+
+function isLocalHostname(hostname: string) {
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0";
+}
+
 type SubmitState =
   | { status: "idle" }
+  | { status: "notice"; message: string }
   | { status: "success"; message: string }
   | { status: "error"; message: string };
 
@@ -26,72 +37,42 @@ const fieldClassName =
   "w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
 export function ContactForm() {
+  const hydrated = useSyncExternalStore(subscribeToHydration, () => true, () => false);
   const [isPending, setIsPending] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
+  const [verificationReady, setVerificationReady] = useState(false);
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
   const startedAt = useMemo(() => Date.now(), []);
-  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const turnstileSiteKey = hydrated
+    ? isLocalHostname(window.location.hostname)
+      ? TURNSTILE_TEST_SITE_KEY
+      : process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+    : "";
   const turnstileRef = useRef<TurnstileInstance | null>(null);
-  const pendingVerificationRef = useRef<{
-    resolve: (token: string) => void;
-    reject: (reason?: unknown) => void;
-    timeoutId: ReturnType<typeof setTimeout>;
-  } | null>(null);
 
-  function resolvePendingVerification(token: string) {
-    const pendingVerification = pendingVerificationRef.current;
-    if (!pendingVerification) {
-      return;
+  function resetTurnstileWidget() {
+    if (verificationReady) {
+      turnstileRef.current?.reset();
     }
-
-    clearTimeout(pendingVerification.timeoutId);
-    pendingVerification.resolve(token);
-    pendingVerificationRef.current = null;
-  }
-
-  function rejectPendingVerification(message: string) {
-    const pendingVerification = pendingVerificationRef.current;
-    if (!pendingVerification) {
-      setSubmitState({
-        status: "error",
-        message,
-      });
-      return;
-    }
-
-    clearTimeout(pendingVerification.timeoutId);
-    pendingVerification.reject(new Error(message));
-    pendingVerificationRef.current = null;
   }
 
   async function getVerificationToken(formData: FormData) {
     const responseFieldToken = String(formData.get("cf-turnstile-response") ?? "").trim();
-    const currentToken = turnstileRef.current?.getResponse() || captchaToken || responseFieldToken;
+    const currentToken = captchaToken || responseFieldToken;
 
     if (currentToken) {
       return currentToken;
     }
 
-    if (!turnstileSiteKey || !turnstileRef.current) {
+    if (!turnstileSiteKey) {
       throw new Error("Verification is temporarily unavailable. Please try again shortly.");
     }
 
-    turnstileRef.current.reset();
+    if (!verificationReady) {
+      throw new Error("Verification is still loading. Please wait a moment and try again.");
+    }
 
-    const token = await new Promise<string>((resolve, reject) => {
-      pendingVerificationRef.current = {
-        resolve,
-        reject,
-        timeoutId: setTimeout(() => {
-          pendingVerificationRef.current = null;
-          reject(new Error("Verification timed out. Please try again."));
-        }, 12_000),
-      };
-
-      turnstileRef.current?.execute();
-    });
-
-    return token;
+    throw new Error("Please complete verification and try again.");
   }
 
   async function onSubmit(formData: FormData) {
@@ -119,7 +100,19 @@ export function ContactForm() {
         body: JSON.stringify(payload),
       });
 
-      const data = (await res.json()) as { ok?: boolean; message?: string };
+      const data = (await res.json()) as {
+        ok?: boolean;
+        message?: string;
+        fallbackToEmail?: boolean;
+      };
+
+      if (data.fallbackToEmail) {
+        setSubmitState({
+          status: "notice",
+          message: data.message ?? "Verification is temporarily unavailable. Please email directly.",
+        });
+        return;
+      }
 
       if (!res.ok || !data.ok) {
         setSubmitState({
@@ -134,7 +127,7 @@ export function ContactForm() {
         message: data.message ?? "Thanks. Your message has been delivered.",
       });
       setCaptchaToken("");
-      turnstileRef.current?.reset();
+      resetTurnstileWidget();
     } catch (error) {
       setSubmitState({
         status: "error",
@@ -142,7 +135,7 @@ export function ContactForm() {
           error instanceof Error ? error.message : "Network issue. Please try again in a minute.",
       });
       setCaptchaToken("");
-      turnstileRef.current?.reset();
+      resetTurnstileWidget();
     } finally {
       setIsPending(false);
     }
@@ -204,36 +197,61 @@ export function ContactForm() {
       </div>
 
       {turnstileSiteKey ? (
-        <Turnstile
-          ref={turnstileRef}
-          siteKey={turnstileSiteKey}
-          options={{
-            action: "contact_form",
-            appearance: "execute",
-            execution: "execute",
-            refreshExpired: "auto",
-          }}
-          onSuccess={(token) => {
-            setCaptchaToken(token);
-            resolvePendingVerification(token);
-          }}
-          onExpire={() => {
-            setCaptchaToken("");
-            rejectPendingVerification("Verification expired. Please try again.");
-            turnstileRef.current?.reset();
-          }}
-          onError={() => {
-            setCaptchaToken("");
-            rejectPendingVerification("Verification failed. Please retry.");
-          }}
-          onTimeout={() => {
-            setCaptchaToken("");
-            rejectPendingVerification("Verification timed out. Please try again.");
-          }}
-        />
+        <div className="grid gap-2">
+          <Turnstile
+            ref={turnstileRef}
+            siteKey={turnstileSiteKey}
+            options={{
+              action: "contact_form",
+              size: "flexible",
+              refreshExpired: "auto",
+              theme: "auto",
+            }}
+            onWidgetLoad={() => {
+              setVerificationReady(true);
+            }}
+            onSuccess={(token) => {
+              setCaptchaToken(token);
+              setSubmitState((currentState) =>
+                currentState.status === "error" && currentState.message.toLowerCase().includes("verification")
+                  ? { status: "idle" }
+                  : currentState,
+              );
+            }}
+            onExpire={() => {
+              setCaptchaToken("");
+              setSubmitState({
+                status: "error",
+                message: "Verification expired. Please try again.",
+              });
+              resetTurnstileWidget();
+            }}
+            onError={() => {
+              setCaptchaToken("");
+              setVerificationReady(false);
+              setSubmitState({
+                status: "error",
+                message: "Verification failed to load. Disable blockers or refresh the page, or email directly.",
+              });
+            }}
+            onTimeout={() => {
+              setCaptchaToken("");
+              setSubmitState({
+                status: "error",
+                message: "Verification timed out. Please try again.",
+              });
+            }}
+          />
+
+          <p className="text-xs text-muted-foreground">
+            Complete the verification before sending. If the widget does not appear, refresh the page or disable blockers for this site.
+          </p>
+        </div>
       ) : (
         <p className="text-sm text-muted-foreground">
-          Verification is temporarily unavailable. Please try again shortly.
+          {hydrated
+            ? "Verification is temporarily unavailable. Please try again shortly."
+            : "Loading verification..."}
         </p>
       )}
 
@@ -245,7 +263,11 @@ export function ContactForm() {
         <p
           className={cn(
             "text-sm",
-            submitState.status === "success" ? "text-emerald-600" : "text-destructive",
+            submitState.status === "success"
+              ? "text-emerald-600"
+              : submitState.status === "notice"
+                ? "text-amber-700"
+                : "text-destructive",
           )}
           aria-live="polite"
         >

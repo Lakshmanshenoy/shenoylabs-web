@@ -39,7 +39,7 @@ export default function ContactPage() {
       <SectionHeader
         badge="Contact"
         title="Let's Build Something Useful"
-        description="Share your idea, your current problem, or what you want to ship next. Messages are delivered directly by email."
+        description="Share what you're building, where you're stuck, or the outcome you want. The form uses quiet verification and messages are delivered directly by email."
       />
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
@@ -55,12 +55,12 @@ export default function ContactPage() {
               mention deadlines in your subject line.
             </p>
             <p>
-              For support contributions and optional payments, visit the support
-              page.
+              If verification or delivery ever fails, email is the fastest fallback.
+              For support contributions and optional payments, use the support page.
             </p>
             <div className="rounded-xl border border-dashed border-border/80 bg-secondary/30 p-4">
               <p className="text-sm text-foreground">
-                Prefer email directly or need a fallback?
+                Prefer email directly, or want a no-form fallback?
               </p>
               <p className="mt-2 break-all">{siteConfig.contactEmail}</p>
               <Link href={mailtoHref} className={buttonVariants({ variant: "outline", size: "sm" }) + " mt-3"}>
