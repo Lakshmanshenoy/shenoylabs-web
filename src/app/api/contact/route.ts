@@ -35,6 +35,8 @@ type TurnstileVerificationResult =
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const limiter = new Map<string, number>();
 const verifiedTurnstileTokens = new Map<string, number>();
+const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
+const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 const RATE_LIMIT_WINDOW_MS = 45_000;
 const TURNSTILE_TOKEN_WINDOW_MS = 5 * 60 * 1000;
 const TURNSTILE_EXPECTED_ACTION = "contact_form";
@@ -129,8 +131,25 @@ function isAllowedRequestSource(headerStore: Headers) {
   return true;
 }
 
-function rateLimited(key: string) {
+async function rateLimited(key: string) {
   const now = Date.now();
+
+  if (UPSTASH_URL && UPSTASH_TOKEN) {
+    try {
+      const prev = await upstashCmd(["GET", `rl:${key}`]);
+      if (prev != null) {
+        const prevTs = Number(prev);
+        if (!Number.isNaN(prevTs) && now - prevTs < RATE_LIMIT_WINDOW_MS) {
+          return true;
+        }
+      }
+      await upstashCmd(["SET", `rl:${key}`, String(now), "PX", String(RATE_LIMIT_WINDOW_MS)]);
+      return false;
+    } catch (_) {
+      // fallthrough to in-memory
+    }
+  }
+
   const last = limiter.get(key) ?? 0;
   if (now - last < RATE_LIMIT_WINDOW_MS) return true;
   limiter.set(key, now);
@@ -154,21 +173,72 @@ function pruneExpiredEntries(store: Map<string, number>, windowMs: number, now: 
   }
 }
 
+async function upstashCmd(command: string[]) {
+  if (!UPSTASH_URL || !UPSTASH_TOKEN) return null;
+  try {
+    const res = await fetch(`${UPSTASH_URL}/commands`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${UPSTASH_TOKEN}`,
+      },
+      body: JSON.stringify({ command }),
+    });
+
+    if (!res.ok) {
+      try {
+        const text = await res.text();
+        console.error("upstash command failed:", text);
+      } catch (_) {}
+      return null;
+    }
+
+    const j = await res.json().catch(() => null);
+    return j?.result ?? null;
+  } catch (err) {
+    console.error("upstash command error", err);
+    return null;
+  }
+}
+
 function hashTurnstileToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
 function markTurnstileTokenAsUsed(token: string, timestamp = Date.now()) {
-  verifiedTurnstileTokens.set(hashTurnstileToken(token), timestamp);
+  (async () => {
+    const hashed = hashTurnstileToken(token);
+    if (UPSTASH_URL && UPSTASH_TOKEN) {
+      try {
+        await upstashCmd(["SET", `turnstile:${hashed}`, "1", "PX", String(TURNSTILE_TOKEN_WINDOW_MS)]);
+        return;
+      } catch (_) {
+        // fall through to in-memory
+      }
+    }
 
-  if (verifiedTurnstileTokens.size > 1000) {
-    pruneExpiredEntries(verifiedTurnstileTokens, TURNSTILE_TOKEN_WINDOW_MS, timestamp);
-  }
+    verifiedTurnstileTokens.set(hashed, timestamp);
+
+    if (verifiedTurnstileTokens.size > 1000) {
+      pruneExpiredEntries(verifiedTurnstileTokens, TURNSTILE_TOKEN_WINDOW_MS, timestamp);
+    }
+  })();
 }
 
-function hasSeenTurnstileToken(token: string, now = Date.now()) {
+async function hasSeenTurnstileToken(token: string, now = Date.now()) {
+  const hashed = hashTurnstileToken(token);
+  if (UPSTASH_URL && UPSTASH_TOKEN) {
+    try {
+      const res = await upstashCmd(["GET", `turnstile:${hashed}`]);
+      if (res != null) return true;
+      return false;
+    } catch (_) {
+      // fall back to memory
+    }
+  }
+
   pruneExpiredEntries(verifiedTurnstileTokens, TURNSTILE_TOKEN_WINDOW_MS, now);
-  return verifiedTurnstileTokens.has(hashTurnstileToken(token));
+  return verifiedTurnstileTokens.has(hashed);
 }
 
 function logContactSecurityEvent(event: string, details: Record<string, unknown>) {
@@ -214,7 +284,7 @@ async function verifyTurnstileToken(token: string, ip: string, trustedHosts: Set
     } as const;
   }
 
-  if (!useTestKeys && hasSeenTurnstileToken(token, now)) {
+  if (!useTestKeys && (await hasSeenTurnstileToken(token, now))) {
     logContactSecurityEvent("turnstile_replay_blocked", {
       ip,
       reason: "local-replay-cache",
@@ -386,7 +456,7 @@ export async function POST(request: Request) {
     }
 
     const ip = getClientIpFromHeaders(requestHeaders);
-    if (rateLimited(ip)) {
+    if (await rateLimited(ip)) {
       const response: ContactResponseBody = {
         ok: false,
         message: "Too many attempts. Please retry shortly.",

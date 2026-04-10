@@ -15,17 +15,29 @@ export default function CookieBanner() {
     } catch (_) {}
   }, []);
 
-  const accept = () => {
+  const sendConsentEvent = async (action: "grant" | "revoke") => {
+    try {
+      await fetch("/api/consent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: action === "grant" ? "grant" : "revoke", type: "analytics" }),
+      });
+    } catch (_) {}
+  };
+
+  const accept = async () => {
     try {
       localStorage.setItem(CONSENT_KEY, "granted");
       window.dispatchEvent(new Event("cookie-consent-changed"));
+      sendConsentEvent("grant");
     } catch (_) {}
     setVisible(false);
   };
 
-  const dismiss = () => {
+  const dismiss = async () => {
     try {
       localStorage.setItem(CONSENT_KEY, "denied");
+      sendConsentEvent("revoke");
     } catch (_) {}
     setVisible(false);
   };
