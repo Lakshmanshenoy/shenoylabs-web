@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ type ContactPayload = {
   email: string;
   subject: string;
   message: string;
+  captchaToken: string;
   website?: string;
   submittedAt: number;
 };
@@ -25,15 +27,26 @@ const fieldClassName =
 
 export function ContactForm() {
   const [isPending, setIsPending] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
   const startedAt = useMemo(() => Date.now(), []);
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   async function onSubmit(formData: FormData) {
+    if (!captchaToken) {
+      setSubmitState({
+        status: "error",
+        message: "Please complete verification and try again.",
+      });
+      return;
+    }
+
     const payload: ContactPayload = {
       name: String(formData.get("name") ?? "").trim(),
       email: String(formData.get("email") ?? "").trim(),
       subject: String(formData.get("subject") ?? "").trim(),
       message: String(formData.get("message") ?? "").trim(),
+      captchaToken,
       website: String(formData.get("website") ?? "").trim(),
       submittedAt: startedAt,
     };
@@ -64,6 +77,7 @@ export function ContactForm() {
         status: "success",
         message: data.message ?? "Thanks. Your message has been delivered.",
       });
+      setCaptchaToken("");
     } catch {
       setSubmitState({
         status: "error",
@@ -128,6 +142,29 @@ export function ContactForm() {
         <label htmlFor="website">Website</label>
         <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
       </div>
+
+      {turnstileSiteKey ? (
+        <Turnstile
+          siteKey={turnstileSiteKey}
+          onSuccess={(token) => {
+            setCaptchaToken(token);
+          }}
+          onExpire={() => {
+            setCaptchaToken("");
+          }}
+          onError={() => {
+            setCaptchaToken("");
+            setSubmitState({
+              status: "error",
+              message: "Verification failed. Please retry.",
+            });
+          }}
+        />
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Verification is temporarily unavailable. Please try again shortly.
+        </p>
+      )}
 
       <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
         {isPending ? "Sending..." : "Send message"}

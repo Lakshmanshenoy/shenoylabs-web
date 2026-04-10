@@ -9,6 +9,7 @@ type ContactRequestBody = {
   email?: unknown;
   subject?: unknown;
   message?: unknown;
+  captchaToken?: unknown;
   website?: unknown;
   submittedAt?: unknown;
 };
@@ -22,6 +23,11 @@ type ContactResponseBody = {
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const limiter = new Map<string, number>();
 const RATE_LIMIT_WINDOW_MS = 45_000;
+
+type TurnstileVerifyResponse = {
+  success: boolean;
+  "error-codes"?: string[];
+};
 
 function asText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -101,6 +107,61 @@ function rateLimited(key: string) {
   return false;
 }
 
+async function verifyTurnstileToken(token: string, ip: string) {
+  const secret = process.env.TURNSTILE_SECRET_KEY;
+
+  if (!secret) {
+    return {
+      ok: false,
+      status: 503,
+      message: "Verification is not configured on the server.",
+    } as const;
+  }
+
+  try {
+    const formData = new URLSearchParams();
+    formData.set("secret", secret);
+    formData.set("response", token);
+    if (ip && ip !== "unknown") {
+      formData.set("remoteip", ip);
+    }
+
+    const verifyResponse = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: formData,
+      signal: AbortSignal.timeout(8_000),
+    });
+
+    if (!verifyResponse.ok) {
+      return {
+        ok: false,
+        status: 502,
+        message: "Verification provider is unavailable. Please try again.",
+      } as const;
+    }
+
+    const verification = (await verifyResponse.json()) as TurnstileVerifyResponse;
+    if (!verification.success) {
+      return {
+        ok: false,
+        status: 400,
+        message: "Verification failed. Please retry and submit again.",
+      } as const;
+    }
+
+    return { ok: true } as const;
+  } catch {
+    return {
+      ok: false,
+      status: 502,
+      message: "Verification timed out. Please retry.",
+    } as const;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const raw = (await request.json()) as ContactRequestBody;
@@ -109,6 +170,7 @@ export async function POST(request: Request) {
     const email = asText(raw.email);
     const subject = asText(raw.subject);
     const message = asText(raw.message);
+    const captchaToken = asText(raw.captchaToken);
     const website = asText(raw.website);
     const submittedAt = typeof raw.submittedAt === "number" ? raw.submittedAt : 0;
 
@@ -171,6 +233,29 @@ export async function POST(request: Request) {
       return Response.json(
         response,
         { status: 429 },
+      );
+    }
+
+    if (!captchaToken) {
+      const response: ContactResponseBody = {
+        ok: false,
+        message: "Verification token is missing. Please complete verification.",
+      };
+      return Response.json(
+        response,
+        { status: 400 },
+      );
+    }
+
+    const turnstileVerification = await verifyTurnstileToken(captchaToken, ip);
+    if (!turnstileVerification.ok) {
+      const response: ContactResponseBody = {
+        ok: false,
+        message: turnstileVerification.message,
+      };
+      return Response.json(
+        response,
+        { status: turnstileVerification.status },
       );
     }
 
