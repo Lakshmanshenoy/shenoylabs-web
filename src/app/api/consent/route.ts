@@ -19,6 +19,7 @@ async function ensureDir() {
 function normalizeUpstashList(arr: any): any[] {
   if (!arr) return [];
 
+  // Unwrap { result: [...] } envelope responses
   if (typeof arr === "object" && !Array.isArray(arr) && "result" in arr && Array.isArray((arr as any).result)) {
     arr = (arr as any).result;
   }
@@ -26,14 +27,18 @@ function normalizeUpstashList(arr: any): any[] {
   if (typeof arr === "string") {
     try {
       const parsed = JSON.parse(arr);
-      if (Array.isArray(parsed)) arr = parsed;
+      arr = parsed;
     } catch {
-      // leave as-is
+      return [arr];
     }
   }
 
-  if (Array.isArray(arr) && arr.every((el) => Array.isArray(el))) {
-    arr = (arr as any[]).flat();
+  if (Array.isArray(arr)) {
+    try {
+      arr = (arr as any[]).flat(Infinity);
+    } catch {
+      arr = (arr as any[]).flat();
+    }
   }
 
   return Array.isArray(arr) ? arr : [];

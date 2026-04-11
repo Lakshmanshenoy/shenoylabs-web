@@ -20,24 +20,32 @@ async function ensureDir() {
 function normalizeUpstashList(arr: any): any[] {
   if (!arr) return [];
 
-  // If the response is an object with a `result` array, use that
+  // Unwrap { result: [...] } responses
   if (typeof arr === "object" && !Array.isArray(arr) && "result" in arr && Array.isArray((arr as any).result)) {
     arr = (arr as any).result;
   }
 
-  // If the response is a JSON string that encodes an array, try to parse it
+  // If the whole payload is a JSON-encoded array/string, try to parse it
   if (typeof arr === "string") {
     try {
       const parsed = JSON.parse(arr);
-      if (Array.isArray(parsed)) arr = parsed;
+      // If parsing yields an array or primitive, use it
+      arr = parsed;
     } catch {
-      // keep as-is
+      // leave as a raw string
+      return [arr];
     }
   }
 
-  // If it's an array of arrays (sometimes returned by wrappers), flatten one level
-  if (Array.isArray(arr) && arr.every((el) => Array.isArray(el))) {
-    arr = (arr as any[]).flat();
+  // Flatten any nested arrays to a single-level list of items
+  if (Array.isArray(arr)) {
+    try {
+      // depth Infinity to be defensive against nested wrappers
+      arr = (arr as any[]).flat(Infinity);
+    } catch {
+      // fallback to shallow flatten
+      arr = (arr as any[]).flat();
+    }
   }
 
   return Array.isArray(arr) ? arr : [];
@@ -46,6 +54,7 @@ function normalizeUpstashList(arr: any): any[] {
 function parseForExport(arr: any): any[] {
   const list = normalizeUpstashList(arr);
   return list.map((el: any) => {
+    // If element is a JSON string, parse into object; otherwise return as-is
     if (typeof el === "string") {
       try {
         return JSON.parse(el);
@@ -60,11 +69,12 @@ function parseForExport(arr: any): any[] {
 function parseForDelete(arr: any): any[] {
   const list = normalizeUpstashList(arr);
   return list.map((el: any) => {
+    // For deletion we prefer the original stored representation (string) so we
+    // return the raw string when parsing fails, otherwise the parsed object.
     if (typeof el === "string") {
       try {
         return JSON.parse(el);
       } catch {
-        // for delete we want the original string preserved so it can be pushed back
         return el;
       }
     }
