@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { rpush, lrange, ltrim } from "@/lib/upstash";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const LOG_FILE = path.join(DATA_DIR, "consent-events.ndjson");
@@ -18,30 +19,15 @@ async function ensureDir() {
 async function pushToUpstash(event: any) {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) return false;
   try {
-    const res = await fetch(`${UPSTASH_URL}/commands`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${UPSTASH_TOKEN}`,
-      },
-      body: JSON.stringify({ command: ["RPUSH", UPSTASH_KEY, JSON.stringify(event)] }),
-    });
-
-    if (!res.ok) {
-      console.error("/api/consent upstash RPUSH failed:", await res.text());
+    const pushed = await rpush(UPSTASH_KEY, [JSON.stringify(event)]);
+    if (!pushed) {
+      console.error("/api/consent upstash RPUSH failed: no response");
       return false;
     }
 
     // keep list bounded (last 10k)
     try {
-      await fetch(`${UPSTASH_URL}/commands`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${UPSTASH_TOKEN}`,
-        },
-        body: JSON.stringify({ command: ["LTRIM", UPSTASH_KEY, "0", "9999"] }),
-      });
+      await ltrim(UPSTASH_KEY, 0, 9999);
     } catch (_) {}
 
     return true;
@@ -54,22 +40,8 @@ async function pushToUpstash(event: any) {
 async function readFromUpstash(): Promise<any[] | null> {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) return null;
   try {
-    const res = await fetch(`${UPSTASH_URL}/commands`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${UPSTASH_TOKEN}`,
-      },
-      body: JSON.stringify({ command: ["LRANGE", UPSTASH_KEY, "0", "-1"] }),
-    });
-
-    if (!res.ok) {
-      console.error("/api/consent upstash LRANGE failed:", await res.text());
-      return null;
-    }
-
-    const j = await res.json().catch(() => null);
-    const arr = (j && Array.isArray(j.result)) ? j.result : [];
+    const arr = (await lrange(UPSTASH_KEY, 0, -1)) || [];
+    if (!Array.isArray(arr)) return [];
     return arr.map((s: string) => {
       try {
         return JSON.parse(s);

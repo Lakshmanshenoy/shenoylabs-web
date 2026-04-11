@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { headers } from "next/headers";
+import { getKey, setKey } from "@/lib/upstash";
 
 import { siteConfig } from "@/lib/site";
 
@@ -176,28 +177,29 @@ function pruneExpiredEntries(store: Map<string, number>, windowMs: number, now: 
 
 async function upstashCmd(command: string[]) {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) return null;
+  const cmd = (command[0] ?? "").toString().toUpperCase();
   try {
-    const res = await fetch(`${UPSTASH_URL}/commands`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${UPSTASH_TOKEN}`,
-      },
-      body: JSON.stringify({ command }),
-    });
-
-    if (!res.ok) {
-      try {
-        const text = await res.text();
-        console.error("upstash command failed:", text);
-      } catch (_) {}
-      return null;
+    switch (cmd) {
+      case "GET":
+        return await getKey(command[1]);
+      case "SET": {
+        const key = command[1];
+        const value = command[2];
+        let px: number | undefined;
+        for (let i = 3; i < command.length; i++) {
+          if (String(command[i]).toUpperCase() === "PX") {
+            px = Number(command[i + 1]) || undefined;
+            break;
+          }
+        }
+        return await setKey(key, value, px);
+      }
+      default:
+        // unsupported/mapped fallback
+        return null;
     }
-
-    const j = await res.json().catch(() => null);
-    return j?.result ?? null;
   } catch (err) {
-    console.error("upstash command error", err);
+    console.error("upstash command mapped error", err);
     return null;
   }
 }

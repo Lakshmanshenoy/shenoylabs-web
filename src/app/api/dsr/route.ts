@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { lrange, delKey, rpush, ltrim, getKey, setKey } from "@/lib/upstash";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const LOG_FILE = path.join(DATA_DIR, "consent-events.ndjson");
@@ -18,28 +19,56 @@ async function ensureDir() {
 
 async function upstashCmd(command: string[]) {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) return null;
+  const cmd = (command[0] ?? "").toString().toUpperCase();
   try {
-    const res = await fetch(`${UPSTASH_URL}/commands`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${UPSTASH_TOKEN}`,
-      },
-      body: JSON.stringify({ command }),
-    });
-
-    if (!res.ok) {
-      try {
-        const text = await res.text();
-        console.error("/api/dsr upstash command failed:", text);
-      } catch (_) {}
-      return null;
+    switch (cmd) {
+      case "LRANGE":
+        return await lrange(command[1], command[2], command[3]);
+      case "RPUSH":
+        return await rpush(command[1], command.slice(2));
+      case "LTRIM":
+        return await ltrim(command[1], command[2], command[3]);
+      case "DEL":
+        return await delKey(command[1]);
+      case "GET":
+        return await getKey(command[1]);
+      case "SET": {
+        const key = command[1];
+        const value = command[2];
+        let px: number | undefined;
+        for (let i = 3; i < command.length; i++) {
+          if (String(command[i]).toUpperCase() === "PX") {
+            px = Number(command[i + 1]) || undefined;
+            break;
+          }
+        }
+        return await setKey(key, value, px);
+      }
+      default:
+        // fallback to /commands if an unmapped command is used
+        try {
+          const res = await fetch(`${UPSTASH_URL}/commands`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${UPSTASH_TOKEN}`,
+            },
+            body: JSON.stringify({ command }),
+          });
+          if (!res.ok) {
+            const text = await res.text().catch(() => "<no-body>");
+            console.error("/api/dsr upstash command failed:", text);
+            return null;
+          }
+          const j = await res.json().catch(() => null);
+          return j?.result ?? null;
+        } catch (err) {
+          console.error("/api/dsr upstash error", err);
+          return null;
+        }
     }
-
-    const j = await res.json().catch(() => null);
-    return j?.result ?? null;
   } catch (err) {
-    console.error("/api/dsr upstash error", err);
+    console.error("/api/dsr upstash mapped error", err);
     return null;
   }
 }
