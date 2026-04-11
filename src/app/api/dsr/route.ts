@@ -50,35 +50,69 @@ function normalizeUpstashList(arr: any): any[] {
 
   return Array.isArray(arr) ? arr : [];
 }
+function deepUnwrapValue(v: any): any {
+  if (v == null) return v;
+
+  // If it's a string, try to JSON.parse it and recurse
+  if (typeof v === "string") {
+    const s = v.trim();
+    try {
+      const parsed = JSON.parse(s);
+      return deepUnwrapValue(parsed);
+    } catch {
+      return s;
+    }
+  }
+
+  // If it's an array, unwrap each element and collapse single-item arrays
+  if (Array.isArray(v)) {
+    const mapped = (v as any[]).map((it) => deepUnwrapValue(it));
+    if (mapped.length === 1) return mapped[0];
+    return mapped;
+  }
+
+  // If it's an object, recursively unwrap values
+  if (typeof v === "object") {
+    const out: any = {};
+    for (const k of Object.keys(v)) {
+      out[k] = deepUnwrapValue((v as any)[k]);
+    }
+    return out;
+  }
+
+  return v;
+}
 
 function parseForExport(arr: any): any[] {
   const list = normalizeUpstashList(arr);
-  return list.map((el: any) => {
-    // If element is a JSON string, parse into object; otherwise return as-is
-    if (typeof el === "string") {
-      try {
-        return JSON.parse(el);
-      } catch {
-        return { raw: el };
+  const results: any[] = [];
+  for (const el of list) {
+    const un = deepUnwrapValue(el);
+    if (Array.isArray(un)) {
+      for (const it of un) {
+        if (it && typeof it === "object") results.push(it);
+        else results.push({ raw: it });
       }
+    } else if (un && typeof un === "object") {
+      results.push(un);
+    } else {
+      results.push({ raw: un });
     }
-    return el;
-  });
+  }
+  return results;
 }
 
 function parseForDelete(arr: any): any[] {
+  // Provide a best-effort parsed view for deletion checks (object or null)
   const list = normalizeUpstashList(arr);
   return list.map((el: any) => {
-    // For deletion we prefer the original stored representation (string) so we
-    // return the raw string when parsing fails, otherwise the parsed object.
-    if (typeof el === "string") {
-      try {
-        return JSON.parse(el);
-      } catch {
-        return el;
-      }
+    try {
+      const un = deepUnwrapValue(el);
+      if (Array.isArray(un) && un.length === 1) return un[0];
+      return un;
+    } catch {
+      return null;
     }
-    return el;
   });
 }
 
@@ -227,18 +261,39 @@ export async function POST(req: Request) {
 
       if (UPSTASH_URL && UPSTASH_TOKEN) {
         const arrRaw = await upstashCmd(["LRANGE", UPSTASH_KEY, "0", "-1"]);
-        const parsed = parseForDelete(arrRaw);
+        const list = normalizeUpstashList(arrRaw);
 
-        const remaining = parsed.filter((e) => !(e && e.subject === subject));
-        const deleted = parsed.length - remaining.length;
+        const remainingRaw: string[] = [];
+        let deleted = 0;
+
+        for (const rawItem of list) {
+          const parsedItem = deepUnwrapValue(rawItem);
+          let candidate: any = parsedItem;
+          if (Array.isArray(candidate) && candidate.length === 1) candidate = candidate[0];
+
+          if (candidate && typeof candidate === "object" && candidate.subject === subject) {
+            deleted++;
+            continue;
+          }
+
+          // preserve original stored representation when re-pushing
+          if (typeof rawItem === "string") remainingRaw.push(rawItem);
+          else {
+            try {
+              remainingRaw.push(JSON.stringify(rawItem));
+            } catch {
+              remainingRaw.push(String(rawItem));
+            }
+          }
+        }
 
         if (deleted === 0) {
           return new Response(JSON.stringify({ ok: true, deleted: 0 }), { status: 200 });
         }
 
         await upstashCmd(["DEL", UPSTASH_KEY]);
-        if (remaining.length > 0) {
-          const pushCmd = ["RPUSH", UPSTASH_KEY, ...remaining.map((r) => JSON.stringify(r))];
+        if (remainingRaw.length > 0) {
+          const pushCmd = ["RPUSH", UPSTASH_KEY, ...remainingRaw];
           await upstashCmd(pushCmd);
           await upstashCmd(["LTRIM", UPSTASH_KEY, "0", "9999"]);
         }
