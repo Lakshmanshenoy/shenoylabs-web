@@ -4,8 +4,10 @@ import path from "path";
 const DATA_DIR = path.join(process.cwd(), "data");
 const LOG_FILE = path.join(DATA_DIR, "consent-events.ndjson");
 
-const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
-const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+// Support multiple env var names: original Upstash Redis REST vars and newer KV-style names
+const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL ?? null;
+const UPSTASH_TOKEN =
+  process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN ?? process.env.KV_REST_API_READ_ONLY_TOKEN ?? null;
 const UPSTASH_KEY = process.env.UPSTASH_CONSENT_KEY || "consent_events";
 
 async function ensureDir() {
