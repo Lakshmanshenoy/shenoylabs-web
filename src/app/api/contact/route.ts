@@ -147,7 +147,7 @@ async function rateLimited(key: string) {
       }
       await upstashCmd(["SET", `rl:${key}`, String(now), "PX", String(RATE_LIMIT_WINDOW_MS)]);
       return false;
-    } catch (_) {
+    } catch {
       // fallthrough to in-memory
     }
   }
@@ -215,7 +215,7 @@ function markTurnstileTokenAsUsed(token: string, timestamp = Date.now()) {
       try {
         await upstashCmd(["SET", `turnstile:${hashed}`, "1", "PX", String(TURNSTILE_TOKEN_WINDOW_MS)]);
         return;
-      } catch (_) {
+      } catch {
         // fall through to in-memory
       }
     }
@@ -235,7 +235,7 @@ async function hasSeenTurnstileToken(token: string, now = Date.now()) {
       const res = await upstashCmd(["GET", `turnstile:${hashed}`]);
       if (res != null) return true;
       return false;
-    } catch (_) {
+    } catch {
       // fall back to memory
     }
   }

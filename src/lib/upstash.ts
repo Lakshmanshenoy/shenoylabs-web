@@ -57,4 +57,6 @@ export async function setKey(key: string, value: unknown, pxMs?: number) {
   return await request(`/set/${encodeURIComponent(key)}${q}`, { method: "POST", body: value });
 }
 
-export default { request, rpush, lrange, ltrim, delKey, getKey, setKey };
+const upstash = { request, rpush, lrange, ltrim, delKey, getKey, setKey };
+
+export default upstash;

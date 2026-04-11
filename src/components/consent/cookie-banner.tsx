@@ -11,7 +11,7 @@ export default function CookieBanner() {
       if (typeof window === "undefined") return false;
       const v = localStorage.getItem(CONSENT_KEY);
       return !v;
-    } catch (_) {
+    } catch {
       return false;
     }
   });
@@ -23,7 +23,7 @@ export default function CookieBanner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: action === "grant" ? "grant" : "revoke", type: "analytics" }),
       });
-    } catch (_) {}
+    } catch {}
   };
 
   const accept = async () => {
@@ -31,7 +31,7 @@ export default function CookieBanner() {
       localStorage.setItem(CONSENT_KEY, "granted");
       window.dispatchEvent(new Event("cookie-consent-changed"));
       sendConsentEvent("grant");
-    } catch (_) {}
+    } catch {}
     setVisible(false);
   };
 
@@ -39,7 +39,7 @@ export default function CookieBanner() {
     try {
       localStorage.setItem(CONSENT_KEY, "denied");
       sendConsentEvent("revoke");
-    } catch (_) {}
+    } catch {}
     setVisible(false);
   };
 

@@ -14,7 +14,7 @@ const UPSTASH_KEY = process.env.UPSTASH_CONSENT_KEY || "consent_events";
 async function ensureDir() {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
-  } catch (_) {}
+  } catch {}
 }
 
 // use normalizeUpstashList from src/lib/dsr-utils for robust parsing
@@ -31,7 +31,7 @@ async function pushToUpstash(event: unknown) {
     // keep list bounded (last 10k)
     try {
       await ltrim(UPSTASH_KEY, 0, 9999);
-    } catch (_) {}
+    } catch {}
 
     return true;
   } catch (err) {

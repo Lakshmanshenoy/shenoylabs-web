@@ -14,7 +14,7 @@ const ADMIN_KEY = process.env.CONSENT_ADMIN_KEY;
 async function ensureDir() {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
-  } catch (_) {}
+  } catch {}
 }
 import { normalizeUpstashList, deepUnwrapValue, parseForExport, parseForDelete } from "../../../lib/dsr-utils";
 
