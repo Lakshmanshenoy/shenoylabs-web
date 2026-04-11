@@ -240,19 +240,6 @@ export async function POST(req: Request) {
 
       const filtered = subject ? events.filter((e) => e && e.subject === subject) : events;
 
-      // Temporary debug: when request includes `debugRaw` (boolean) or `debug: "raw"`,
-      // include the raw LRANGE payload in the response body and set a debug header.
-      if (body?.debugRaw || body?.debug === "raw") {
-        try {
-          const headers = new Headers({ "Content-Type": "application/json", "x-upstash-raw": "included" });
-          return new Response(JSON.stringify({ events: filtered, rawUpstash: arrRaw }), { status: 200, headers });
-        } catch (e) {
-          // Fallback if serialization fails
-          const headers = new Headers({ "Content-Type": "application/json", "x-upstash-raw": "failed-serialize" });
-          return new Response(JSON.stringify({ events: filtered, rawUpstash: String(arrRaw) }), { status: 200, headers });
-        }
-      }
-
       return new Response(JSON.stringify({ events: filtered }), { status: 200 });
     }
 
