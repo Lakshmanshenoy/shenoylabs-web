@@ -35,10 +35,9 @@ type TurnstileVerificationResult =
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const limiter = new Map<string, number>();
 const verifiedTurnstileTokens = new Map<string, number>();
-// Support multiple env var names: original Upstash Redis REST vars and newer KV-style names
-const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL ?? null;
-const UPSTASH_TOKEN =
-  process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN ?? process.env.KV_REST_API_READ_ONLY_TOKEN ?? null;
+// Use KV-style REST env names (KV_REST_API_URL / KV_REST_API_TOKEN)
+const UPSTASH_URL = process.env.KV_REST_API_URL ?? null;
+const UPSTASH_TOKEN = process.env.KV_REST_API_TOKEN ?? process.env.KV_REST_API_READ_ONLY_TOKEN ?? null;
 const RATE_LIMIT_WINDOW_MS = 45_000;
 const TURNSTILE_TOKEN_WINDOW_MS = 5 * 60 * 1000;
 const TURNSTILE_EXPECTED_ACTION = "contact_form";
