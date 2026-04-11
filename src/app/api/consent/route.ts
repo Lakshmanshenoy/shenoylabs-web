@@ -16,6 +16,29 @@ async function ensureDir() {
   } catch (_) {}
 }
 
+function normalizeUpstashList(arr: any): any[] {
+  if (!arr) return [];
+
+  if (typeof arr === "object" && !Array.isArray(arr) && "result" in arr && Array.isArray((arr as any).result)) {
+    arr = (arr as any).result;
+  }
+
+  if (typeof arr === "string") {
+    try {
+      const parsed = JSON.parse(arr);
+      if (Array.isArray(parsed)) arr = parsed;
+    } catch {
+      // leave as-is
+    }
+  }
+
+  if (Array.isArray(arr) && arr.every((el) => Array.isArray(el))) {
+    arr = (arr as any[]).flat();
+  }
+
+  return Array.isArray(arr) ? arr : [];
+}
+
 async function pushToUpstash(event: any) {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) return false;
   try {
@@ -40,14 +63,17 @@ async function pushToUpstash(event: any) {
 async function readFromUpstash(): Promise<any[] | null> {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) return null;
   try {
-    const arr = (await lrange(UPSTASH_KEY, 0, -1)) || [];
-    if (!Array.isArray(arr)) return [];
-    return arr.map((s: string) => {
-      try {
-        return JSON.parse(s);
-      } catch {
-        return { raw: s };
+    const arrRaw = await lrange(UPSTASH_KEY, 0, -1);
+    const list = normalizeUpstashList(arrRaw);
+    return list.map((s: any) => {
+      if (typeof s === "string") {
+        try {
+          return JSON.parse(s);
+        } catch {
+          return { raw: s };
+        }
       }
+      return s;
     });
   } catch (err) {
     console.error("/api/consent upstash read error", err);
