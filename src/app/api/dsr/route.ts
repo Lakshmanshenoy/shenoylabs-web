@@ -155,9 +155,10 @@ export async function POST(req: Request) {
 
     if (action === "export") {
       let events: any[] = [];
+      let arrRaw: any = null;
 
       if (UPSTASH_URL && UPSTASH_TOKEN) {
-        const arrRaw = await upstashCmd(["LRANGE", UPSTASH_KEY, "0", "-1"]);
+        arrRaw = await upstashCmd(["LRANGE", UPSTASH_KEY, "0", "-1"]);
         events = parseForExport(arrRaw);
 
         // If a subject filter was provided but nothing matched, try a tolerant
@@ -193,19 +194,31 @@ export async function POST(req: Request) {
         }
       } else {
         const data = await fs.readFile(LOG_FILE, "utf8").catch(() => "");
-        events = data
-          .split(/\r?\n/)
-          .filter(Boolean)
-          .map((l) => {
-            try {
-              return JSON.parse(l);
-            } catch {
-              return { raw: l };
-            }
-          });
+        arrRaw = data.split(/\r?\n/).filter(Boolean);
+        events = arrRaw.map((l: string) => {
+          try {
+            return JSON.parse(l);
+          } catch {
+            return { raw: l };
+          }
+        });
       }
 
       const filtered = subject ? events.filter((e) => e && e.subject === subject) : events;
+
+      // Temporary debug: when request includes `debugRaw` (boolean) or `debug: "raw"`,
+      // include the raw LRANGE payload in the response body and set a debug header.
+      if (body?.debugRaw || body?.debug === "raw") {
+        try {
+          const headers = new Headers({ "Content-Type": "application/json", "x-upstash-raw": "included" });
+          return new Response(JSON.stringify({ events: filtered, rawUpstash: arrRaw }), { status: 200, headers });
+        } catch (e) {
+          // Fallback if serialization fails
+          const headers = new Headers({ "Content-Type": "application/json", "x-upstash-raw": "failed-serialize" });
+          return new Response(JSON.stringify({ events: filtered, rawUpstash: String(arrRaw) }), { status: 200, headers });
+        }
+      }
+
       return new Response(JSON.stringify({ events: filtered }), { status: 200 });
     }
 
