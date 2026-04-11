@@ -159,6 +159,38 @@ export async function POST(req: Request) {
       if (UPSTASH_URL && UPSTASH_TOKEN) {
         const arrRaw = await upstashCmd(["LRANGE", UPSTASH_KEY, "0", "-1"]);
         events = parseForExport(arrRaw);
+
+        // If a subject filter was provided but nothing matched, try a tolerant
+        // fallback: collect all string blobs from any nested shape and look for
+        // ones that contain the subject, then parse them.
+        if (subject && Array.isArray(events) && events.length === 0) {
+          const collected: string[] = [];
+          const collectStrings = (v: any) => {
+            if (v == null) return;
+            if (typeof v === "string") {
+              collected.push(v);
+            } else if (Array.isArray(v)) {
+              for (const it of v) collectStrings(it);
+            } else if (typeof v === "object") {
+              // sometimes elements may be objects with nested string values
+              for (const k of Object.keys(v)) collectStrings((v as any)[k]);
+            }
+          };
+
+          collectStrings(arrRaw);
+
+          const matches = collected
+            .filter((s) => s.includes(subject))
+            .map((s) => {
+              try {
+                return JSON.parse(s);
+              } catch {
+                return { raw: s };
+              }
+            });
+
+          if (matches.length > 0) events = matches;
+        }
       } else {
         const data = await fs.readFile(LOG_FILE, "utf8").catch(() => "");
         events = data
