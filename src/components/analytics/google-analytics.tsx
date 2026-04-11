@@ -10,13 +10,25 @@ type GoogleAnalyticsProps = {
 const CONSENT_KEY = "shenoylabs:consent:analytics";
 
 export function GoogleAnalytics({ gaId }: GoogleAnalyticsProps) {
-  const [enabled, setEnabled] = useState(false);
+  const [enabled, setEnabled] = useState<boolean>(() => {
+    try {
+      if (typeof window === "undefined") return false;
+      return localStorage.getItem(CONSENT_KEY) === "granted";
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     if (!gaId) return;
     try {
-      setEnabled(localStorage.getItem(CONSENT_KEY) === "granted");
-      const onChange = () => setEnabled(localStorage.getItem(CONSENT_KEY) === "granted");
+      const onChange = () => {
+        try {
+          setEnabled(localStorage.getItem(CONSENT_KEY) === "granted");
+        } catch {
+          setEnabled(false);
+        }
+      };
       window.addEventListener("cookie-consent-changed", onChange);
       return () => window.removeEventListener("cookie-consent-changed", onChange);
     } catch {

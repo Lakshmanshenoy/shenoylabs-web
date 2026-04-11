@@ -18,7 +18,7 @@ export function ThemeToggle() {
   const isDark = mounted && theme === "dark";
 
   useEffect(() => {
-    setMounted(true);
+    // schedule mount flag and initial sync on next animation frame
     const media = window.matchMedia("(prefers-color-scheme: dark)");
 
     const syncTheme = () => {
@@ -32,13 +32,18 @@ export function ThemeToggle() {
         syncTheme();
       }
     };
-    syncTheme();
+
+    const raf = requestAnimationFrame(() => {
+      setMounted(true);
+      syncTheme();
+    });
 
     media.addEventListener("change", syncTheme);
     window.addEventListener("storage", onStorage);
     window.addEventListener(THEME_EVENT, syncTheme);
 
     return () => {
+      cancelAnimationFrame(raf);
       media.removeEventListener("change", syncTheme);
       window.removeEventListener("storage", onStorage);
       window.removeEventListener(THEME_EVENT, syncTheme);

@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { rpush, lrange, ltrim } from "@/lib/upstash";
+import { normalizeUpstashList } from "@/lib/dsr-utils";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const LOG_FILE = path.join(DATA_DIR, "consent-events.ndjson");
@@ -16,35 +17,9 @@ async function ensureDir() {
   } catch (_) {}
 }
 
-function normalizeUpstashList(arr: any): any[] {
-  if (!arr) return [];
+// use normalizeUpstashList from src/lib/dsr-utils for robust parsing
 
-  // Unwrap { result: [...] } envelope responses
-  if (typeof arr === "object" && !Array.isArray(arr) && "result" in arr && Array.isArray((arr as any).result)) {
-    arr = (arr as any).result;
-  }
-
-  if (typeof arr === "string") {
-    try {
-      const parsed = JSON.parse(arr);
-      arr = parsed;
-    } catch {
-      return [arr];
-    }
-  }
-
-  if (Array.isArray(arr)) {
-    try {
-      arr = (arr as any[]).flat(Infinity);
-    } catch {
-      arr = (arr as any[]).flat();
-    }
-  }
-
-  return Array.isArray(arr) ? arr : [];
-}
-
-async function pushToUpstash(event: any) {
+async function pushToUpstash(event: unknown) {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) return false;
   try {
     const pushed = await rpush(UPSTASH_KEY, [JSON.stringify(event)]);
@@ -65,15 +40,15 @@ async function pushToUpstash(event: any) {
   }
 }
 
-async function readFromUpstash(): Promise<any[] | null> {
+async function readFromUpstash(): Promise<unknown[] | null> {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) return null;
   try {
     const arrRaw = await lrange(UPSTASH_KEY, 0, -1);
     const list = normalizeUpstashList(arrRaw);
-    return list.map((s: any) => {
+    return list.map((s: unknown) => {
       if (typeof s === "string") {
         try {
-          return JSON.parse(s);
+          return JSON.parse(s as string) as unknown;
         } catch {
           return { raw: s };
         }
@@ -110,12 +85,14 @@ export async function POST(req: Request) {
     };
 
     // If this is a revoke action, clear common analytics cookies server-side.
-    let responseHeaders: Record<string, string | string[]> | undefined = undefined;
+    let responseHeaders: Headers | undefined = undefined;
     if (action === "revoke") {
       const cookieAttrs = "Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; SameSite=Lax";
       const toClear = ["_ga", "_gid", "_gcl_au", "g_state", "AMP_TOKEN", "shenoylabs_consent"];
-      const setCookies = toClear.map((n) => `${n}=; ${cookieAttrs}`);
-      responseHeaders = { "Set-Cookie": setCookies };
+      responseHeaders = new Headers();
+      for (const n of toClear) {
+        responseHeaders.append("Set-Cookie", `${n}=; ${cookieAttrs}`);
+      }
     }
 
     // Try Upstash first (durable, serverless-friendly). If not configured/fails, fall back to local file (dev).

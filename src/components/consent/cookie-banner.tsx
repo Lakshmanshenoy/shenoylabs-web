@@ -6,14 +6,15 @@ import Link from "next/link";
 const CONSENT_KEY = "shenoylabs:consent:analytics";
 
 export default function CookieBanner() {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
+  const [visible, setVisible] = useState<boolean>(() => {
     try {
+      if (typeof window === "undefined") return false;
       const v = localStorage.getItem(CONSENT_KEY);
-      if (!v) setVisible(true);
-    } catch (_) {}
-  }, []);
+      return !v;
+    } catch (_) {
+      return false;
+    }
+  });
 
   const sendConsentEvent = async (action: "grant" | "revoke") => {
     try {

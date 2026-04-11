@@ -92,8 +92,8 @@ export async function POST(req: Request) {
     }
 
     if (action === "export") {
-      let events: any[] = [];
-      let arrRaw: any = null;
+      let events: Array<Record<string, unknown> | { raw: unknown }> = [];
+      let arrRaw: unknown = null;
 
       if (UPSTASH_URL && UPSTASH_TOKEN) {
         arrRaw = await upstashCmd(["LRANGE", UPSTASH_KEY, "0", "-1"]);
@@ -104,15 +104,16 @@ export async function POST(req: Request) {
         // ones that contain the subject, then parse them.
         if (subject && Array.isArray(events) && events.length === 0) {
           const collected: string[] = [];
-          const collectStrings = (v: any) => {
+          const collectStrings = (v: unknown) => {
             if (v == null) return;
             if (typeof v === "string") {
               collected.push(v);
             } else if (Array.isArray(v)) {
               for (const it of v) collectStrings(it);
-            } else if (typeof v === "object") {
+            } else if (typeof v === "object" && v !== null) {
               // sometimes elements may be objects with nested string values
-              for (const k of Object.keys(v)) collectStrings((v as any)[k]);
+              const rec = v as Record<string, unknown>;
+              for (const k of Object.keys(rec)) collectStrings(rec[k]);
             }
           };
 
@@ -122,9 +123,9 @@ export async function POST(req: Request) {
             .filter((s) => s.includes(subject))
             .map((s) => {
               try {
-                return JSON.parse(s);
+                return JSON.parse(s) as Record<string, unknown>;
               } catch {
-                return { raw: s };
+                return { raw: s } as { raw: unknown };
               }
             });
 
@@ -132,17 +133,26 @@ export async function POST(req: Request) {
         }
       } else {
         const data = await fs.readFile(LOG_FILE, "utf8").catch(() => "");
-        arrRaw = data.split(/\r?\n/).filter(Boolean);
-        events = arrRaw.map((l: string) => {
+        const lines = data.split(/\r?\n/).filter(Boolean);
+        arrRaw = lines;
+        events = lines.map((l: string) => {
           try {
-            return JSON.parse(l);
+            return JSON.parse(l) as Record<string, unknown>;
           } catch {
-            return { raw: l };
+            return { raw: l } as { raw: unknown };
           }
         });
       }
 
-      const filtered = subject ? events.filter((e) => e && e.subject === subject) : events;
+      const filtered = subject
+        ? events.filter((e) => {
+            if (typeof e === "object" && e !== null && "subject" in e) {
+              const rec = e as Record<string, unknown>;
+              return String(rec.subject) === subject;
+            }
+            return false;
+          })
+        : events;
 
       return new Response(JSON.stringify({ events: filtered }), { status: 200 });
     }
@@ -159,12 +169,15 @@ export async function POST(req: Request) {
 
         for (const rawItem of list) {
           const parsedItem = deepUnwrapValue(rawItem);
-          let candidate: any = parsedItem;
+          let candidate: unknown = parsedItem;
           if (Array.isArray(candidate) && candidate.length === 1) candidate = candidate[0];
 
-          if (candidate && typeof candidate === "object" && candidate.subject === subject) {
-            deleted++;
-            continue;
+          if (candidate && typeof candidate === "object" && candidate !== null) {
+            const rec = candidate as Record<string, unknown>;
+            if (rec.subject === subject) {
+              deleted++;
+              continue;
+            }
           }
 
           // preserve original stored representation when re-pushing
