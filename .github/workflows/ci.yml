@@ -27,7 +27,7 @@ jobs:
           version: 8
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --no-workspace-root-check
+        run: pnpm install --frozen-lockfile
 
       - name: Typecheck (capture report)
         run: pnpm exec tsc --noEmit
@@ -62,7 +62,7 @@ jobs:
           version: 8
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --no-workspace-root-check
+        run: pnpm install --frozen-lockfile
 
       - name: Typecheck (capture report)
         run: pnpm exec tsc --noEmit 2>&1 | tee tsc-report.txt || true
