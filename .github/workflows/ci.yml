@@ -27,6 +27,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
+        continue-on-error: true
+
+      - name: Run ESLint (report only)
+        run: pnpm exec eslint --ext .js,.jsx,.ts,.tsx .
+        continue-on-error: true
+
       - name: Run tests
         run: pnpm test -- --run
         env:
