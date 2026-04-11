@@ -109,17 +109,26 @@ export async function POST(req: Request) {
       referer: req.headers.get("referer") || null,
     };
 
+    // If this is a revoke action, clear common analytics cookies server-side.
+    let responseHeaders: Record<string, string | string[]> | undefined = undefined;
+    if (action === "revoke") {
+      const cookieAttrs = "Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; SameSite=Lax";
+      const toClear = ["_ga", "_gid", "_gcl_au", "g_state", "AMP_TOKEN", "shenoylabs_consent"];
+      const setCookies = toClear.map((n) => `${n}=; ${cookieAttrs}`);
+      responseHeaders = { "Set-Cookie": setCookies };
+    }
+
     // Try Upstash first (durable, serverless-friendly). If not configured/fails, fall back to local file (dev).
     const pushed = await pushToUpstash(event);
     if (pushed) {
-      return new Response(JSON.stringify({ ok: true, store: "upstash" }), { status: 201 });
+      return new Response(JSON.stringify({ ok: true, store: "upstash" }), { status: 201, headers: responseHeaders });
     }
 
     // fallback to file
     await ensureDir();
     await fs.appendFile(LOG_FILE, JSON.stringify(event) + "\n", "utf8");
 
-    return new Response(JSON.stringify({ ok: true, store: "file" }), { status: 201 });
+    return new Response(JSON.stringify({ ok: true, store: "file" }), { status: 201, headers: responseHeaders });
   } catch (err) {
     console.error("/api/consent POST error", err);
     return new Response(JSON.stringify({ error: "server error" }), { status: 500 });
