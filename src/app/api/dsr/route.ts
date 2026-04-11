@@ -17,6 +17,61 @@ async function ensureDir() {
   } catch (_) {}
 }
 
+function normalizeUpstashList(arr: any): any[] {
+  if (!arr) return [];
+
+  // If the response is an object with a `result` array, use that
+  if (typeof arr === "object" && !Array.isArray(arr) && "result" in arr && Array.isArray((arr as any).result)) {
+    arr = (arr as any).result;
+  }
+
+  // If the response is a JSON string that encodes an array, try to parse it
+  if (typeof arr === "string") {
+    try {
+      const parsed = JSON.parse(arr);
+      if (Array.isArray(parsed)) arr = parsed;
+    } catch {
+      // keep as-is
+    }
+  }
+
+  // If it's an array of arrays (sometimes returned by wrappers), flatten one level
+  if (Array.isArray(arr) && arr.every((el) => Array.isArray(el))) {
+    arr = (arr as any[]).flat();
+  }
+
+  return Array.isArray(arr) ? arr : [];
+}
+
+function parseForExport(arr: any): any[] {
+  const list = normalizeUpstashList(arr);
+  return list.map((el: any) => {
+    if (typeof el === "string") {
+      try {
+        return JSON.parse(el);
+      } catch {
+        return { raw: el };
+      }
+    }
+    return el;
+  });
+}
+
+function parseForDelete(arr: any): any[] {
+  const list = normalizeUpstashList(arr);
+  return list.map((el: any) => {
+    if (typeof el === "string") {
+      try {
+        return JSON.parse(el);
+      } catch {
+        // for delete we want the original string preserved so it can be pushed back
+        return el;
+      }
+    }
+    return el;
+  });
+}
+
 async function upstashCmd(command: string[]) {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) return null;
   const cmd = (command[0] ?? "").toString().toUpperCase();
@@ -92,16 +147,8 @@ export async function POST(req: Request) {
       let events: any[] = [];
 
       if (UPSTASH_URL && UPSTASH_TOKEN) {
-        const arr = (await upstashCmd(["LRANGE", UPSTASH_KEY, "0", "-1"])) || [];
-        events = Array.isArray(arr)
-          ? arr.map((s: string) => {
-              try {
-                return JSON.parse(s);
-              } catch {
-                return { raw: s };
-              }
-            })
-          : [];
+        const arrRaw = await upstashCmd(["LRANGE", UPSTASH_KEY, "0", "-1"]);
+        events = parseForExport(arrRaw);
       } else {
         const data = await fs.readFile(LOG_FILE, "utf8").catch(() => "");
         events = data
@@ -124,16 +171,8 @@ export async function POST(req: Request) {
       if (!subject) return new Response(JSON.stringify({ error: "missing subject" }), { status: 400 });
 
       if (UPSTASH_URL && UPSTASH_TOKEN) {
-        const arr = (await upstashCmd(["LRANGE", UPSTASH_KEY, "0", "-1"])) || [];
-        const parsed = Array.isArray(arr)
-          ? arr.map((s: string) => {
-              try {
-                return JSON.parse(s);
-              } catch {
-                return s;
-              }
-            })
-          : [];
+        const arrRaw = await upstashCmd(["LRANGE", UPSTASH_KEY, "0", "-1"]);
+        const parsed = parseForDelete(arrRaw);
 
         const remaining = parsed.filter((e) => !(e && e.subject === subject));
         const deleted = parsed.length - remaining.length;
