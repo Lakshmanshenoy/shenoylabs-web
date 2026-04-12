@@ -30,6 +30,18 @@ jobs:
         run: |
           echo "Using committed .pnpm/allow-builds.json; no runtime approvals"
 
+      - name: Debug pnpm and allowlist
+        run: |
+          corepack enable
+          corepack prepare pnpm@10 --activate
+          echo "node: $(node -v)"
+          echo "pnpm: $(pnpm -v || true)"
+          echo "workspace file:"; sed -n '1,200p' pnpm-workspace.yaml || true
+          echo "allowlist exists:"; if [ -f .pnpm/allow-builds.json ]; then echo yes; else echo no; fi
+          echo "allowlist content:"; sed -n '1,200p' .pnpm/allow-builds.json || true
+          echo "pnpm allowBuilds config:"; pnpm config get --location=project --json allowBuilds || true
+          echo "pnpm onlyBuiltDependenciesFile config:"; pnpm config get --location=project --json onlyBuiltDependenciesFile || true
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
