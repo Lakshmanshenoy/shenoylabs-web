@@ -8,4 +8,6 @@ packages:
   - 'services/*'
 onlyBuiltDependenciesFile: .pnpm/allow-builds.json
 strictDepBuilds: true
-ignoredBuiltDependencies: []
+# `ignoredBuiltDependencies` is intentionally omitted — use the
+# committed allowlist `.pnpm/allow-builds.json` with
+# `onlyBuiltDependenciesFile` + `strictDepBuilds` for auditable approvals.
