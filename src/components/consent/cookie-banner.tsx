@@ -17,13 +17,23 @@ export default function CookieBanner() {
   });
 
   const sendConsentEvent = async (action: "grant" | "revoke") => {
+    const payload = { action: action === "grant" ? "grant" : "revoke", type: "analytics" };
     try {
-      await fetch("/api/consent", {
+      const res = await fetch("/api/consent", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: action === "grant" ? "grant" : "revoke", type: "analytics" }),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
-    } catch {}
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        console.error("/api/consent POST failed", res.status, text || res.statusText);
+      }
+    } catch (err) {
+      console.error("/api/consent send error", err);
+    }
   };
 
   const accept = async () => {
