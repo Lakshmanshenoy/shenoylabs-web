@@ -1,9 +1,17 @@
-const UPSTASH_URL = process.env.KV_REST_API_URL ?? null;
+const rawUpstashUrl = process.env.KV_REST_API_URL ?? "";
+const UPSTASH_URL = rawUpstashUrl ? rawUpstashUrl.replace(/^['\"]|['\"]$/g, "").trim() : null;
 const UPSTASH_TOKEN = process.env.KV_REST_API_TOKEN ?? process.env.KV_REST_API_READ_ONLY_TOKEN ?? null;
 
 async function request(path: string, options: { method?: string; body?: unknown } = {}) {
   if (!UPSTASH_URL || !UPSTASH_TOKEN) return null;
-  const url = `${UPSTASH_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  let url: string;
+  try {
+    // Use the URL constructor to build a correct request URL from the base
+    url = new URL(path.startsWith("/") ? path : `/${path}`, UPSTASH_URL).toString();
+  } catch (err) {
+    console.error("upstash invalid base URL or path", UPSTASH_URL, path, err);
+    return null;
+  }
   const headers: Record<string, string> = {
     Authorization: `Bearer ${UPSTASH_TOKEN}`,
   };

@@ -103,9 +103,14 @@ export async function POST(req: Request) {
 
     // fallback to file
     await ensureDir();
-    await fs.appendFile(LOG_FILE, JSON.stringify(event) + "\n", "utf8");
-
-    return new Response(JSON.stringify({ ok: true, store: "file" }), { status: 201, headers: responseHeaders });
+    try {
+      await fs.appendFile(LOG_FILE, JSON.stringify(event) + "\n", "utf8");
+      return new Response(JSON.stringify({ ok: true, store: "file" }), { status: 201, headers: responseHeaders });
+    } catch (err) {
+      console.error("/api/consent file fallback error", err);
+      // Both Upstash and file fallback failed — report service unavailable instead of a generic 500
+      return new Response(JSON.stringify({ error: "service unavailable" }), { status: 503 });
+    }
   } catch (err) {
     console.error("/api/consent POST error", err);
     return new Response(JSON.stringify({ error: "server error" }), { status: 500 });
