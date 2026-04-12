@@ -48,6 +48,11 @@ jobs:
           pnpm config set --location=project onlyBuiltDependenciesFile .pnpm/allow-builds.json
           pnpm config set --location=project allowBuilds "$(cat .pnpm/allow-builds.json)"
 
+      - name: Force pnpm v10
+        run: |
+          npm i -g pnpm@10
+          pnpm -v
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -86,6 +91,11 @@ jobs:
       - name: Use committed pnpm allowlist
         run: |
           echo "Using committed .pnpm/allow-builds.json; no runtime approvals"
+
+      - name: Force pnpm v10
+        run: |
+          npm i -g pnpm@10
+          pnpm -v
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
