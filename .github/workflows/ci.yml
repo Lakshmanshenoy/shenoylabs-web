@@ -19,18 +19,24 @@ jobs:
           node-version: '24'
 
       - name: Enable Corepack + prepare pnpm
-        run: corepack enable && corepack prepare pnpm@9 --activate
+        run: corepack enable && corepack prepare pnpm@10 --activate
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 9
+          version: 10
 
       - name: Allow pnpm build scripts (non-interactive)
         run: |
           corepack enable
-          corepack prepare pnpm@9 --activate
+          corepack prepare pnpm@10 --activate
+          # set modern allowBuilds (v10.26+) and keep onlyBuiltDependencies for compatibility
+          pnpm config set --location=project --json allowBuilds '{"esbuild":true,"msw":true,"sharp":true,"unrs-resolver":true}' || true
           pnpm config set --location=project --json onlyBuiltDependencies '["esbuild","msw","sharp","unrs-resolver"]' || true
+          # diagnostics
+          pnpm config get --location=project --json allowBuilds || true
+          pnpm config get --location=project --json onlyBuiltDependencies || true
+          cat pnpm-workspace.yaml || true
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
