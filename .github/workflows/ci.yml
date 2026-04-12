@@ -42,6 +42,12 @@ jobs:
           echo "pnpm allowBuilds config:"; pnpm config get --location=project --json allowBuilds || true
           echo "pnpm onlyBuiltDependenciesFile config:"; pnpm config get --location=project --json onlyBuiltDependenciesFile || true
 
+      - name: Apply pnpm allowlist config
+        run: |
+          # Ensure the project pnpm config explicitly uses the committed allowlist
+          pnpm config set --location=project onlyBuiltDependenciesFile .pnpm/allow-builds.json
+          pnpm config set --location=project allowBuilds "$(cat .pnpm/allow-builds.json)"
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
