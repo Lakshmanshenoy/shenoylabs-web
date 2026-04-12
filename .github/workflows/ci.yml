@@ -26,11 +26,11 @@ jobs:
         with:
           version: 9
 
-      - name: Approve pnpm build scripts
+      - name: Allow pnpm build scripts (non-interactive)
         run: |
           corepack enable
           corepack prepare pnpm@9 --activate
-          pnpm approve-builds --yes || true
+          pnpm config set --location=project --json onlyBuiltDependencies '["esbuild","msw","sharp","unrs-resolver"]' || true
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -67,11 +67,11 @@ jobs:
         with:
           version: 9
 
-      - name: Approve pnpm build scripts
+      - name: Allow pnpm build scripts (non-interactive)
         run: |
           corepack enable
           corepack prepare pnpm@9 --activate
-          pnpm approve-builds --yes || true
+          pnpm config set --location=project --json onlyBuiltDependencies '["esbuild","msw","sharp","unrs-resolver"]' || true
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
