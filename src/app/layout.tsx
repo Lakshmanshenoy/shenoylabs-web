@@ -69,6 +69,7 @@ export default function RootLayout({
             } catch {}
           `}
         </Script>
+        <link rel="preload" as="image" href={siteConfig.ogImage} />
       </head>
       {/* suppressHydrationWarning prevents false positives from browser extensions
            that mutate body attributes (e.g. Grammarly) after server render. */}

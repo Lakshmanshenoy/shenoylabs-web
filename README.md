@@ -34,3 +34,26 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Verification
+
+To verify the `CONSENT_ADMIN_KEY` and exercise the consent endpoints after deployment or when testing locally:
+
+- Ensure the production environment variable `CONSENT_ADMIN_KEY` is set in your deployment environment.
+- The repository includes a helper script: [scripts/verify_consent_key.sh](scripts/verify_consent_key.sh).
+
+Example — use the key from your local `.env.local` and run the script from the repo root:
+
+```bash
+BASE_URL=$(grep -E '^NEXT_PUBLIC_SITE_URL=' .env.local | cut -d= -f2-) \
+CONSENT_ADMIN_KEY=$(grep -E '^CONSENT_ADMIN_KEY=' .env.local | cut -d= -f2-) \
+bash scripts/verify_consent_key.sh
+```
+
+Or run against a deployed URL:
+
+```bash
+BASE_URL=https://shenoylabs.com CONSENT_ADMIN_KEY=<your_key_here> bash scripts/verify_consent_key.sh
+```
+
+Check the script output for HTTP status codes and presence of the `events` array in the admin GET response.
