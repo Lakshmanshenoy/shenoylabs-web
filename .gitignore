@@ -41,3 +41,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 dev-console-network.log
+
+# Editor / local IDE
+.vscode/
+
+# GH CLI run logs and archives
+.gh_run*
+.gh_run_logs_*.zip
