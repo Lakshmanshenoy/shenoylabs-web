@@ -54,16 +54,16 @@ jobs:
           pnpm -v
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npx pnpm@10 install --frozen-lockfile
 
       - name: Typecheck (capture report)
-        run: pnpm exec tsc --noEmit
+        run: npx pnpm@10 exec tsc --noEmit
 
       - name: Run ESLint (fail on error)
-        run: pnpm exec eslint --ext .js,.jsx,.ts,.tsx .
+        run: npx pnpm@10 exec eslint --ext .js,.jsx,.ts,.tsx .
 
       - name: Run tests
-        run: pnpm test -- --run
+        run: npx pnpm@10 test -- --run
         env:
           CI: true
 
@@ -98,10 +98,10 @@ jobs:
           pnpm -v
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npx pnpm@10 install --frozen-lockfile
 
       - name: Typecheck (capture report)
-        run: pnpm exec tsc --noEmit 2>&1 | tee tsc-report.txt || true
+        run: npx pnpm@10 exec tsc --noEmit 2>&1 | tee tsc-report.txt || true
         continue-on-error: true
 
       - name: Upload TypeScript report
@@ -111,7 +111,7 @@ jobs:
           path: tsc-report.txt
 
       - name: Run ESLint (JSON report)
-        run: pnpm exec eslint --ext .js,.jsx,.ts,.tsx . -f json -o eslint-report.json || true
+        run: npx pnpm@10 exec eslint --ext .js,.jsx,.ts,.tsx . -f json -o eslint-report.json || true
         continue-on-error: true
 
       - name: Upload ESLint report
