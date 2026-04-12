@@ -6,17 +6,6 @@ packages:
   - 'apps/*'
   - 'modules/*'
   - 'services/*'
-
-allowBuilds:
-  esbuild: true
-  msw: true
-  sharp: true
-  unrs-resolver: true
-
+onlyBuiltDependenciesFile: .pnpm/allow-builds.json
+strictDepBuilds: true
 ignoredBuiltDependencies: []
-
-onlyBuiltDependencies:
-  - esbuild
-  - msw
-  - sharp
-  - unrs-resolver

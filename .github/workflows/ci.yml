@@ -26,17 +26,9 @@ jobs:
         with:
           version: 10
 
-      - name: Allow pnpm build scripts (non-interactive)
+      - name: Use committed pnpm allowlist
         run: |
-          corepack enable
-          corepack prepare pnpm@10 --activate
-          # set modern allowBuilds (v10.26+) and keep onlyBuiltDependencies for compatibility
-          pnpm config set --location=project --json allowBuilds '{"esbuild":true,"msw":true,"sharp":true,"unrs-resolver":true}' || true
-          pnpm config set --location=project --json onlyBuiltDependencies '["esbuild","msw","sharp","unrs-resolver"]' || true
-          # diagnostics
-          pnpm config get --location=project --json allowBuilds || true
-          pnpm config get --location=project --json onlyBuiltDependencies || true
-          cat pnpm-workspace.yaml || true
+          echo "Using committed .pnpm/allow-builds.json; no runtime approvals"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -73,11 +65,9 @@ jobs:
         with:
           version: 9
 
-      - name: Allow pnpm build scripts (non-interactive)
+      - name: Use committed pnpm allowlist
         run: |
-          corepack enable
-          corepack prepare pnpm@9 --activate
-          pnpm config set --location=project --json onlyBuiltDependencies '["esbuild","msw","sharp","unrs-resolver"]' || true
+          echo "Using committed .pnpm/allow-builds.json; no runtime approvals"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
