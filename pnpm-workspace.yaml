@@ -1,5 +1,12 @@
+# Workspace packages: include root and common monorepo globs so the repo
+# can expand into a multi-package layout later without breaking CI.
 packages:
   - '.'
+  - 'packages/*'
+  - 'apps/*'
+  - 'modules/*'
+  - 'services/*'
+
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
