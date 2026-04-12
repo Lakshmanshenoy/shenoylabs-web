@@ -26,6 +26,12 @@ jobs:
         with:
           version: 9
 
+      - name: Approve pnpm build scripts
+        run: |
+          corepack enable
+          corepack prepare pnpm@9 --activate
+          pnpm approve-builds --yes || true
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -60,6 +66,12 @@ jobs:
         uses: pnpm/action-setup@v6
         with:
           version: 9
+
+      - name: Approve pnpm build scripts
+        run: |
+          corepack enable
+          corepack prepare pnpm@9 --activate
+          pnpm approve-builds --yes || true
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
