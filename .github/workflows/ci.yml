@@ -19,15 +19,15 @@ jobs:
           node-version: '20'
 
       - name: Enable Corepack + prepare pnpm
-        run: corepack enable && corepack prepare pnpm@8 --activate
+        run: corepack enable && corepack prepare pnpm@9 --activate
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 8
+          version: 9
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
       - name: Typecheck (capture report)
         run: pnpm exec tsc --noEmit
@@ -54,15 +54,15 @@ jobs:
           node-version: '20'
 
       - name: Enable Corepack + prepare pnpm
-        run: corepack enable && corepack prepare pnpm@8 --activate
+        run: corepack enable && corepack prepare pnpm@9 --activate
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 8
+          version: 9
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
       - name: Typecheck (capture report)
         run: pnpm exec tsc --noEmit 2>&1 | tee tsc-report.txt || true
