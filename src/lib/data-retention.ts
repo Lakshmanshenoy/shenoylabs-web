@@ -12,4 +12,6 @@ export const DATA_RETENTION_DAYS = {
 
 export const msFromDays = (d: number) => d * 24 * 60 * 60 * 1000;
 
-export default { DATA_RETENTION_DAYS, msFromDays };
+const dataRetention = { DATA_RETENTION_DAYS, msFromDays };
+
+export default dataRetention;
