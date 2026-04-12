@@ -7,10 +7,10 @@ packages:
   - 'modules/*'
   - 'services/*'
 
+ignoredBuiltDependencies: [ esbuild, msw ]
+
 onlyBuiltDependencies:
   - esbuild
   - msw
   - sharp
   - unrs-resolver
-
-ignoredBuiltDependencies: []
