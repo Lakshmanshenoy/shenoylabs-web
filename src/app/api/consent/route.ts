@@ -63,9 +63,78 @@ async function readFromUpstash(): Promise<unknown[] | null> {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const action = body?.action;
-    const type = body?.type;
+    // Robust body parsing: prefer JSON, but accept urlencoded, colon-separated, or simple text fallbacks.
+    let body: any = {};
+    try {
+      const raw = (await req.text()) || "";
+      const contentType = (req.headers.get("content-type") || "").toLowerCase();
+      const trimmed = raw.trim();
+
+      // Try JSON first (either content-type or looks like JSON)
+      if (contentType.includes("application/json") || trimmed.startsWith("{") || trimmed.startsWith("[")) {
+        try {
+          body = JSON.parse(trimmed || "{}");
+        } catch (e) {
+          // fallthrough to other parsers
+        }
+      }
+
+      // Parse form-urlencoded or key=value pairs
+      if (!body || Object.keys(body).length === 0) {
+        try {
+          if (contentType.includes("application/x-www-form-urlencoded") || trimmed.includes("=") || trimmed.includes("&")) {
+            const params = new URLSearchParams(trimmed);
+            body = Object.fromEntries(params.entries());
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      // Parse simple colon-separated pairs like "action:grant" or newline-separated
+      if (!body || Object.keys(body).length === 0) {
+        if (trimmed.includes(":")) {
+          const obj: Record<string, string> = {};
+          const parts = trimmed.split(/\r?\n|&|;/);
+          for (const p of parts) {
+            const idx = p.indexOf(":");
+            if (idx > -1) {
+              const k = p.slice(0, idx).trim();
+              const v = p.slice(idx + 1).trim();
+              if (k) obj[k] = v;
+            }
+          }
+          if (Object.keys(obj).length > 0) body = obj;
+        }
+      }
+
+      // Single-token fallback: 'grant' or 'revoke' -> action
+      if ((!body || Object.keys(body).length === 0) && (trimmed === "grant" || trimmed === "revoke")) {
+        body = { action: trimmed };
+      }
+
+      // Final fallback: if still empty, attach raw
+      if (!body || Object.keys(body).length === 0) {
+        if (trimmed.length > 0) body = { raw: trimmed };
+        else body = {};
+      }
+
+      // Log when we had to use a non-JSON fallback for troubleshooting
+      if (trimmed && !contentType.includes("application/json") ) {
+        console.warn("/api/consent parsed non-JSON body via fallback", { parsed: { action: body?.action, type: body?.type } });
+      }
+    } catch (e) {
+      console.error("/api/consent POST error reading body", e);
+      body = {};
+    }
+
+    let action = body?.action;
+    let type = body?.type;
+    // Backwards-compatibility: default missing `type` to `analytics` when action is present
+    if (action && !type) {
+      type = "analytics";
+      console.warn("/api/consent: missing type, defaulting to 'analytics'");
+    }
 
     if (!action || (action !== "grant" && action !== "revoke")) {
       return new Response(JSON.stringify({ error: "invalid action" }), { status: 400 });
