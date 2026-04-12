@@ -64,7 +64,7 @@ async function readFromUpstash(): Promise<unknown[] | null> {
 export async function POST(req: Request) {
   try {
     // Robust body parsing: prefer JSON, but accept urlencoded, colon-separated, or simple text fallbacks.
-    let body: any = {};
+    let body: Record<string, unknown> = {};
     try {
       const raw = (await req.text()) || "";
       const contentType = (req.headers.get("content-type") || "").toLowerCase();
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
       if (contentType.includes("application/json") || trimmed.startsWith("{") || trimmed.startsWith("[")) {
         try {
           body = JSON.parse(trimmed || "{}");
-        } catch (e) {
+        } catch {
           // fallthrough to other parsers
         }
       }
@@ -86,7 +86,7 @@ export async function POST(req: Request) {
             const params = new URLSearchParams(trimmed);
             body = Object.fromEntries(params.entries());
           }
-        } catch (e) {
+        } catch {
           // ignore
         }
       }
@@ -128,7 +128,7 @@ export async function POST(req: Request) {
       body = {};
     }
 
-    let action = body?.action;
+    const action = body?.action;
     let type = body?.type;
     // Backwards-compatibility: default missing `type` to `analytics` when action is present
     if (action && !type) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 const CONSENT_KEY = "shenoylabs:consent:analytics";
@@ -15,6 +15,15 @@ export default function CookieBanner() {
       return false;
     }
   });
+
+  const [announce, setAnnounce] = useState<string>("");
+  const acceptRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (visible) {
+      acceptRef.current?.focus();
+    }
+  }, [visible]);
 
   const sendConsentEvent = async (action: "grant" | "revoke") => {
     const payload = { action: action === "grant" ? "grant" : "revoke", type: "analytics" };
@@ -41,22 +50,38 @@ export default function CookieBanner() {
       localStorage.setItem(CONSENT_KEY, "granted");
       window.dispatchEvent(new Event("cookie-consent-changed"));
       sendConsentEvent("grant");
-    } catch {}
+      setAnnounce("Analytics cookies accepted.");
+    } catch {
+      setAnnounce("Analytics cookies accepted.");
+    }
     setVisible(false);
   };
 
-  const dismiss = async () => {
+  const reject = async () => {
     try {
       localStorage.setItem(CONSENT_KEY, "denied");
       sendConsentEvent("revoke");
-    } catch {}
+      setAnnounce("Analytics cookies rejected.");
+    } catch {
+      setAnnounce("Analytics cookies rejected.");
+    }
     setVisible(false);
   };
 
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-[60] mx-auto max-w-3xl rounded-xl bg-card/95 p-4 shadow-lg">
+    <div
+      role="region"
+      aria-label="Cookie consent"
+      aria-describedby="cookie-banner-desc"
+      className="fixed bottom-4 left-4 right-4 z-[60] mx-auto max-w-3xl rounded-xl bg-card/95 p-4 shadow-lg"
+    >
+      <p id="cookie-banner-desc" className="sr-only">
+        This site uses analytics cookies. You can accept, reject, or manage cookie
+        preferences.
+      </p>
+
       <div className="flex items-start justify-between gap-4">
         <div className="text-sm leading-6 text-muted-foreground">
           <p>
@@ -68,14 +93,24 @@ export default function CookieBanner() {
             {' '}for details.
           </p>
         </div>
+
         <div className="flex shrink-0 items-center gap-2">
           <button
-            onClick={dismiss}
+            onClick={reject}
             className="rounded-md border border-border/60 bg-transparent px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted/5"
           >
-            Dismiss
+            Reject
           </button>
+
+          <Link
+            href="/privacy-policy"
+            className="rounded-md border border-border/60 bg-transparent px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted/5"
+          >
+            Manage
+          </Link>
+
           <button
+            ref={acceptRef}
             onClick={accept}
             className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary/90"
           >
@@ -83,6 +118,10 @@ export default function CookieBanner() {
           </button>
         </div>
       </div>
+
+      <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {announce}
+      </p>
     </div>
   );
 }
