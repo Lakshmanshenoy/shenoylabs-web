@@ -96,6 +96,13 @@ export async function POST(req: Request) {
     }
 
     // Try Upstash first (durable, serverless-friendly). If not configured/fails, fall back to local file (dev).
+    // If Upstash is not configured in production, refuse to attempt the file fallback
+    // because serverless runtimes may not allow writing to the project filesystem.
+    if ((!UPSTASH_URL || !UPSTASH_TOKEN) && (process.env.NODE_ENV === "production" || process.env.VERCEL === "1")) {
+      console.error("/api/consent: Upstash not configured in production; aborting to avoid file-system fallback");
+      return new Response(JSON.stringify({ error: "service unavailable" }), { status: 503 });
+    }
+
     const pushed = await pushToUpstash(event);
     if (pushed) {
       return new Response(JSON.stringify({ ok: true, store: "upstash" }), { status: 201, headers: responseHeaders });
