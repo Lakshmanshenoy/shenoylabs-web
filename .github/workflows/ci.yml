@@ -48,6 +48,22 @@ jobs:
           pnpm config set --location=project onlyBuiltDependenciesFile .pnpm/allow-builds.json
           pnpm config set --location=project allowBuilds "$(cat .pnpm/allow-builds.json)"
 
+      - name: Assert pnpm allowlist config
+        run: |
+          # Fail early if allowlist file is missing or project config isn't set
+          if [ ! -f .pnpm/allow-builds.json ]; then
+            echo ".pnpm/allow-builds.json not found" >&2
+            ls -la .pnpm || true
+            exit 1
+          fi
+          onlyBuilt=$(pnpm config get --location=project --json onlyBuiltDependenciesFile || echo null)
+          if [ "$onlyBuilt" != "\".pnpm/allow-builds.json\"" ] && [ "$onlyBuilt" != ".pnpm/allow-builds.json" ]; then
+            echo "pnpm onlyBuiltDependenciesFile is not set to .pnpm/allow-builds.json (value: $onlyBuilt)" >&2
+            pnpm config list --location=project || true
+            exit 1
+          fi
+          echo "pnpm allowlist present and project config set."
+
 
       - name: Install dependencies
         run: npx pnpm@10 install --frozen-lockfile
