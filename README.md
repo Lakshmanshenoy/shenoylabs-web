@@ -1,3 +1,20 @@
+# Development
+
+Run the checks (ESLint + TypeScript) locally:
+
+```bash
+# preferred (uses your package manager to run the script)
+pnpm run check
+# or
+npm run check
+```
+
+Or run the script directly:
+
+```bash
+sh ./scripts/checks.sh
+```
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
