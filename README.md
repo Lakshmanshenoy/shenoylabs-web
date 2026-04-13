@@ -33,6 +33,53 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+### TinaCMS
+
+This repository includes a TinaCMS schema at `tina/config.ts` for MDX and homepage JSON content.
+
+Run Tina + Next locally:
+
+```bash
+pnpm dev:tina
+```
+
+Use the regular app server (without Tina sidebar):
+
+```bash
+pnpm dev
+```
+
+For cloud-backed Tina editing/builds, set:
+
+```bash
+NEXT_PUBLIC_TINA_CLIENT_ID=<your_client_id>
+TINA_TOKEN=<your_readonly_token>
+```
+
+Local Git bridge (no cloud)
+
+This repository supports a local Git-backed editing flow using Tina's isomorphic git bridge. Edits made in the Tina admin will be committed directly into the repository on the machine running the dev server.
+
+Quick start (local only):
+
+```bash
+# Run the site with Tina admin and local git bridge
+pnpm dev:tina
+```
+
+Notes:
+- Ensure your git user is configured so commits have an author:
+
+```bash
+git config user.name "Your Name"
+git config user.email "you@example.com"
+```
+- After editing in the admin, review changes with `git status` and push as usual.
+
+GitHub-backed (no Tina Cloud)
+
+If you prefer web editing for collaborators without using Tina Cloud, we can add a GitHub-backed flow next. That requires a GitHub token for the server to create commits/PRs and a small server-side bridge or configuration to push changes.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

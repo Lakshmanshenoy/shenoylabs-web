@@ -48,3 +48,7 @@ dev-console-network.log
 # GH CLI run logs and archives
 .gh_run*
 .gh_run_logs_*.zip
+
+# TinaCMS
+/admin/
+/.tina/
