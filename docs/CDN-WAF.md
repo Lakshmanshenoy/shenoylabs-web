@@ -20,6 +20,16 @@ Environment
   - `LOG_SAMPLE_RATE` (default: 10) — only 1-in-N events are written to Upstash for logging. Use a higher value to reduce write volume.
   - The middleware sets the Upstash key TTL only when the counter is first created to avoid an extra write on every request.
 
+  Cookie token-bucket (zero-cost, recommended)
+  -------------------------------------------
+
+  - `RATE_LIMIT_COOKIE_SECRET` — when set, middleware will use a signed cookie token-bucket per client instead of Upstash for fast, zero-cost rate limiting. The middleware stores an HMAC-signed payload in a secure HttpOnly cookie and refills tokens over time. This avoids additional Upstash requests and is fully stateless on the server.
+  - `RATE_LIMIT_COOKIE_NAME` — optional cookie name (defaults to `rbucket`).
+
+  Notes:
+  - The cookie approach is fail-safe: if the cookie logic fails, the middleware will fall back to the existing Upstash-based counter.
+  - Keep `RATE_LIMIT_COOKIE_SECRET` secret and rotate if needed. Rotating requires changing the secret and optionally evicting existing cookies by changing `RATE_LIMIT_COOKIE_NAME`.
+
 Notes and next steps
 - This middleware is a software-layer protection; for higher capacity and stricter
   enforcement use your CDN/WAF provider's built-in rate limiting (Cloudflare Rate

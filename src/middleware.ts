@@ -7,6 +7,90 @@ import { incr, setKey, rpush } from "./lib/upstash";
 const RATE_LIMIT_REQUESTS = Number(process.env.RATE_LIMIT_REQUESTS ?? 60);
 const RATE_LIMIT_WINDOW_S = Number(process.env.RATE_LIMIT_WINDOW_S ?? 60);
 const LOG_SAMPLE_RATE = Number(process.env.LOG_SAMPLE_RATE ?? 10);
+const COOKIE_SECRET = process.env.RATE_LIMIT_COOKIE_SECRET ?? null;
+const COOKIE_NAME = process.env.RATE_LIMIT_COOKIE_NAME ?? "rbucket";
+
+// Cached HMAC key for the cookie signer (avoid re-importing every request)
+let _cachedHmacKey: CryptoKey | null = null;
+let _cachedHmacSecret: string | null = null;
+
+async function getHmacKey(secret: string) {
+  if (_cachedHmacKey && _cachedHmacSecret === secret) return _cachedHmacKey;
+  const enc = new TextEncoder();
+  const keyData = enc.encode(secret);
+  // Web Crypto API import
+  const key = await crypto.subtle.importKey("raw", keyData, { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+  _cachedHmacKey = key;
+  _cachedHmacSecret = secret;
+  return key;
+}
+
+function base64UrlEncode(bytes: Uint8Array) {
+  // Prefer Buffer when available (Node), fall back to btoa
+  let b64 = "";
+  if (typeof Buffer !== "undefined") {
+    b64 = Buffer.from(bytes).toString("base64");
+  } else {
+    let s = "";
+    for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    b64 = typeof btoa !== "undefined" ? btoa(s) : "";
+  }
+  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function base64UrlDecodeToString(b64u: string) {
+  const b64 = b64u.replace(/-/g, "+").replace(/_/g, "/") + "==".slice((2 - b64u.length * 3) & 3);
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(b64, "base64").toString("utf8");
+  }
+  const bin = typeof atob !== "undefined" ? atob(b64) : "";
+  try {
+    // decode UTF-8
+    return decodeURIComponent(
+      Array.prototype.map
+        .call(bin, function (c: string) {
+          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join("")
+    );
+  } catch {
+    return bin;
+  }
+}
+
+async function signPayload(secret: string, payloadStr: string) {
+  const key = await getHmacKey(secret);
+  const enc = new TextEncoder();
+  const sigBuf = await crypto.subtle.sign("HMAC", key, enc.encode(payloadStr));
+  return base64UrlEncode(new Uint8Array(sigBuf));
+}
+
+async function verifySignature(secret: string, payloadStr: string, sigB64u: string) {
+  try {
+    const key = await getHmacKey(secret);
+    const enc = new TextEncoder();
+    const sig = Uint8Array.from(atob ? atob(sigB64u.replace(/-/g, "+").replace(/_/g, "/")) : [], (c) => c.charCodeAt(0));
+    // Use subtle.verify with reconstructed signature buffer
+    const ok = await crypto.subtle.verify("HMAC", key, sig, enc.encode(payloadStr));
+    return ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+function parseCookies(header: string | null) {
+  const out: Record<string, string> = {};
+  if (!header) return out;
+  const parts = header.split(";");
+  for (const p of parts) {
+    const idx = p.indexOf("=");
+    if (idx === -1) continue;
+    const name = p.slice(0, idx).trim();
+    const val = p.slice(idx + 1).trim();
+    out[name] = val;
+  }
+  return out;
+}
 
 function getIpFromRequest(req: NextRequest) {
   const xff = req.headers.get("x-forwarded-for");
@@ -47,6 +131,93 @@ export async function middleware(req: NextRequest) {
         // swallow logging errors
       }
       return new NextResponse("Forbidden", { status: 403 });
+    }
+
+    // Cookie token-bucket (stateless) — preferred no-cost enforcement when cookie secret is set
+    if (COOKIE_SECRET) {
+      try {
+        const cookieHeader = req.headers.get("cookie") || null;
+        const cookies = parseCookies(cookieHeader);
+        const raw = cookies[COOKIE_NAME] ?? null;
+        const now = Date.now();
+        const capacity = RATE_LIMIT_REQUESTS;
+        const windowS = RATE_LIMIT_WINDOW_S;
+
+        let tokens = capacity;
+        let last = now;
+
+        if (raw) {
+          const parts = raw.split(".");
+          if (parts.length === 2) {
+            const payloadB64 = parts[0];
+            const sig = parts[1];
+            const payloadStr = base64UrlDecodeToString(payloadB64);
+            const ok = await verifySignature(COOKIE_SECRET, payloadStr, sig).catch(() => false);
+            if (ok) {
+              try {
+                const parsed = JSON.parse(payloadStr) as { t?: number; l?: number };
+                tokens = typeof parsed.t === "number" ? parsed.t : capacity;
+                last = typeof parsed.l === "number" ? parsed.l : now;
+              } catch {
+                tokens = capacity;
+                last = now;
+              }
+            }
+          }
+        }
+
+        // Refill tokens based on elapsed time
+        const elapsedS = Math.max(0, (now - last) / 1000);
+        const rate = capacity / windowS; // tokens per second
+        let newTokens = Math.min(capacity, tokens + elapsedS * rate);
+
+        if (newTokens >= 1) {
+          newTokens = newTokens - 1;
+          const payloadStr = JSON.stringify({ t: newTokens, l: now });
+          const payloadB64u = base64UrlEncode(new TextEncoder().encode(payloadStr));
+          const sigB64u = await signPayload(COOKIE_SECRET, payloadStr);
+          const cookieVal = `${payloadB64u}.${sigB64u}`;
+          const res = NextResponse.next();
+          try {
+            res.cookies.set(COOKIE_NAME, cookieVal, {
+              httpOnly: true,
+              path: "/",
+              secure: true,
+              sameSite: "lax",
+              maxAge: windowS,
+            });
+          } catch {
+            // ignore cookie set failures
+          }
+          return res;
+        }
+
+        // Exceeded token bucket
+        try {
+          const payloadStr = JSON.stringify({ t: 0, l: now });
+          const payloadB64u = base64UrlEncode(new TextEncoder().encode(payloadStr));
+          const sigB64u = await signPayload(COOKIE_SECRET, payloadStr);
+          const cookieVal = `${payloadB64u}.${sigB64u}`;
+          const resp = new NextResponse("Too Many Requests", { status: 429 });
+          try {
+            resp.cookies.set(COOKIE_NAME, cookieVal, {
+              httpOnly: true,
+              path: "/",
+              secure: true,
+              sameSite: "lax",
+              maxAge: windowS,
+            });
+          } catch {
+            // ignore
+          }
+          return resp;
+        } catch (e) {
+          return new NextResponse("Too Many Requests", { status: 429 });
+        }
+      } catch (e) {
+        // If cookie/token logic fails, fall through to Upstash path
+        console.error("token-bucket cookie error", e);
+      }
     }
 
     // Rate limiting per IP
