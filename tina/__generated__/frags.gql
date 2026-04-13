@@ -1,0 +1,91 @@
+fragment ArticleParts on Article {
+  __typename
+  title
+  excerpt
+  date
+  category
+  primaryCategory
+  tags
+  author
+  depthLevel
+  coverImage
+  coverAlt
+  body
+}
+
+fragment ProjectParts on Project {
+  __typename
+  title
+  description
+  date
+  primaryCategory
+  tags
+  depthLevel
+  status
+  githubUrl
+  liveUrl
+  coverImage
+  coverAlt
+  body
+}
+
+fragment PageParts on Page {
+  __typename
+  title
+  description
+  body
+}
+
+fragment HomepageHeroParts on HomepageHero {
+  __typename
+  headline
+  identityLine
+  subheadline
+  primaryCta {
+    __typename
+    label
+    href
+  }
+  secondaryCta {
+    __typename
+    label
+    href
+  }
+  statusLine
+  tagline
+  visualImage
+  visualAlt
+  whatIDo {
+    __typename
+    icon
+    label
+  }
+  credentialFootnote
+}
+
+fragment HomepageFeaturedProjectsParts on HomepageFeaturedProjects {
+  __typename
+  projects {
+    __typename
+    slug
+    title
+    problem
+    whyItMatters
+    tags
+    thumbnail
+    thumbnailAlt
+    status
+    statusColor
+  }
+}
+
+fragment HomepageSupportCopyParts on HomepageSupportCopy {
+  __typename
+  heading
+  body
+  primaryCtaLabel
+  primaryCtaHref
+  secondaryCtaLabel
+  secondaryCtaHref
+  footnote
+}
