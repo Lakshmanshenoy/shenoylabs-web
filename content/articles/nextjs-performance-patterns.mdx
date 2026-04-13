@@ -1,14 +1,22 @@
 ---
 title: Next.js performance patterns that actually move the needle
-excerpt: A deep-dive into the RSC + streaming model, partial pre-rendering, and edge execution trade-offs.
-date: 2026-03-14
+excerpt: >-
+  A deep-dive into the RSC + streaming model, partial pre-rendering, and edge
+  execution trade-offs.
+date: 2026-03-14T00:00:00.000Z
 category: Technology
 primaryCategory: Technology
-tags: [nextjs, performance, rsc, streaming]
+tags:
+  - nextjs
+  - performance
+  - rsc
+  - streaming
 author: Lakshman Shenoy
 depthLevel: deep-dive
 coverImage: /images/articles/nextjs-performance-patterns.svg
-coverAlt: Next.js performance patterns cover artwork with streaming performance visual cues.
+coverAlt: >-
+  Next.js performance patterns cover artwork with streaming performance visual
+  cues.
 ---
 
 Performance is a product feature. Users do not wait — they leave.
@@ -75,12 +83,12 @@ Combine this with `<Suspense>` boundaries and your static shell becomes a CDN re
 
 ## 4. Edge vs Node runtime trade-offs
 
-| | Edge | Node |
-|---|---|---|
-| Cold start | ~0 ms | ~100 ms |
-| Memory | 128 MB | 3 GB |
-| Node APIs | ✗ | ✓ |
-| Geo-awareness | ✓ | ✗ |
+|               | Edge   | Node     |
+| ------------- | ------ | -------- |
+| Cold start    | \~0 ms | \~100 ms |
+| Memory        | 128 MB | 3 GB     |
+| Node APIs     | ✗      | ✓        |
+| Geo-awareness | ✓      | ✗        |
 
 Use Edge for lightweight middleware and auth checks. Use Node for anything touching the filesystem or heavy compute.
 
@@ -102,6 +110,6 @@ Explicitly set sizes for responsive images:
 
 This alone can reduce LCP by 40% on mobile.
 
----
+***
 
-*Profile first. The patterns above are high-leverage, but the highest-leverage thing is always: measure, then fix.*
+*Profile first. The patterns above are high-leverage, but the highest-leverage thing is always: measure, then fix…*
