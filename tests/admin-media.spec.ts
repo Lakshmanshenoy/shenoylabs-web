@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test("media admin upload and delete flow (mocked)", async ({ page }) => {
   // Intercept media API calls from the client and return mocked responses
+  const serverLogs: any[] = [];
   await page.route("**/media/**", async (route) => {
     const req = route.request();
     const url = req.url();
@@ -25,6 +26,20 @@ test("media admin upload and delete flow (mocked)", async ({ page }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pr: { url: "https://github.com/pr/999" }, src: "https://raw.githubusercontent.com/owner/repo/branch/public/images/new.txt" }),
       });
+      return;
+    }
+
+    // server-backed PR logs GET
+    if (url.endsWith("/api/media/prs") && req.method() === "GET") {
+      await route.fulfill({ status: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ logs: serverLogs }) });
+      return;
+    }
+
+    // server-backed PR logs POST
+    if (url.endsWith("/api/media/prs") && req.method() === "POST") {
+      const data = req.postData() ? JSON.parse(req.postData() as string) : {};
+      serverLogs.unshift(data);
+      await route.fulfill({ status: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ok: true }) });
       return;
     }
 

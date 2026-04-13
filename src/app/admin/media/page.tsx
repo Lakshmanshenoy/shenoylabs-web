@@ -21,11 +21,32 @@ export default function MediaAdminPage() {
   const PR_LOG_KEY = "tina_media_pr_log";
   const [prLogs, setPrLogs] = useState<PrLog[]>([]);
 
+  // load server-backed logs with localStorage fallback
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(PR_LOG_KEY);
-      if (raw) setPrLogs(JSON.parse(raw));
-    } catch (e) {}
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/media/prs", { headers: { "User-Agent": "Mozilla/5.0" } });
+        if (res.ok) {
+          const json = await res.json();
+          if (mounted && Array.isArray(json?.logs)) {
+            setPrLogs(json.logs);
+            return;
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // fallback to localStorage
+      try {
+        const raw = localStorage.getItem(PR_LOG_KEY);
+        if (raw && mounted) setPrLogs(JSON.parse(raw));
+      } catch (e) {}
+    })();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const addPrLog = (url: string, action: "upload" | "delete", filename?: string) => {
@@ -37,6 +58,18 @@ export default function MediaAdminPage() {
       } catch (e) {}
       return next;
     });
+    // try to persist server-side (best-effort)
+    (async () => {
+      try {
+        await fetch("/api/media/prs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(entry),
+        });
+      } catch (e) {
+        // ignore failures — localStorage remains as fallback
+      }
+    })();
   };
 
   useEffect(() => {
