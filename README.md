@@ -80,6 +80,40 @@ GitHub-backed (no Tina Cloud)
 
 If you prefer web editing for collaborators without using Tina Cloud, we can add a GitHub-backed flow next. That requires a GitHub token for the server to create commits/PRs and a small server-side bridge or configuration to push changes.
 
+GitHub-backed (self-hosted admin, no Tina Cloud)
+
+This repo includes a small helper API at `/api/tina/github` that can create a branch, commit file changes, and open a pull request using a GitHub token. This enables a self-hosted web admin that writes edits back to your repo without Tina Cloud.
+
+Steps to use the GitHub flow
+
+1. Create a GitHub Personal Access Token with `repo` scope.
+2. Set environment variables (see `.env.example`):
+
+```
+GITHUB_TOKEN=ghp_xxx
+GITHUB_REPOSITORY=owner/repo
+GITHUB_BASE_BRANCH=main
+```
+
+3. Build or run your admin and wire the admin save action to POST to `/api/tina/github` with JSON like:
+
+```json
+{
+	"changes": [
+		{ "path": "content/homepage/hero.json", "content": "{...}" }
+	],
+	"commitMessage": "Update homepage hero",
+	"prTitle": "Content updates via Tina"
+}
+```
+
+4. The API will create a branch `tina-edit-<ts>`, commit the changed files, and open a pull request into the base branch.
+
+Notes & next steps
+
+- This helper intentionally performs per-file content updates using the GitHub Contents API (simple, robust for MDX/JSON edits). For bulk edits in a single commit, we can extend it to create trees + single commit instead.
+- If you want, I can wire the generated Tina admin to call this endpoint automatically on save, and add a CI job to build and publish the admin to `/admin` on merges.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
