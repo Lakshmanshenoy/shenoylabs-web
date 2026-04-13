@@ -55,3 +55,4 @@ dev-console-network.log
 # Avoid committing server-side PR logs and optional built admin artifacts
 data/tina-media-prs.json
 public/admin/
+.eslintcache
