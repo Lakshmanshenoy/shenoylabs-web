@@ -1,0 +1,79 @@
+name: Build Tina Admin
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+jobs:
+  build-admin:
+    name: Build admin and upload artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '10'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Tina admin
+        run: pnpm build:tina
+
+      - name: Upload admin artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tina-admin
+          path: admin
+
+  publish-admin:
+    name: Publish built admin to public/admin (manual only)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout (full)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '10'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Tina admin
+        run: pnpm build:tina
+
+      - name: Copy built admin into public/admin
+        run: |
+          rm -rf public/admin || true
+          mkdir -p public
+          cp -a admin public/admin
+
+      - name: Commit and push built admin
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/admin
+          if git diff --staged --quiet; then echo "No admin changes to commit"; else git commit -m "chore(admin): update built Tina admin" && git push; fi

@@ -114,6 +114,12 @@ Notes & next steps
 - This helper intentionally performs per-file content updates using the GitHub Contents API (simple, robust for MDX/JSON edits). For bulk edits in a single commit, we can extend it to create trees + single commit instead.
 - If you want, I can wire the generated Tina admin to call this endpoint automatically on save, and add a CI job to build and publish the admin to `/admin` on merges.
 
+CI: build Tina admin
+
+There is a GitHub Actions workflow that builds the Tina admin and uploads it as an artifact on pushes to `main`. It also supports a manual `workflow_dispatch` run that will copy the built `admin/` into `public/admin` and commit it back to the repository (useful for publishing a static admin bundle).
+
+The workflow file is `.github/workflows/build-tina-admin.yml`.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
