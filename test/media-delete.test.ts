@@ -48,9 +48,9 @@ describe("media delete route (dry-run)", () => {
     const res: any = await (route as any).DELETE(req);
     const body = await res.json();
     // debug output on failure
-    // eslint-disable-next-line no-console
+     
     console.log('media-delete test result body:', body);
-    // eslint-disable-next-line no-console
+     
     console.log('fetch calls:', calls.map((c) => c.url));
 
     expect(body.ok).toBe(true);

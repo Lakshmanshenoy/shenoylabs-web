@@ -92,8 +92,9 @@ export default function MediaAdminPage() {
       const json = await res.json();
       setFiles(json.files || []);
       setDirectories(json.directories || []);
-    } catch (e: any) {
-      setError(e?.message || String(e));
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -129,8 +130,9 @@ export default function MediaAdminPage() {
       }
       // refresh
       fetchList();
-    } catch (e: any) {
-      setError(e?.message || String(e));
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
     } finally {
       setProcessingFile(null);
     }
@@ -171,8 +173,9 @@ export default function MediaAdminPage() {
       }
       fetchList();
       if (fileInputRef.current) fileInputRef.current.value = "";
-    } catch (e: any) {
-      setError(e?.message || String(e));
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
     } finally {
       setUploading(false);
     }

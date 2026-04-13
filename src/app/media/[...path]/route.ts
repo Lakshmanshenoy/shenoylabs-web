@@ -83,7 +83,7 @@ export async function DELETE(req: Request) {
 
     return jsonResponse({ ok: true, pr: { url: prJson.html_url, number: prJson.number } }, 200);
   } catch (err) {
-    // eslint-disable-next-line no-console
+     
     console.error("/media/* error", err);
     return jsonResponse({ error: "server error" }, 500);
   }

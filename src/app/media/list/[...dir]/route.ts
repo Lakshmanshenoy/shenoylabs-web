@@ -52,7 +52,7 @@ export async function GET(req: Request) {
 
     return jsonResponse({ cursor: 0, files, directories });
   } catch (err) {
-    // eslint-disable-next-line no-console
+     
     console.error('/media/list error', err);
     return jsonResponse({ error: 'server error' }, 500);
   }

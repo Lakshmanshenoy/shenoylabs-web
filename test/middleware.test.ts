@@ -92,7 +92,7 @@ describe("middleware edge rate-limit", () => {
       expect((upstash as any).rpush).toHaveBeenCalled();
     } else {
       // allow 200 (fail-open) but warn during test output
-      // eslint-disable-next-line no-console
+       
       console.warn("middleware returned 200 for over-limit case (fail-open)");
       expect(res.status).toBe(200);
     }

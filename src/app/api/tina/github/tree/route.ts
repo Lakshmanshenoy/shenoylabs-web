@@ -167,7 +167,7 @@ export async function POST(req: Request) {
 
     return jsonResponse({ ok: true, pr: { url: prJson.html_url, number: prJson.number } }, 201);
   } catch (err) {
-    // eslint-disable-next-line no-console
+     
     console.error("/api/tina/github/tree error", err);
     return jsonResponse({ error: "server error" }, 500);
   }

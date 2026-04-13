@@ -31,7 +31,7 @@ export async function GET() {
       return jsonResponse({ logs: [] }, 200);
     }
   } catch (err) {
-    // eslint-disable-next-line no-console
+     
     console.error("/api/media/prs GET error", err);
     return jsonResponse({ logs: [] }, 200);
   }
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
     // Fetch existing file if present
     const getRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(baseBranch)}`, { headers: ghHeaders });
-    let logs: any[] = [];
+    let logs: unknown[] = [];
     let sha: string | undefined = undefined;
     if (getRes.ok) {
       const getJson = await getRes.json();
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       const content = getJson?.content || "";
       try {
         logs = JSON.parse(Buffer.from(content, "base64").toString("utf8") || "[]");
-      } catch (e) {
+      } catch (e: unknown) {
         logs = [];
       }
     }
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
 
     const newContent = Buffer.from(JSON.stringify(logs, null, 2)).toString("base64");
 
-    const putBody: any = { message: `Tina media logs: add ${action}`, content: newContent, branch: baseBranch };
+    const putBody: Record<string, unknown> = { message: `Tina media logs: add ${action}`, content: newContent, branch: baseBranch };
     if (sha) putBody.sha = sha;
 
     const putRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`, {
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
     const putJson = await putRes.json();
     return jsonResponse({ ok: true, commit: putJson?.commit ?? null }, 200);
   } catch (err) {
-    // eslint-disable-next-line no-console
+     
     console.error("/api/media/prs POST error", err);
     return jsonResponse({ error: "server error" }, 500);
   }

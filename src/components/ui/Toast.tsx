@@ -14,15 +14,18 @@ export default function Toast({ message, type = "info", onClose, duration = 5000
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // animate in
-    setVisible(true);
-    if (!onClose) return;
+    // animate in on next frame to avoid synchronous setState in effect
+    const raf = requestAnimationFrame(() => setVisible(true));
+    if (!onClose) return () => cancelAnimationFrame(raf);
     const t = setTimeout(() => {
       // fade out then call onClose
       setVisible(false);
       setTimeout(() => onClose(), 220);
     }, duration);
-    return () => clearTimeout(t);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(t);
+    };
   }, [onClose, duration]);
 
   const colors: Record<string, string> = {

@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     }
 
     const form = await req.formData();
-    const file = form.get('file') as any;
+    const file = form.get('file') as File | null;
     const filenameField = form.get('filename') as string | null;
     const directoryField = form.get('directory') as string | null;
     if (!file) return jsonResponse({ error: 'no file provided' }, 400);
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     const repoPath = `public/${uploadPath}`;
 
     // read file into buffer and base64
-    const arrayBuffer = await file.arrayBuffer();
+    const arrayBuffer = await (file as File).arrayBuffer();
     const contentBase64 = Buffer.from(arrayBuffer).toString('base64');
 
     const commitMessage = `Tina media upload: ${filename}`;
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
 
     return jsonResponse({ success: true, src: rawUrl, pr: treeJson.pr });
   } catch (err) {
-    // eslint-disable-next-line no-console
+     
     console.error('/media/upload error', err);
     return jsonResponse({ error: 'server error' }, 500);
   }
