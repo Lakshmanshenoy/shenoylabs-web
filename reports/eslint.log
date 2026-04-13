@@ -1,0 +1,42 @@
+
+/Users/lakshmanshenoy/shenoylabs-web/src/app/admin/media/page.tsx
+   37:16  warning  'e' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+   45:16  warning  'e' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+   58:16  warning  'e' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+   69:16  warning  'e' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+   77:6   warning  React Hook useEffect has a missing dependency: 'fetchList'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  250:28  warning  'e' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+
+/Users/lakshmanshenoy/shenoylabs-web/src/app/api/media/prs/route.ts
+  30:14  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+  64:16  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/lakshmanshenoy/shenoylabs-web/src/app/api/tina/github/route.ts
+  5:15  warning  'NextRequest' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/lakshmanshenoy/shenoylabs-web/src/app/api/tina/github/tree/route.ts
+  12:10  warning  'encodePathSegments' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/lakshmanshenoy/shenoylabs-web/src/app/media/[...path]/route.ts
+  92:27  warning  'req' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/lakshmanshenoy/shenoylabs-web/src/app/media/upload/[...path]/route.ts
+  2:10  warning  'NextResponse' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/lakshmanshenoy/shenoylabs-web/src/middleware.ts
+   76:12  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+  130:16  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+  214:18  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+  238:18  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+  256:16  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/lakshmanshenoy/shenoylabs-web/tina/__generated__/client.ts
+  13:11  warning  'e' is defined but never used                          @typescript-eslint/no-unused-vars
+  23:11  warning  'e' is defined but never used                          @typescript-eslint/no-unused-vars
+  59:41  warning  '_relativePath' is assigned a value but never used     @typescript-eslint/no-unused-vars
+  59:56  warning  '_keepTemplateKey' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  59:74  warning  '_id' is assigned a value but never used               @typescript-eslint/no-unused-vars
+  59:79  warning  '_collection' is assigned a value but never used       @typescript-eslint/no-unused-vars
+
+✖ 23 problems (0 errors, 23 warnings)
+

@@ -33,6 +33,112 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+### TinaCMS
+
+This repository includes a TinaCMS schema at `tina/config.ts` for MDX and homepage JSON content.
+
+Run Tina + Next locally:
+
+```bash
+pnpm dev:tina
+```
+
+Use the regular app server (without Tina sidebar):
+
+```bash
+pnpm dev
+```
+
+For cloud-backed Tina editing/builds, set:
+
+```bash
+NEXT_PUBLIC_TINA_CLIENT_ID=<your_client_id>
+TINA_TOKEN=<your_readonly_token>
+```
+
+Local Git bridge (no cloud)
+
+This repository supports a local Git-backed editing flow using Tina's isomorphic git bridge. Edits made in the Tina admin will be committed directly into the repository on the machine running the dev server.
+
+Quick start (local only):
+
+```bash
+# Run the site with Tina admin and local git bridge
+pnpm dev:tina
+```
+
+Notes:
+- Ensure your git user is configured so commits have an author:
+
+```bash
+git config user.name "Your Name"
+git config user.email "you@example.com"
+```
+- After editing in the admin, review changes with `git status` and push as usual.
+
+GitHub-backed (no Tina Cloud)
+
+If you prefer web editing for collaborators without using Tina Cloud, we can add a GitHub-backed flow next. That requires a GitHub token for the server to create commits/PRs and a small server-side bridge or configuration to push changes.
+
+GitHub-backed (self-hosted admin, no Tina Cloud)
+
+This repo includes a small helper API at `/api/tina/github` that can create a branch, commit file changes, and open a pull request using a GitHub token. This enables a self-hosted web admin that writes edits back to your repo without Tina Cloud.
+
+Steps to use the GitHub flow
+
+1. Create a GitHub Personal Access Token with `repo` scope.
+2. Set environment variables (see `.env.local.example`):
+
+```
+GITHUB_TOKEN=ghp_xxx
+GITHUB_REPOSITORY=owner/repo
+GITHUB_BASE_BRANCH=main
+```
+
+3. Build or run your admin and wire the admin save action to POST to `/api/tina/github` with JSON like:
+
+```json
+{
+	"changes": [
+		{ "path": "content/homepage/hero.json", "content": "{...}" }
+	],
+	"commitMessage": "Update homepage hero",
+	"prTitle": "Content updates via Tina"
+}
+```
+
+4. The API will create a branch `tina-edit-<ts>`, commit the changed files, and open a pull request into the base branch.
+
+Notes & next steps
+
+- This helper intentionally performs per-file content updates using the GitHub Contents API (simple, robust for MDX/JSON edits). For bulk edits in a single commit, we can extend it to create trees + single commit instead.
+- If you want, I can wire the generated Tina admin to call this endpoint automatically on save, and add a CI job to build and publish the admin to `/admin` on merges.
+
+Tree-based single commit endpoint
+
+There is also a tree-based helper endpoint at `/api/tina/github/tree` that creates blobs, builds a tree, makes a single commit, and opens a PR. Use this when you want a single atomic commit/PR containing all changes instead of per-file updates.
+
+POST shape example for the tree endpoint:
+
+```json
+{
+	"changes": [
+		{ "path": "content/homepage/hero.json", "content": "{\"headline\": \"New\"}" }
+	],
+	"commitMessage": "Update hero via Tina",
+	"prTitle": "Content: Update hero",
+	"branchName": "tina-admin-update-123"
+}
+```
+
+The endpoint requires the same `GITHUB_TOKEN` and `GITHUB_REPOSITORY` env vars described earlier.
+
+CI: build Tina admin
+
+There is a GitHub Actions workflow that builds the Tina admin and uploads it as an artifact on pushes to `main`. It also supports a manual `workflow_dispatch` run that will copy the built `admin/` into `public/admin` and commit it back to the repository (useful for publishing a static admin bundle).
+
+The workflow file is `.github/workflows/build-tina-admin.yml`.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

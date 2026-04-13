@@ -32,7 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
-.env.example
+!.env.example
 
 # vercel
 .vercel
@@ -48,3 +48,7 @@ dev-console-network.log
 # GH CLI run logs and archives
 .gh_run*
 .gh_run_logs_*.zip
+
+# TinaCMS
+/admin/
+/.tina/

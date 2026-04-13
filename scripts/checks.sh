@@ -78,18 +78,28 @@ run_cmd() {
 }
 
 # ESLint
+ESLINT_BASE=( . --ext .js,.jsx,.ts,.tsx )
 ESLINT_ARGS=( --cache --cache-location .eslintcache )
 if [ "$FAST" = true ]; then
   ESLINT_ARGS+=( --cache )
 fi
 if [ "$FIX" = true ]; then
+  # prefer eslint --fix when requested
   ESLINT_ARGS+=( --fix )
 fi
 
-run_cmd eslint "$PKG_MANAGER" run lint -- "${ESLINT_ARGS[@]}"
+# Run ESLint directly (use local binary) to avoid npm/pnpm argument forwarding
+# which can insert a `--` that causes ESLint to treat subsequent args as file patterns.
+ESLINT_BIN="$(pwd)/node_modules/.bin/eslint"
+if [ -x "$ESLINT_BIN" ]; then
+  run_cmd eslint "$ESLINT_BIN" "${ESLINT_BASE[@]}" "${ESLINT_ARGS[@]}"
+else
+  # fallback to npx if local binary isn't present
+  run_cmd eslint npx eslint "${ESLINT_BASE[@]}" "${ESLINT_ARGS[@]}"
+fi
 
 # TypeScript type-check
-run_cmd typescript "$PKG_MANAGER" run typecheck --
+run_cmd typescript "$PKG_MANAGER" run typecheck
 
 # Prettier (optional) — only run if configured in package.json
 if grep -q '"prettier"' package.json 2>/dev/null; then
