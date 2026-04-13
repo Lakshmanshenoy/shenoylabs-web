@@ -56,3 +56,4 @@ dev-console-network.log
 data/tina-media-prs.json
 public/admin/
 .eslintcache
+reports/*.log
