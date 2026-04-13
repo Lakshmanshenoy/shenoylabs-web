@@ -87,7 +87,7 @@ This repo includes a small helper API at `/api/tina/github` that can create a br
 Steps to use the GitHub flow
 
 1. Create a GitHub Personal Access Token with `repo` scope.
-2. Set environment variables (see `.env.example`):
+2. Set environment variables (see `.env.local.example`):
 
 ```
 GITHUB_TOKEN=ghp_xxx
