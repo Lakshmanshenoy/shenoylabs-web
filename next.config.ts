@@ -4,12 +4,16 @@ const isDev = process.env.NODE_ENV === "development";
 
 // React requires eval() in development for callstack reconstruction.
 // In production the directive is omitted so the strict CSP applies fully.
+// During local development Tina's dev server serves assets on port 4001,
+// so allow that origin in the CSP while `isDev` is true.
+const tinaDevOrigin = isDev ? ` http://localhost:${process.env.TINA_DATALAYER_PORT ?? 4001}` : "";
 const scriptSrc = isDev
-  ? "'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://challenges.cloudflare.com"
+  ? `"'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://challenges.cloudflare.com${tinaDevOrigin}"`
   : "'self' 'unsafe-inline' https://www.googletagmanager.com https://challenges.cloudflare.com";
 
-const connectSrc =
-  "'self' https://www.google-analytics.com https://region1.google-analytics.com https://challenges.cloudflare.com";
+const connectSrc = isDev
+  ? `"'self' https://www.google-analytics.com https://region1.google-analytics.com https://challenges.cloudflare.com${tinaDevOrigin}"`
+  : "'self' https://www.google-analytics.com https://region1.google-analytics.com https://challenges.cloudflare.com";
 
 const frameSrc = "'self' https://challenges.cloudflare.com";
 
