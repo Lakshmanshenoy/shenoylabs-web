@@ -17,6 +17,28 @@ export default function MediaAdminPage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  type PrLog = { url: string; action: "upload" | "delete"; filename?: string; ts: number };
+  const PR_LOG_KEY = "tina_media_pr_log";
+  const [prLogs, setPrLogs] = useState<PrLog[]>([]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PR_LOG_KEY);
+      if (raw) setPrLogs(JSON.parse(raw));
+    } catch (e) {}
+  }, []);
+
+  const addPrLog = (url: string, action: "upload" | "delete", filename?: string) => {
+    const entry: PrLog = { url, action, filename, ts: Date.now() };
+    setPrLogs((prev) => {
+      const next = [entry, ...prev].slice(0, 50);
+      try {
+        localStorage.setItem(PR_LOG_KEY, JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+  };
+
   useEffect(() => {
     fetchList();
   }, []);
@@ -68,6 +90,7 @@ export default function MediaAdminPage() {
       if (json?.pr?.url) {
         setSuccess("Delete PR created");
         setPrUrl(json.pr.url);
+        addPrLog(json.pr.url, "delete", filename);
       } else {
         setSuccess("Delete committed");
       }
@@ -107,6 +130,7 @@ export default function MediaAdminPage() {
       if (json?.pr?.url) {
         setSuccess("Upload PR created");
         setPrUrl(json.pr.url);
+        addPrLog(json.pr.url, "upload", file.name);
       } else if (json?.src) {
         setSuccess("Uploaded");
       } else {
@@ -159,6 +183,45 @@ export default function MediaAdminPage() {
           }}
         />
       )}
+
+      <div style={{ marginTop: 18 }}>
+        <h3 style={{ marginBottom: 8, fontSize: 15 }}>Recent PRs</h3>
+        {prLogs.length === 0 ? (
+          <div style={{ color: "#6b7280" }}>No PRs yet</div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {prLogs.map((l) => (
+              <div key={l.url + String(l.ts)} style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+                <div style={{ fontSize: 13 }}>
+                  <div style={{ color: "#111827", fontWeight: 600 }}>
+                    {l.action === "upload" ? "Upload PR" : "Delete PR"}
+                  </div>
+                  <a href={l.url} target="_blank" rel="noreferrer" style={{ color: "#2563eb" }}>
+                    {l.url}
+                  </a>
+                  <div style={{ color: "#6b7280", fontSize: 12 }}>{new Date(l.ts).toLocaleString()}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 12, color: "#6b7280" }}>{l.filename ?? "—"}</div>
+                </div>
+              </div>
+            ))}
+            <div>
+              <button
+                onClick={() => {
+                  try {
+                    localStorage.removeItem(PR_LOG_KEY);
+                  } catch (e) {}
+                  setPrLogs([]);
+                }}
+                style={{ marginTop: 8 }}
+              >
+                Clear logs
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 12 }}>
         {files.map((f) => (

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 type ToastProps = {
   message: string;
@@ -11,9 +11,17 @@ type ToastProps = {
 };
 
 export default function Toast({ message, type = "info", onClose, duration = 5000, action }: ToastProps) {
+  const [visible, setVisible] = useState(false);
+
   useEffect(() => {
+    // animate in
+    setVisible(true);
     if (!onClose) return;
-    const t = setTimeout(() => onClose(), duration);
+    const t = setTimeout(() => {
+      // fade out then call onClose
+      setVisible(false);
+      setTimeout(() => onClose(), 220);
+    }, duration);
     return () => clearTimeout(t);
   }, [onClose, duration]);
 
@@ -26,33 +34,42 @@ export default function Toast({ message, type = "info", onClose, duration = 5000
   const accent = colors[type] || colors.info;
 
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      style={{
-        position: "fixed",
-        right: 20,
-        bottom: 20,
-        background: "white",
-        border: `1px solid ${accent}`,
-        color: accent,
-        padding: "10px 14px",
-        borderRadius: 8,
-        boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
-        zIndex: 9999,
-        minWidth: 220,
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
-        <div style={{ fontSize: 14, display: "flex", gap: 8, alignItems: "center" }}>
-          <span>{message}</span>
+    <div style={{ position: "fixed", right: 20, bottom: 20, zIndex: 9999 }}>
+      <div
+        role="status"
+        aria-live="polite"
+        style={{
+          transform: visible ? "translateY(0px)" : "translateY(10px)",
+          opacity: visible ? 1 : 0,
+          transition: "transform 220ms cubic-bezier(.2,.8,.2,1), opacity 180ms linear",
+          background: "#fff",
+          borderRadius: 10,
+          boxShadow: "0 8px 24px rgba(2,6,23,0.08)",
+          padding: "12px 14px",
+          display: "flex",
+          gap: 12,
+          alignItems: "center",
+          minWidth: 260,
+          border: `1px solid ${accent}`,
+        }}
+      >
+        <div style={{ width: 12, height: 12, borderRadius: 999, background: accent, flex: "0 0 auto" }} />
+        <div style={{ flex: 1, color: "#0f172a", fontSize: 14 }}>
+          <div>{message}</div>
           {action && (
-            <a href={action.href} target="_blank" rel="noreferrer" style={{ color: accent, fontWeight: 600 }}>
+            <a href={action.href} target="_blank" rel="noreferrer" style={{ display: "inline-block", marginTop: 6, color: accent, fontWeight: 600 }}>
               {action.label ?? "View PR"}
             </a>
           )}
         </div>
-        <button aria-label="close" onClick={() => onClose?.()} style={{ background: "transparent", border: "none", color: accent, cursor: "pointer" }}>
+        <button
+          aria-label="close"
+          onClick={() => {
+            setVisible(false);
+            setTimeout(() => onClose?.(), 180);
+          }}
+          style={{ background: "transparent", border: "none", fontSize: 18, color: accent, cursor: "pointer" }}
+        >
           ×
         </button>
       </div>

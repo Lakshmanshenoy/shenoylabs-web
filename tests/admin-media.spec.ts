@@ -53,9 +53,23 @@ test("media admin upload and delete flow (mocked)", async ({ page }) => {
   await prLink.waitFor({ state: "visible", timeout: 5000 });
   await expect(prLink).toHaveAttribute("href", "https://github.com/pr/999");
 
+  // The PR should also be recorded in Recent PRs (localStorage)
+  await page.waitForFunction(() => !!localStorage.getItem('tina_media_pr_log'));
+  const logsAfterUpload = await page.evaluate(() => JSON.parse(localStorage.getItem('tina_media_pr_log') || '[]'));
+  expect(logsAfterUpload.some((e: any) => e.url === "https://github.com/pr/999")).toBeTruthy();
+
   // Delete: accept the confirmation dialog
   page.once("dialog", (d) => d.accept());
   await page.click("text=Delete");
   await expect(page.locator("text=Delete PR created")).toBeVisible();
-  await expect(page.locator('a[href="https://github.com/pr/998"]')).toBeVisible();
+  await expect(page.locator('a[href="https://github.com/pr/998"]').nth(1)).toBeVisible();
+
+  // Both PRs should be in localStorage logs
+  const logsAfterDelete = await page.evaluate(() => JSON.parse(localStorage.getItem('tina_media_pr_log') || '[]'));
+  expect(logsAfterDelete.some((e: any) => e.url === "https://github.com/pr/999")).toBeTruthy();
+  expect(logsAfterDelete.some((e: any) => e.url === "https://github.com/pr/998")).toBeTruthy();
+
+  // Clear logs and ensure list empties
+  await page.click('text=Clear logs');
+  await expect(page.locator('text=No PRs yet')).toBeVisible();
 });
