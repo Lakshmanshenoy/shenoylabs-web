@@ -30,6 +30,17 @@ Environment
   - The cookie approach is fail-safe: if the cookie logic fails, the middleware will fall back to the existing Upstash-based counter.
   - Keep `RATE_LIMIT_COOKIE_SECRET` secret and rotate if needed. Rotating requires changing the secret and optionally evicting existing cookies by changing `RATE_LIMIT_COOKIE_NAME`.
 
+  GitHub Actions monitor
+  ----------------------
+
+  You can enable a scheduled monitor that checks Upstash list lengths and files a GitHub issue when thresholds are exceeded. Add the following repository secrets:
+
+  - `KV_REST_API_URL` — your Upstash REST base URL
+  - `KV_REST_API_TOKEN` — Upstash REST token with read access to `bad-bots` / `rate-limit-events`
+  - Optional: `THRESHOLD_BAD_BOTS`, `THRESHOLD_RATE_LIMIT_EVENTS` to override defaults
+
+  The workflow is `.github/workflows/monitor-rate-limits.yml` and runs hourly by default. The monitor script is `scripts/monitor_rate_limits.js`.
+
 Notes and next steps
 - This middleware is a software-layer protection; for higher capacity and stricter
   enforcement use your CDN/WAF provider's built-in rate limiting (Cloudflare Rate

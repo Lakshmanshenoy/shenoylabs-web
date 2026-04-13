@@ -1,0 +1,30 @@
+name: Monitor Rate Limits
+
+on:
+  schedule:
+    - cron: '0 * * * *' # every hour
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    name: Monitor Upstash lists
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run rate-limit monitor
+        env:
+          KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+          KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
+          THRESHOLD_BAD_BOTS: ${{ secrets.THRESHOLD_BAD_BOTS }}
+          THRESHOLD_RATE_LIMIT_EVENTS: ${{ secrets.THRESHOLD_RATE_LIMIT_EVENTS }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/monitor_rate_limits.js
