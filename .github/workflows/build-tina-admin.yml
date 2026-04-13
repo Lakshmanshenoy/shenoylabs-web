@@ -28,7 +28,24 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Tina admin
-        run: pnpm build:tina
+        run: |
+          # Run full Tina build only if credentials are present and not the placeholder 'local'.
+          run_tina_build=false
+          if [ -n "${{ secrets.TINA_TOKEN }}" ] && [ "${{ secrets.TINA_TOKEN }}" != "local" ]; then
+            run_tina_build=true
+          fi
+          if [ -n "${{ secrets.TINA_CLIENT_ID }}" ] && [ "${{ secrets.TINA_CLIENT_ID }}" != "local" ]; then
+            run_tina_build=true
+          fi
+          if [ -n "${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}" ] && [ "${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}" != "local" ]; then
+            run_tina_build=true
+          fi
+          if [ "$run_tina_build" = true ]; then
+            pnpm build:tina
+          else
+            echo "Tina credentials not found or set to 'local'; skipping tinacms build and running next build only"
+            pnpm build
+          fi
 
       - name: Upload admin artifact
         uses: actions/upload-artifact@v4
@@ -61,7 +78,25 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Tina admin
-        run: pnpm build:tina
+        run: |
+          # For manual publish runs, behave the same: run full Tina build only if
+          # credentials exist and are not the placeholder 'local'.
+          run_tina_build=false
+          if [ -n "${{ secrets.TINA_TOKEN }}" ] && [ "${{ secrets.TINA_TOKEN }}" != "local" ]; then
+            run_tina_build=true
+          fi
+          if [ -n "${{ secrets.TINA_CLIENT_ID }}" ] && [ "${{ secrets.TINA_CLIENT_ID }}" != "local" ]; then
+            run_tina_build=true
+          fi
+          if [ -n "${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}" ] && [ "${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}" != "local" ]; then
+            run_tina_build=true
+          fi
+          if [ "$run_tina_build" = true ]; then
+            pnpm build:tina
+          else
+            echo "Tina credentials not found or set to 'local'; skipping tinacms build and running next build only"
+            pnpm build
+          fi
 
       - name: Copy built admin into public/admin
         run: |
