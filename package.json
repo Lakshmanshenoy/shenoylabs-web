@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "typecheck": "tsc --noEmit",
+    "check": "bash ./scripts/checks.sh",
     "pnpm:approve-builds": "pnpm approve-builds --json > .pnpm/allow-builds.json",
     "purge:consent": "node scripts/purge_old_consent.js"
   },
