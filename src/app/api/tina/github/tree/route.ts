@@ -15,10 +15,10 @@ function encodePathSegments(p: string) {
 
 export async function POST(req: Request) {
   try {
-    const token = process.env.GITHUB_TOKEN;
+    const token = process.env.GITHUB_TOKEN ?? process.env.TINA_GITHUB_TOKEN;
     const repository = process.env.GITHUB_REPOSITORY; // owner/repo
     if (!token || !repository) {
-      return jsonResponse({ error: "GITHUB_TOKEN and GITHUB_REPOSITORY must be set" }, 500);
+      return jsonResponse({ error: "GITHUB_TOKEN (or TINA_GITHUB_TOKEN) and GITHUB_REPOSITORY must be set" }, 500);
     }
 
     const [owner, repo] = repository.split("/");
