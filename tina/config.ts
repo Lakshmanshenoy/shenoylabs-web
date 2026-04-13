@@ -6,10 +6,17 @@ const branch =
   process.env.HEAD ||
   "main";
 
+// During CI (GitHub Actions) we may not have Tina Cloud credentials available.
+// The Tina CLI requires `clientId` and `token` to be non-empty when running
+// `tinacms build`. When building in CI we prefer to rely on the checked-in
+// generated artifacts in `tina/__generated__` and avoid requiring real
+// credentials. Provide a harmless fallback when `process.env.CI` is set.
+const ciFallback = process.env.CI ? "local" : "";
+
 export default defineConfig({
   branch,
-  clientId: process.env.NEXT_PUBLIC_TINA_CLIENT_ID || "",
-  token: process.env.TINA_TOKEN || "",
+  clientId: process.env.NEXT_PUBLIC_TINA_CLIENT_ID || process.env.TINA_CLIENT_ID || ciFallback,
+  token: process.env.TINA_TOKEN || ciFallback,
   build: {
     outputFolder: "admin",
     publicFolder: "public",
