@@ -114,6 +114,25 @@ Notes & next steps
 - This helper intentionally performs per-file content updates using the GitHub Contents API (simple, robust for MDX/JSON edits). For bulk edits in a single commit, we can extend it to create trees + single commit instead.
 - If you want, I can wire the generated Tina admin to call this endpoint automatically on save, and add a CI job to build and publish the admin to `/admin` on merges.
 
+Tree-based single commit endpoint
+
+There is also a tree-based helper endpoint at `/api/tina/github/tree` that creates blobs, builds a tree, makes a single commit, and opens a PR. Use this when you want a single atomic commit/PR containing all changes instead of per-file updates.
+
+POST shape example for the tree endpoint:
+
+```json
+{
+	"changes": [
+		{ "path": "content/homepage/hero.json", "content": "{\"headline\": \"New\"}" }
+	],
+	"commitMessage": "Update hero via Tina",
+	"prTitle": "Content: Update hero",
+	"branchName": "tina-admin-update-123"
+}
+```
+
+The endpoint requires the same `GITHUB_TOKEN` and `GITHUB_REPOSITORY` env vars described earlier.
+
 CI: build Tina admin
 
 There is a GitHub Actions workflow that builds the Tina admin and uploads it as an artifact on pushes to `main`. It also supports a manual `workflow_dispatch` run that will copy the built `admin/` into `public/admin` and commit it back to the repository (useful for publishing a static admin bundle).
