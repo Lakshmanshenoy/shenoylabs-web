@@ -6,6 +6,7 @@ import { incr, setKey, rpush } from "./lib/upstash";
 
 const RATE_LIMIT_REQUESTS = Number(process.env.RATE_LIMIT_REQUESTS ?? 60);
 const RATE_LIMIT_WINDOW_S = Number(process.env.RATE_LIMIT_WINDOW_S ?? 60);
+const LOG_SAMPLE_RATE = Number(process.env.LOG_SAMPLE_RATE ?? 10);
 
 function getIpFromRequest(req: NextRequest) {
   const xff = req.headers.get("x-forwarded-for");
@@ -38,9 +39,10 @@ export async function middleware(req: NextRequest) {
 
     // Basic bot detection: block obvious CLI/empty agents and known bad UA substrings
     if (!ua || BOT_PATTERNS.some((p) => ua.includes(p))) {
-      // Log the event (non-blocking)
+      // Sample logging: only push 1 in LOG_SAMPLE_RATE events to reduce write volume
       try {
-        await rpush("bad-bots", [{ ts: Date.now(), ip, ua, path: pathname }]);
+        const shouldLog = LOG_SAMPLE_RATE <= 1 ? true : Math.random() < 1 / LOG_SAMPLE_RATE;
+        if (shouldLog) await rpush("bad-bots", [{ ts: Date.now(), ip, ua, path: pathname }]);
       } catch (e) {
         // swallow logging errors
       }
@@ -50,14 +52,22 @@ export async function middleware(req: NextRequest) {
     // Rate limiting per IP
     const key = `rl:${ip}`;
 
-    // Use Upstash INCR for atomic increments (if available) and then ensure TTL
+    // Use Upstash INCR for atomic increments. Only set the TTL when the key
+    // is first created (count === 1) to avoid an extra write on every request.
+    // This reduces Upstash write volume while keeping accurate counters.
     let count: number | null = null;
     try {
       const incResult = await incr(key);
       // Upstash often returns numbers as strings; normalize
       count = incResult === null ? null : Number(incResult);
-      // Set TTL (overwrite with same numeric value but set px to window)
-      if (count !== null) await setKey(key, String(count), RATE_LIMIT_WINDOW_S * 1000);
+      // Set TTL only when counter is first created to avoid repeated writes
+      if (count !== null && count === 1) {
+        try {
+          await setKey(key, String(count), RATE_LIMIT_WINDOW_S * 1000);
+        } catch (e) {
+          // ignore TTL set failures
+        }
+      }
     } catch (err) {
       // If Upstash fails, allow the request rather than risk blocking legitimate traffic
       console.error("rate-limit: upstash error", err);
@@ -65,6 +75,16 @@ export async function middleware(req: NextRequest) {
     }
 
     if (count !== null && count > RATE_LIMIT_REQUESTS) {
+      // Log rate-limit events sparsely: log the first exceed and then 1-in-N samples
+      try {
+        const firstExceed = count === RATE_LIMIT_REQUESTS + 1;
+        const sampled = LOG_SAMPLE_RATE <= 1 ? true : count % LOG_SAMPLE_RATE === 0;
+        if (firstExceed || sampled) {
+          await rpush("rate-limit-events", [{ ts: Date.now(), ip, ua, path: pathname, count }]);
+        }
+      } catch (e) {
+        // swallow logging errors
+      }
       return new NextResponse("Too Many Requests", { status: 429 });
     }
 

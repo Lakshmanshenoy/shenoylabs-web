@@ -15,6 +15,11 @@ Environment
   - `RATE_LIMIT_REQUESTS` (default: 60)
   - `RATE_LIMIT_WINDOW_S` (default: 60)
 
+  Additional runtime tuning (no added provider cost):
+
+  - `LOG_SAMPLE_RATE` (default: 10) — only 1-in-N events are written to Upstash for logging. Use a higher value to reduce write volume.
+  - The middleware sets the Upstash key TTL only when the counter is first created to avoid an extra write on every request.
+
 Notes and next steps
 - This middleware is a software-layer protection; for higher capacity and stricter
   enforcement use your CDN/WAF provider's built-in rate limiting (Cloudflare Rate

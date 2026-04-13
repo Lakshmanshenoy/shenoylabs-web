@@ -200,10 +200,14 @@ export async function GET(req: Request) {
     return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 });
   }
 
+
   // Try reading from Upstash if available
   const fromUpstash = await readFromUpstash();
+  const cacheHeaders = new Headers();
+  // Short private cache to reduce repeated Upstash read volume from the same client
+  cacheHeaders.set("Cache-Control", "private, max-age=30, stale-while-revalidate=60");
   if (fromUpstash) {
-    return new Response(JSON.stringify({ events: fromUpstash }), { status: 200 });
+    return new Response(JSON.stringify({ events: fromUpstash }), { status: 200, headers: cacheHeaders });
   }
 
   try {
@@ -219,7 +223,7 @@ export async function GET(req: Request) {
         }
       });
 
-    return new Response(JSON.stringify({ events: lines }), { status: 200 });
+    return new Response(JSON.stringify({ events: lines }), { status: 200, headers: cacheHeaders });
   } catch (err) {
     console.error("/api/consent GET error", err);
     return new Response(JSON.stringify({ error: "server error" }), { status: 500 });
