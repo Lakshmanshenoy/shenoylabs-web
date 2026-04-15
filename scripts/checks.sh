@@ -101,6 +101,11 @@ fi
 # TypeScript type-check
 run_cmd typescript "$PKG_MANAGER" run typecheck
 
+# Validate featured projects are well-formed (optional)
+if [ -f "scripts/validate-featured.mjs" ]; then
+  run_cmd featured "$PKG_MANAGER" run validate:featured
+fi
+
 # Prettier (optional) — only run if configured in package.json
 if grep -q '"prettier"' package.json 2>/dev/null; then
   if [ "$FIX" = true ]; then
