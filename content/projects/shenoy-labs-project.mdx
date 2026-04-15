@@ -1,0 +1,132 @@
+---
+title: Shenoy Labs Project
+description: "A production-grade case study for shenoylabs-web: a content-first, privacy-conscious, performance-oriented Next.js site with editorial CMS and modern engineering practices."
+date: 2026-04-15
+primaryCategory: Projects
+tags: [Next.js, TypeScript, MDX, TinaCMS, Performance, Architecture]
+depthLevel: senior
+status: shipped
+githubUrl: https://github.com/Lakshmanshenoy/shenoylabs-web
+liveUrl: https://shenoylabs.com
+coverImage: /images/projects/shenoy-labs.svg
+coverAlt: Shenoy Labs project case study cover.
+screenshot: /images/projects/shenoy-labs.svg
+maintainers: ["Lakshman Shenoy"]
+audience: ["engineering", "product", "recruiters"]
+---
+
+# PROJECT EXPLANATION FRAMEWORK
+
+## 1) Overview
+
+Shenoy Labs Project is the production website and content platform for the Shenoy Labs portfolio. It is a content-first, editor-friendly, performance-focused web application built with Next.js (App Router), TypeScript, MDX, and TinaCMS. The site solves the common tension between highly polished, editorial content and the engineering need for maintainability, observability, and privacy-by-design.
+
+What it is: a full-stack, static+server hybrid website serving editorial articles, project case studies, and a small admin experience for non-developer content updates.
+
+Category: Content platform / marketing & portfolio site with first-class editorial workflow.
+
+Business/technical problem it solves: delivers high-quality, fast-loading content for portfolio and product storytelling while keeping editorial control in non-developer hands and minimizing operational overhead.
+
+Technically impressive: combines React Server Components, MDX-driven content, a schema-aware CMS (Tina), and edge-first delivery to deliver sub-second experiences with an editable content pipeline.
+
+What makes it different: a privacy-first, performance-first editorial workflow that integrates programmatic content (MDX + components) with a lightweight editorial UI and automated publishing controls.
+
+## 2) Problem
+
+Content-heavy sites face a specific set of constraints that this project addresses:
+
+- Slow content iteration: non-technical authors need to update copy/assets without developer commits or build-time friction.
+- Poor performance trade-offs: traditional CMS-driven sites frequently ship large client bundles or rely on heavy client-side rendering.
+- Compliance and trust: portfolio sites must handle contact flows, consent, and bot protection while keeping user data minimal.
+- Operational complexity: maintaining an editorial CMS, preview flows, and a reproducible CI/CD pipeline can create ongoing maintenance burdens.
+
+Why existing solutions were insufficient: off-the-shelf CMS integrations often force heavy runtime bundles, or they require custom backend hosting. Static-only approaches make editorial updates slow (full-site rebuilds). The project needed a middle path that preserves speed, editorial velocity, and privacy.
+
+## 3) Solution / Product Vision
+
+Core idea: provide a lightweight, developer-friendly platform where content is authored as MDX, edited through TinaCMS when needed, and delivered via an edge-optimized Next.js stack.
+
+User experience philosophy:
+
+- Editor-first: make the authoring and previewing experience obvious and fast for non-engineers.
+- Reader-first: prioritize page load, stable layout, and accessible content.
+
+Design principles:
+
+- Speed-first: minimize JS shipped to the client; favor server and edge rendering.
+- Privacy-first: minimize analytics surface, provide explicit consent flows, and integrate bot protection for forms.
+- Automation-first: CI-driven checks, preview deployments, and a repeatable publishing pipeline.
+
+Engineering philosophy:
+
+- Server-first: compute at the edge or server where appropriate, using RSC for data fetches.
+- Type-safety: TypeScript and schema-driven content models reduce runtime surprises.
+- Observability and testing: instrumented releases and automated browser tests protect UX.
+
+System goals:
+
+- Sub-second meaningful paint for content pages.
+- Publish changes without requiring full-team involvement.
+- Keep operations lean (single deploy pipeline, predictable hosting).
+
+## 4) Architecture
+
+- Frontend: Next.js 16 App Router, React Server Components for data fetching, TypeScript, TailwindCSS for utility-driven styling, MDX (next-mdx-remote) for rich editorial content and embedded React components.
+- Backend: Small serverless/API layer (Next.js API/edge routes) for contact forms, telemetry, admin actions, and webhook handling.
+- Database: Content is primarily filesystem-backed MDX for articles and structured JSON for editorial meta; lightweight server-side stores or third-party services (if needed) are used for form submissions or short-lived state.
+- Authentication: Minimal admin session for content editing (TinaCMS / git-bridge) and tokenized webhooks for CI/CD — public pages remain unauthenticated.
+- Infrastructure: Edge-deployed on a CDN-friendly platform (Vercel or similar), static assets in `public/`, and images served via Next.js image optimization.
+- Hosting / Deployment: Git-based workflow with preview deployments for branches and an automated production deploy on merge.
+- CI/CD: GitHub Actions scripts for linting, typechecking, tests (Vitest + Playwright), and build validation; preview builds surface in PRs.
+- Third-party integrations: TinaCMS (editor), Turnstile for bot protection, lightweight analytics (consent-gated), and optional emailing/messaging integrations.
+
+## 5) Key Technical Decisions
+
+Decision → Reason → Tradeoff → Benefit
+
+- Server-first rendering (RSC + App Router) → maximize SEO and reduce client JS → more server-side complexity and need for server-safe code → smaller client bundles and faster first meaningful paint.
+
+- MDX + TinaCMS for content → authors can write rich content with embedded React components and preview changes → requires content schema and editor maintenance → dramatically faster editorial velocity and zero-surprise rendering for interactive examples.
+
+- Filesystem-backed content with incremental rebuilds → simple source-of-truth and easy Git-based workflows → does not replace a full CMS for large-scale editorial teams → keeps operations simple and integrates directly with the repo and CI.
+
+- TypeScript + strict typing for content and APIs → catch classes of bugs at compile time and provide good DX for contributors → upfront schema discipline required → fewer runtime errors and safer refactors.
+
+- Edge-first caching strategy (CDN + Cache-Control + stale-while-revalidate) → deliver cached HTML close to users and keep TTFB low → need careful cache invalidation and preview handling → consistent sub-200ms response for cache hits and fast global performance.
+
+- Privacy-first forms with Turnstile + minimal telemetry → reduce data retention and comply with stricter privacy expectations → limits certain analytics fidelity → lowers compliance risk and improves public trust.
+
+- Monolith/site-first deploy approach (not microservices) → faster iteration and simpler deployments for a single product site → harder to scale individual pieces independently → fewer operational overheads and faster development loops.
+
+- Testing and automation (Vitest unit tests, Playwright end-to-end) → prevent regressions and validate UX across browsers → adds CI time and more maintenance → higher confidence in releases and fewer hotfixes.
+
+## 6) Engineering Excellence / Best Practices
+
+- Performance optimization: RSC, careful code-splitting, image optimization, and aggressive but safe CDN caching.
+- Error handling: centralized error boundaries, robust API validation, and graceful fallback UIs for editorial content.
+- Observability: structured logging (server + edge), request tracing in critical flows, and synthetic monitoring via Playwright checks.
+- Testing strategy: unit tests for utility and UI logic (Vitest), integration tests for content parsing, and end-to-end tests for publish/preview and forms (Playwright).
+- Security: CSP, XSS hardening for MDX rendering, bot protection on public forms (Turnstile), and least-privilege tokens for CI/webhooks.
+- CI/CD: pre-merge checks (lint, typecheck, tests), preview builds for every PR, and gated production merges with automated smoke tests.
+- Rollback strategy: immutable artifact deployments and fast revert via PR rollback; feature flags for risky UX changes.
+- Scalability: static+edge hybrid enables near-infinite read scalability; serverless endpoints scale for low traffic spikes; caching reduces origin load.
+- Code quality: consistent linting, formatting, and a culture of small PRs with clear release notes.
+- Accessibility: semantic HTML in MDX components, keyboard-focus testing in Playwright, and automated a11y checks in CI.
+
+## 7) Outcome / Impact
+
+- Editorial velocity: authors can publish MDX content and structured project pages without developer intervention, reducing publish friction from hours to minutes.
+- Performance: the site is engineered for low payloads and edge delivery — observed production goals target LCP ~1s for content pages and sub-200ms cached TTFB.
+- Reliability: CI gating and synthetic checks reduced post-deploy regressions by a large margin; automated previews caught layout regressions before merges.
+- Developer efficiency: type-safe content models and clear abstractions reduced onboarding time for new contributors and made refactors safer.
+- Privacy & compliance: consent-gated telemetry and Turnstile reduce exposure to compliance risk while maintaining essential bot protection on contact flows.
+
+Note: the numbers above represent production goals and early-measured improvements from the stack and deployment patterns used in `shenoylabs-web`.
+
+## 8) Future Roadmap
+
+- Personalization & experimentation: introduce safe A/B frameworks and content personalization while preserving privacy constraints.
+- AI-assisted authoring: integrate summarization, SEO suggestions, and generation helpers for authors (editor opt-in).
+- Platformization: extract a lightweight theme + editorial starter that can be reused across other portfolio microsites.
+- Multi-region edge replication & analytics: extend telemetry to better understand global usage while preserving consent-first collection.
+- Headless content sync: add optional headless APIs for structured data consumers (webhooks, RSS, JSON endpoints).

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-label="Shenoy Labs project preview">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1">
+      <stop offset="0" stop-color="#0ea5a7"/>
+      <stop offset="1" stop-color="#6366f1"/>
+    </linearGradient>
+    <style>
+      .bg { fill: url(#g); }
+      .title { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; fill: white; font-weight: 700; font-size: 54px; }
+      .meta { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; fill: rgba(255,255,255,0.9); font-size: 20px; }
+    </style>
+  </defs>
+  <rect class="bg" width="1600" height="900" rx="24"/>
+  <g transform="translate(80,120)">
+    <text class="title">Shenoy Labs Project</text>
+    <text class="meta" y="64">Content-first portfolio, MDX + TinaCMS, edge-optimized Next.js</text>
+  </g>
+  <g transform="translate(80,720)">
+    <rect x="0" y="-56" width="520" height="48" rx="8" fill="rgba(255,255,255,0.06)" />
+    <text class="meta" x="16" y="-24">shenoylabs-web — April 2026</text>
+  </g>
+</svg>

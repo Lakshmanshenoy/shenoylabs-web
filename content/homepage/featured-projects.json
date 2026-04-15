@@ -1,6 +1,17 @@
 {
   "projects": [
     {
+      "slug": "shenoy-labs-project",
+      "title": "Shenoy Labs — Site & Editorial Platform",
+      "problem": "Deliver a content-first, editor-friendly, privacy-conscious portfolio site with fast global performance.",
+      "whyItMatters": "Showcases engineering and product work while enabling non-dev editorial workflows and preserving privacy.",
+      "tags": ["Content", "Editorial", "Performance"],
+      "thumbnail": "/images/projects/shenoy-labs.svg",
+      "thumbnailAlt": "Shenoy Labs project thumbnail",
+      "status": "Shipped",
+      "statusColor": "bg-emerald-400"
+    },
+    {
       "slug": "project-alpha",
       "title": "Research & Health Tools",
       "problem": "People struggle to interpret basic health markers and daily wellness signals in a structured way.",
