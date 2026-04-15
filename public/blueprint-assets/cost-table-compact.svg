@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="120" viewBox="0 0 600 120" role="img" aria-labelledby="title desc">
+  <title id="title">Cost table: domain yearly cost and free services</title>
+  <desc id="desc">Domain cost: $10–20 per year. Core services are free within developer tier limits.</desc>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <rect x="8" y="8" width="584" height="36" rx="8" fill="#0ea5a4"/>
+  <text x="24" y="32" fill="#ffffff" font-family="Inter, Roboto, Arial, sans-serif" font-size="16" font-weight="700">Estimated Cost</text>
+
+  <g transform="translate(0,44)">
+    <rect x="12" y="2" width="576" height="28" rx="6" fill="#f3f4f6"/>
+    <text x="28" y="22" fill="#0f172a" font-family="Inter, Roboto, Arial, sans-serif" font-size="14">Domain</text>
+    <text x="564" y="22" fill="#0f172a" font-family="Inter, Roboto, Arial, sans-serif" font-size="14" text-anchor="end">$10–20 / year</text>
+  </g>
+
+  <g transform="translate(0,78)">
+    <rect x="12" y="2" width="576" height="28" rx="6" fill="#ffffff" stroke="#e6e7eb"/>
+    <text x="28" y="22" fill="#0f172a" font-family="Inter, Roboto, Arial, sans-serif" font-size="14">Core services (hosting, CDN, CI, email)</text>
+    <text x="564" y="22" fill="#059669" font-family="Inter, Roboto, Arial, sans-serif" font-size="14" text-anchor="end">Free (within limits)</text>
+  </g>
+
+  <text x="24" y="116" fill="#6b7280" font-family="Inter, Roboto, Arial, sans-serif" font-size="11">Only the domain is recurring; service upgrades optional.</text>
+</svg>

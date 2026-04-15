@@ -1,0 +1,387 @@
+---
+title: "Website Blueprint: Integrations & Environment Variables"
+description: "How shenoylabs-web wires external services, the env vars they need, failure modes, and security/ops guidance."
+slug: "blueprint-integrations"
+date: 2026-04-14
+tags: ["blueprint","integrations","ops","security"]
+author: Lakshman Shenoy
+hero: "/images/articles/website-blueprint-integrations-hero.svg"
+coverImage: "/images/articles/website-blueprint-integrations-hero.svg"
+---
+
+# Integrations & Environment Variables
+
+This article documents the major third-party integrations used by shenoylabs-web, where they are wired in the codebase, required environment variables (server vs public), common failure modes, and recommended security and operational practices.
+
+## Overview
+
+Request flow patterns:
+Client -> Next.js (App Router + Route Handlers) -> External services (Upstash, Resend, GitHub, Vercel, Turnstile). Some components run at the Edge (middleware) while API route handlers use Node-capable runtimes; see the Architecture section for runtime details.
+
+## Per-integration summary
+
+### TinaCMS
+- Purpose: content authoring and schema-driven editing.
+- Key files: `tina/config.ts`, generated schema in `tina/__generated__/`.
+- Env: `TINA_TOKEN` (server), `NEXT_PUBLIC_TINA_CLIENT_ID` (public).
+- Failure modes: missing/invalid token at build/admin time → admin/CI failures.
+- Recommendation: use minimal-scope Tina tokens stored in platform secrets; run admin build in CI.
+
+### Upstash (Redis KV via REST)
+- Purpose: rate-limiting buckets, consent event queue, DSR queues, ephemeral token storage.
+- Key file: `src/lib/upstash.ts`.
+- Env: `KV_REST_API_URL`, `KV_REST_API_TOKEN` (write), `KV_REST_API_READ_ONLY_TOKEN`.
+- Failure modes: auth failures, high latencies, throttling causing API timeouts.
+- Recommendation: use separate read/write tokens, monitor latency/error metrics, set TTLs for ephemeral keys, rotate tokens regularly.
+
+### Cloudflare Turnstile
+- Purpose: bot protection on contact form.
+- Key files: `src/components/contact/contact-form.tsx` (client) and `src/app/api/contact/route.ts` (server).
+- Env: `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (public), `TURNSTILE_SECRET_KEY` (server).
+- Failure modes: misconfigured keys, token replay or missing verification.
+- Recommendation: always verify tokens server-side, use test keys in dev, log and alert on verification failure spikes.
+
+### Resend (email delivery)
+- Purpose: sending contact emails.
+- Key file: `src/app/api/contact/route.ts`.
+- Env: `RESEND_API_KEY`, `CONTACT_FROM_EMAIL`, `CONTACT_TO_EMAIL`.
+- Failure modes: API key revoked, quota exceeded, bounces/unhandled rejections.
+- Recommendation: monitor send errors, implement retries/backoff, use proper email auth (SPF/DKIM).
+
+### Google Analytics
+- Purpose: client-side analytics.
+- Key file: `src/components/analytics/google-analytics.tsx`.
+- Env: `NEXT_PUBLIC_GA_ID`.
+- Recommendation: only initialize after user consent; avoid sending PII.
+
+### Vercel automation
+- Purpose: programmatic env updates and admin automation (scripts).
+- Key file: `scripts/set_vercel_env.sh`.
+- Env: `VERCEL_TOKEN`, `PROJECT_ID`.
+- Recommendation: keep `VERCEL_TOKEN` in CI secrets with minimal scope and audit usage.
+
+### GitHub (Tina helpers, media PRs)
+- Purpose: create branches/commits/PRs for media and CMS edits.
+- Key files: `src/app/api/tina/github/route.ts`, `src/app/api/media/prs/route.ts`.
+- Env: `GITHUB_TOKEN`, `GITHUB_REPOSITORY`, `GITHUB_BASE_BRANCH`.
+- Recommendation: prefer a GitHub App or fine-grained PAT, grant minimal scopes, log all repo-write events.
+
+### Admin / DSR & Consent
+- Purpose: ingest consent events, export/delete DSR data.
+- Key files: `src/app/api/consent/route.ts`, `src/app/api/dsr/route.ts`.
+- Env: `CONSENT_ADMIN_KEY`.
+- Recommendation: require `CONSENT_ADMIN_KEY` header for admin routes, rotate key regularly, log all exports/deletes.
+
+## Environment variable catalogue (high level)
+
+Server-only (must be stored as secrets)
+- `GITHUB_TOKEN`, `GITHUB_REPOSITORY`, `GITHUB_BASE_BRANCH`
+- `TINA_TOKEN`, `TINA_GITHUB_TOKEN`
+- `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `KV_REST_API_READ_ONLY_TOKEN`
+- `TURNSTILE_SECRET_KEY`
+- `RESEND_API_KEY`
+- `CONSENT_ADMIN_KEY`
+- `VERCEL_TOKEN`, `PROJECT_ID`
+- `RATE_LIMIT_COOKIE_SECRET`, `UPSTASH_CONSENT_KEY`, `CONSENT_RETENTION_DAYS`
+
+Public (safe to be exposed client-side)
+- `NEXT_PUBLIC_TINA_CLIENT_ID`
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY`
+- `NEXT_PUBLIC_GA_ID`
+- `NEXT_PUBLIC_RAZORPAY_PAYMENT_BUTTON_ID`
+- `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_BASE_URL`
+
+## Sanitized .env example (DO NOT COMMIT)
+
+```env
+KV_REST_API_URL=https://us1-kv.upstash.io/v1/xxxxx
+KV_REST_API_TOKEN=REDACTED_WRITE_TOKEN
+KV_REST_API_READ_ONLY_TOKEN=REDACTED_READ_TOKEN
+
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=REDACTED_SITE_KEY
+TURNSTILE_SECRET_KEY=REDACTED_TURNSTILE_SECRET
+
+RESEND_API_KEY=REDACTED_RESEND_KEY
+CONTACT_FROM_EMAIL=hello@example.com
+CONTACT_TO_EMAIL=ops@example.com
+
+GITHUB_TOKEN=REDACTED_GITHUB_TOKEN
+CONSENT_ADMIN_KEY=REDACTED_ADMIN_KEY
+
+NEXT_PUBLIC_GA_ID=G-XXXXXXXXX
+NEXT_PUBLIC_SITE_URL=https://example.com
+```
+
+## Security & operational recommendations
+
+- Secrets storage: keep production secrets in the platform secret store (Vercel/GitHub Actions/HashiCorp Vault). Never commit secrets.
+- Least privilege: use read/write separation for Upstash, scoped API keys for emails, and GitHub App / minimal PAT for repo writes.
+- Rotation: rotate high-risk tokens (GitHub, Upstash write token, Resend) every 60–90 days; rotate `CONSENT_ADMIN_KEY` more frequently if human-accessed.
+- Logging & audit: log admin/DSR operations and PR/commit events; redact token-like strings from logs.
+- Edge caution: confirm that Edge env vars are not leaked into client bundles; validate provider-specific behavior.
+- Dev fallbacks: local file fallbacks for consent/DSR exist for dev; ensure these are disabled in production (`VERCEL=1` or `NODE_ENV=production` checks).
+
+## Monitoring & alerts (ops checklist)
+
+- Alert on Upstash error rate or latency spikes.
+- Alert on Turnstile verification failure surge (possible bot attack).
+- Alert on Resend send failures and bounce rates.
+- Monitor GitHub API errors and rate-limit warnings.
+- Schedule periodic Playwright E2E runs in CI to validate contact, consent, and admin flows.
+
+## References (code pointers)
+- Upstash wrapper: `src/lib/upstash.ts`  
+- Contact UI: `src/components/contact/contact-form.tsx`  
+- Contact API: `src/app/api/contact/route.ts`  
+- Consent & DSR: `src/app/api/consent/route.ts`, `src/app/api/dsr/route.ts`  
+- Tina helpers: `src/app/api/tina/github/route.ts`  
+- Media PRs: `src/app/api/media/prs/route.ts`  
+- Vercel scripts: `scripts/set_vercel_env.sh`
+
+## Diagrams
+
+<div className="overflow-x-auto my-6">
+	<figure className="mx-auto min-w-[1200px]">
+		<picture>
+			<source srcSet="/blueprint-assets/blueprint-flowchart.svg" type="image/svg+xml" />
+			<img src="/blueprint-assets/blueprint-flowchart.svg" alt="Simplified architecture flowchart" className="w-full h-auto block" />
+		</picture>
+		<figcaption>Simplified flowchart: main components. Description follows below.</figcaption>
+	</figure>
+</div>
+
+<div className="overflow-x-auto my-6">
+	<figure className="mx-auto max-w-[1200px]">
+		<img src="/blueprint-assets/site_architecture_flowchart.png" alt="Uploaded site architecture flowchart" className="w-full h-auto block" />
+		<figcaption>Uploaded flowchart: site_architecture_flowchart.png</figcaption>
+	</figure>
+</div>
+
+## How to run & test locally
+
+Sanity commands to run this site locally for development and testing:
+
+```bash
+pnpm install
+pnpm build
+PORT=3001 pnpm start
+
+# unit tests
+pnpm test
+
+# playwright E2E (requires running server)
+npx playwright test
+```
+
+Set only sanitized env values in `.env.local` when testing locally. See the Sanitized `.env` example earlier in this article.
+
+## Runbooks
+
+Detailed runbooks have been moved to the `docs/runbooks/` folder. Use the
+following links for step-by-step diagnostics and mitigation actions:
+
+- [Upstash KV runbook](../../docs/runbooks/upstash.md)
+- [Cloudflare Turnstile runbook](../../docs/runbooks/turnstile.md)
+- [Resend (email) runbook](../../docs/runbooks/resend.md)
+- [GitHub PR/commit runbook](../../docs/runbooks/github.md)
+- [Consent / DSR runbook](../../docs/runbooks/dsr.md)
+
+You can also view the runbook index at [docs/runbooks/README.md](../../docs/runbooks/README.md).
+## Short, sanitized code examples
+
+### Upstash REST read (sanitized)
+
+```js
+const res = await fetch(`${process.env.KV_REST_API_URL}/string/example`, {
+	headers: { Authorization: `Bearer ${process.env.KV_REST_API_READ_ONLY_TOKEN}` }
+});
+const data = await res.json();
+```
+
+### Safe logging & redaction
+
+```js
+function redactToken(t) {
+	if (!t) return t;
+	return `${t.slice(0,4)}…${t.slice(-4)}`;
+}
+console.log('Upstash token (partial):', redactToken(process.env.KV_REST_API_TOKEN));
+```
+
+## Observability & Alerts (recommendations)
+
+- Track request latency (p50/p95/p99) for `POST /api/contact` and for middleware path handlers.
+- Monitor Upstash: error rate, latency, and throttle counts.
+- Monitor Turnstile verification failure rate and token replay patterns.
+- Monitor Resend: send error rate, bounce percentage, and DKIM/SPF failures.
+- Monitor GitHub API errors (401/403/429) for repository operations.
+- Add alerts for sudden spikes in blocked requests or consent exports.
+
+## CI: nightly/scheduled Playwright runs (example)
+
+Add a scheduled job to run critical E2E flows nightly. Example GitHub Actions job snippet:
+
+```yaml
+name: Nightly Playwright
+on:
+	schedule:
+		- cron: '0 2 * * *' # daily at 02:00 UTC
+jobs:
+	e2e:
+		runs-on: ubuntu-latest
+		steps:
+			- uses: actions/checkout@v4
+			- uses: pnpm/action-setup@v2
+			- run: pnpm install
+			- run: pnpm build
+			- run: PORT=3001 pnpm start & sleep 6
+			- run: npx playwright test
+```
+
+## Accessibility checks
+
+- Integrate `axe-core` or Playwright accessibility checks into CI for article pages and interactive flows (contact form, cookie banner).
+- Example: use `playwright-axe` or run axe assertions inside Playwright tests.
+
+## Appendix: environment variables
+
+<table className="w-full border-collapse">
+	<thead>
+		<tr>
+			<th className="text-left p-2 border-b border-border/60">Variable</th>
+			<th className="text-left p-2 border-b border-border/60">Purpose</th>
+			<th className="text-left p-2 border-b border-border/60">Server / Public</th>
+			<th className="text-left p-2 border-b border-border/60">Required (prod)</th>
+			<th className="text-left p-2 border-b border-border/60">Notes</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td className="p-2 border-t border-border/60"><code>GITHUB_TOKEN</code></td>
+			<td className="p-2 border-t border-border/60">GitHub PAT for PRs/commits</td>
+			<td className="p-2 border-t border-border/60">Server</td>
+			<td className="p-2 border-t border-border/60">Yes</td>
+			<td className="p-2 border-t border-border/60">Prefer GitHub App or fine-grained PAT</td>
+		</tr>
+		<tr>
+			<td className="p-2 border-t border-border/60"><code>GITHUB_REPOSITORY</code></td>
+			<td className="p-2 border-t border-border/60">owner/repo for GitHub API</td>
+			<td className="p-2 border-t border-border/60">Server</td>
+			<td className="p-2 border-t border-border/60">Yes</td>
+			<td className="p-2 border-t border-border/60">e.g. owner/repo</td>
+		</tr>
+		<tr>
+			<td className="p-2 border-t border-border/60"><code>GITHUB_BASE_BRANCH</code></td>
+			<td className="p-2 border-t border-border/60">base branch for PRs</td>
+			<td className="p-2 border-t border-border/60">Server</td>
+			<td className="p-2 border-t border-border/60">Yes</td>
+			<td className="p-2 border-t border-border/60"></td>
+		</tr>
+		<tr>
+			<td className="p-2 border-t border-border/60"><code>TINA_TOKEN</code></td>
+			<td className="p-2 border-t border-border/60">Tina admin/build token</td>
+			<td className="p-2 border-t border-border/60">Server</td>
+			<td className="p-2 border-t border-border/60">Yes</td>
+			<td className="p-2 border-t border-border/60">Minimal scope</td>
+		</tr>
+		<tr>
+			<td className="p-2 border-t border-border/60"><code>NEXT_PUBLIC_TINA_CLIENT_ID</code></td>
+			<td className="p-2 border-t border-border/60">Tina client id (admin UI)</td>
+			<td className="p-2 border-t border-border/60">Public</td>
+			<td className="p-2 border-t border-border/60">Yes</td>
+			<td className="p-2 border-t border-border/60">Safe to expose</td>
+		</tr>
+		<tr>
+			<td className="p-2 border-t border-border/60"><code>KV_REST_API_URL</code></td>
+			<td className="p-2 border-t border-border/60">Upstash REST base URL</td>
+			<td className="p-2 border-t border-border/60">Server</td>
+			<td className="p-2 border-t border-border/60">Yes</td>
+			<td className="p-2 border-t border-border/60"></td>
+		</tr>
+		<tr>
+			<td className="p-2 border-t border-border/60"><code>KV_REST_API_TOKEN</code></td>
+			<td className="p-2 border-t border-border/60">Upstash write token</td>
+			<td className="p-2 border-t border-border/60">Server</td>
+			<td className="p-2 border-t border-border/60">Yes</td>
+			<td className="p-2 border-t border-border/60">Rotate regularly</td>
+		</tr>
+		<tr>
+			<td className="p-2 border-t border-border/60"><code>KV_REST_API_READ_ONLY_TOKEN</code></td>
+			<td className="p-2 border-t border-border/60">Upstash read token</td>
+			<td className="p-2 border-t border-border/60">Server</td>
+			<td className="p-2 border-t border-border/60">Optional</td>
+			<td className="p-2 border-t border-border/60">Use for read-only operations</td>
+		</tr>
+		<tr>
+			<td className="p-2 border-t border-border/60"><code>NEXT_PUBLIC_TURNSTILE_SITE_KEY</code></td>
+			<td className="p-2 border-t border-border/60">Turnstile client key</td>
+			<td className="p-2 border-t border-border/60">Public</td>
+			<td className="p-2 border-t border-border/60">Yes</td>
+			<td className="p-2 border-t border-border/60">Client-only</td>
+		</tr>
+		<tr>
+			<td className="p-2 border-t border-border/60"><code>TURNSTILE_SECRET_KEY</code></td>
+			<td className="p-2 border-t border-border/60">Turnstile verification secret</td>
+			<td className="p-2 border-t border-border/60">Server</td>
+			<td className="p-2 border-t border-border/60">Yes</td>
+			<td className="p-2 border-t border-border/60">Server-only</td>
+		</tr>
+		<tr>
+			<td className="p-2 border-t border-border/60"><code>RESEND_API_KEY</code></td>
+			<td className="p-2 border-t border-border/60">Resend email API key</td>
+			<td className="p-2 border-t border-border/60">Server</td>
+			<td className="p-2 border-t border-border/60">Yes</td>
+			<td className="p-2 border-t border-border/60">Monitor usage</td>
+		</tr>
+		<tr>
+			<td className="p-2 border-t border-border/60"><code>CONTACT_FROM_EMAIL</code></td>
+			<td className="p-2 border-t border-border/60">Sender address for contact</td>
+			<td className="p-2 border-t border-border/60">Server</td>
+			<td className="p-2 border-t border-border/60">Yes</td>
+			<td className="p-2 border-t border-border/60"></td>
+		</tr>
+		<tr>
+			<td className="p-2 border-t border-border/60"><code>CONTACT_TO_EMAIL</code></td>
+			<td className="p-2 border-t border-border/60">Destination for contact</td>
+			<td className="p-2 border-t border-border/60">Server</td>
+			<td className="p-2 border-t border-border/60">Yes</td>
+			<td className="p-2 border-t border-border/60"></td>
+		</tr>
+		<tr>
+			<td className="p-2 border-t border-border/60"><code>CONSENT_ADMIN_KEY</code></td>
+			<td className="p-2 border-t border-border/60">Protects consent/DSR endpoints</td>
+			<td className="p-2 border-t border-border/60">Server</td>
+			<td className="p-2 border-t border-border/60">Yes</td>
+			<td className="p-2 border-t border-border/60">Rotate regularly</td>
+		</tr>
+		<tr>
+			<td className="p-2 border-t border-border/60"><code>VERCEL_TOKEN</code></td>
+			<td className="p-2 border-t border-border/60">Vercel API token for scripts</td>
+			<td className="p-2 border-t border-border/60">Server/CI</td>
+			<td className="p-2 border-t border-border/60">Yes</td>
+			<td className="p-2 border-t border-border/60">Store in CI secrets</td>
+		</tr>
+	</tbody>
+</table>
+## Ops checklist (pre-release)
+
+- Ensure all required secrets exist in Vercel/GitHub Actions and are not `NEXT_PUBLIC_` unless intended.
+- Run `pnpm build` and verify no build-time secret failures.
+- Run `pnpm test` and `npx playwright test` against a staging deployment.
+- Validate Upstash connectivity and quotas.
+- Verify Turnstile token verification succeeds in staging.
+- Confirm Resend send flow and DKIM/SPF records.
+- Run accessibility smoke tests and fix high-severity findings.
+
+## Publishing & frontmatter suggestions
+
+- Add `author` and `hero` frontmatter fields to surface the article in site lists and social previews. For example:
+
+```yaml
+author: "Your Name"
+hero: "/images/blueprint/blueprint-hero.png"
+```
+
+---
+
+

@@ -121,7 +121,7 @@ export default async function ProjectDetailPage({
   };
 
   return (
-    <SectionContainer className="max-w-3xl">
+    <SectionContainer>
       {/* JSON-LD */}
       <script
         type="application/ld+json"

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="120" viewBox="0 0 560 120" role="img" aria-labelledby="title desc">
+  <title id="title">Cloudflare DNS placeholder</title>
+  <desc id="desc">Illustration: Cloudflare DNS and Turnstile setup</desc>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <rect x="12" y="12" width="536" height="96" rx="12" fill="#0369a1"/>
+  <text x="36" y="48" fill="#ffffff" font-family="Inter, Roboto, Arial, sans-serif" font-size="16" font-weight="700">Cloudflare DNS & Turnstile</text>
+  <text x="36" y="76" fill="#bfdbfe" font-family="Inter, Roboto, Arial, sans-serif" font-size="13">DNS, CDN, and lightweight bot protection</text>
+</svg>

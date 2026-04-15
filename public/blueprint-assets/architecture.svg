@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="360" viewBox="0 0 1000 360" role="img" aria-label="Architecture: Edge middleware, Next.js server, External services">
+	<style>
+		.box { fill:#f8fafc; stroke:#94a3b8; stroke-width:1.5; rx:8; }
+		.label { font: 18px/1.2 'Inter', Arial, sans-serif; fill:#ef4444; font-weight:600; }
+		.small { font-size:13px; fill:#0f172a; }
+		.arrow { stroke:#ef4444; stroke-width:2.5; fill:none; marker-end:url(#arrow); }
+	</style>
+	<defs>
+		<marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+			<path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444"/>
+		</marker>
+	</defs>
+
+	<!-- Arrows (drawn behind boxes so boxes sit above arrows) -->
+	<path d="M 312 118 L 360 118" class="arrow"/>
+	<path d="M 660 133 L 700 133" class="arrow"/>
+
+	<!-- Edge -->
+	<rect x="32" y="24" width="280" height="180" class="box"/>
+	<text x="46" y="48" class="label">Edge Middleware</text>
+	<text x="46" y="72" class="small">src/middleware.ts</text>
+	<text x="46" y="110" class="small">Secrets: RATE_LIMIT_COOKIE_SECRET</text>
+	<text x="46" y="150" class="small">Edge handles low-latency checks; caches &amp; rate-limits close to users</text>
+
+	<!-- Server -->
+	<rect x="360" y="12" width="300" height="220" class="box"/>
+	<text x="376" y="36" class="label">Next.js Server</text>
+	<text x="376" y="62" class="small">Route Handlers: src/app/api/*</text>
+	<text x="376" y="82" class="small">Examples: contact, consent, dsr</text>
+	<text x="376" y="118" class="small">Server uses Upstash tokens, Resend key, GitHub token</text>
+
+	<!-- External -->
+	<rect x="700" y="24" width="260" height="240" class="box"/>
+	<text x="716" y="48" class="label">External Services</text>
+	<text x="716" y="72" class="small">Upstash, Resend, GitHub, Vercel, Turnstile</text>
+
+</svg>
