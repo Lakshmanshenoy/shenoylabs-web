@@ -22,7 +22,11 @@ export function ArticlesFilteredGrid({ articles }: Props) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const categories = Array.from(
-    new Set(articles.map((a) => a.frontmatter.primaryCategory)),
+    new Set(
+      articles
+        .map((a) => a.frontmatter.primaryCategory)
+        .filter(Boolean),
+    ),
   ).sort();
 
   const filtered =
@@ -35,6 +39,7 @@ export function ArticlesFilteredGrid({ articles }: Props) {
       {/* Category filter pills */}
       <div className="flex flex-wrap gap-2">
         <Button
+          key="all"
           variant={activeCategory === null ? "default" : "outline"}
           size="sm"
           onClick={() => setActiveCategory(null)}

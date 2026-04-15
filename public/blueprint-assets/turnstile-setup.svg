@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="120" viewBox="0 0 560 120" role="img" aria-labelledby="title desc">
+  <title id="title">Turnstile setup placeholder</title>
+  <desc id="desc">Illustration: Turnstile form protection</desc>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <rect x="12" y="12" width="536" height="96" rx="12" fill="#047857"/>
+  <text x="36" y="48" fill="#ffffff" font-family="Inter, Roboto, Arial, sans-serif" font-size="16" font-weight="700">Turnstile (form protection)</text>
+  <text x="36" y="76" fill="#bbf7d0" font-family="Inter, Roboto, Arial, sans-serif" font-size="13">Invisible bot defense for contact forms</text>
+</svg>
