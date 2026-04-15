@@ -20,6 +20,10 @@ export type ArticleFrontmatter = {
   author: string;
   depthLevel?: DepthLevel;
   coverImage?: string;
+  featured?: boolean;
+  featuredOrder?: number;
+  problem?: string;
+  whyItMatters?: string;
   coverAlt?: string;
 };
 
@@ -31,6 +35,10 @@ export type ProjectFrontmatter = {
   tags: string[];
   depthLevel?: DepthLevel;
   status: "shipped" | "in-progress" | "planning";
+  featured?: boolean;
+  featuredOrder?: number;
+  problem?: string;
+  whyItMatters?: string;
   githubUrl?: string;
   liveUrl?: string;
   coverImage?: string;
