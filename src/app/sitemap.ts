@@ -9,6 +9,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: siteConfig.url, lastModified: now, changeFrequency: "weekly", priority: 1 },
     {
+      url: `${siteConfig.url}/caffilab`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.85,
+    },
+    {
       url: `${siteConfig.url}/projects`,
       lastModified: now,
       changeFrequency: "weekly",
