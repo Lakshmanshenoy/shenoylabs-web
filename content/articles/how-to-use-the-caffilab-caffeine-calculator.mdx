@@ -1,0 +1,89 @@
+---
+title: "How to Use the CaffiLab Caffeine Calculator"
+excerpt: "A step-by-step guide to estimating caffeine in your coffee using CaffiLab — from basic inputs to advanced extraction tuning."
+date: "2025-07-14"
+category: "tools"
+primaryCategory: "tools"
+tags: ["caffilab", "caffeine", "coffee", "calculator", "guide"]
+author: "Lakshman Shenoy"
+depthLevel: "beginner"
+coverImage: "/images/caffilab/drip-brewing.jpg"
+coverAlt: "Coffee dripping into a glass vessel on a counter"
+---
+
+## What is CaffiLab?
+
+CaffiLab is a scientific caffeine estimation tool that calculates how much caffeine is in your coffee based on your exact brew parameters — not generic averages from a database. It uses a model grounded in extraction science:
+
+**C = dose × caffeine fraction × recovery**
+
+Instead of telling you "a cup of coffee has 95 mg," CaffiLab accounts for your specific coffee dose, bean species, brew method, grind size, water temperature, brew time, and more.
+
+## Getting started: the basic inputs
+
+When you open CaffiLab, you'll see six basic inputs that drive the core estimate:
+
+### 1. Brew method
+
+Select your brewing method — pour over, espresso, French press, cold brew, AeroPress, drip machine, Moka pot, Turkish, Indian filter, or others. This sets sensible defaults for grind size, brew time, temperature, and extraction expectations.
+
+### 2. Bean species
+
+Choose between Arabica, Robusta, Blend, or "Not sure." Robusta contains roughly 2.2% caffeine by weight versus Arabica's 1.2%, so this choice has a large impact on the estimate.
+
+If you select "Not sure," CaffiLab will use package clues and price to infer a likely blend profile.
+
+### 3. Coffee dose
+
+Enter the weight of dry coffee grounds you're using. CaffiLab supports grams, ounces, and pounds. More coffee means more available caffeine — this is a direct multiplier in the formula.
+
+### 4. Brew water
+
+The volume of water you're brewing with. This determines your coffee-to-water ratio, which affects extraction efficiency. CaffiLab shows your current ratio and the method's target ratio.
+
+### 5. Beverage volume
+
+The final volume of liquid in your cup, including any dilution. This affects concentration (mg per 100 ml) but not total caffeine.
+
+### 6. Brew time
+
+How long water is in contact with the coffee grounds. Longer contact generally increases caffeine extraction, though the relationship plateaus.
+
+## Understanding the results
+
+CaffiLab shows four key outputs:
+
+- **Estimated caffeine (mg):** The headline number — total milligrams of caffeine in your cup.
+- **Confidence label:** Very High, High, Medium, or Low — based on how many inputs you've declared and how far your recipe deviates from method defaults.
+- **Precision bar:** A visual gauge showing how tight the estimate is.
+- **Range:** The lower and upper bounds (e.g., 140–180 mg), reflecting the uncertainty percentage.
+
+## Fine-tuning with advanced inputs
+
+Click **Advanced inputs** to reveal 10+ additional parameters:
+
+- **Grind size:** Finer grinds expose more surface area, increasing extraction.
+- **Roast level:** Light roasts can yield slightly more caffeine in comparable brews than very dark roasts.
+- **Temperature:** Higher temperatures increase extraction rate. Cold brew uses room-temperature water over many hours.
+- **Extraction yield:** If you measure TDS (total dissolved solids), entering yield is one of the strongest ways to calibrate the estimate.
+- **Pressure:** Only for espresso — 9 bar is the reference point.
+- **Water minerals and pH:** Balanced mineral water is closest to specialty brewing standards.
+- **Bean freshness:** Very fresh beans can resist even extraction; stale beans extract less predictably.
+- **Filter type:** Paper filters produce a slightly cleaner brew; metal filters retain more material.
+- **Chicory:** For Indian filter coffee — chicory adds body but no caffeine.
+
+Each input you declare reduces the uncertainty range, improving confidence.
+
+## Tips for accurate estimates
+
+1. **Weigh your coffee.** Scoops vary; a kitchen scale makes the dose precise.
+2. **Measure your water.** Know how much water goes in and how much beverage comes out.
+3. **Time your brew.** Especially for immersion methods like French press and cold brew.
+4. **Start with defaults.** CaffiLab auto-fills sensible values. Adjust only what you know.
+5. **Check the explanation panel.** As you interact with each field, CaffiLab explains what it does and how it affects the estimate.
+
+## A note on accuracy
+
+CaffiLab is an estimation tool, not a laboratory instrument. Actual caffeine content varies with cultivar, growing conditions, roast batch, water chemistry, and brewing geometry. The model is calibrated against published extraction research and aims to give you a useful, directionally accurate number — not a precise chemical measurement.
+
+For most practical purposes — understanding whether you're having 100 mg or 300 mg, comparing brew methods, or tracking daily intake — CaffiLab gives you a much better answer than generic tables.

@@ -6,7 +6,12 @@ import Link from "next/link";
 import {
   ActivityIcon,
   BeakerIcon,
+  BookOpenIcon,
+  ChevronDownIcon,
   GaugeIcon,
+  HeartIcon,
+  MessageCircleIcon,
+  RotateCcwIcon,
   SlidersHorizontalIcon,
 } from "lucide-react";
 
@@ -287,6 +292,7 @@ export function CaffiLabCalculator() {
   const [filterType, setFilterType] = useState<FilterType>("paper");
   const [chicoryPercent, setChicoryPercent] = useState("20");
   const [focusTopic, setFocusTopic] = useState<FocusTopic>("result");
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const method = BREW_METHODS[brewMethod];
   const estimate = useMemo(
@@ -405,6 +411,43 @@ export function CaffiLabCalculator() {
     setTemperatureAmount(formatNumber(defaultTemperatureValue(brewMethod, nextUnit)));
   }
 
+  function handleReset() {
+    const defaultMethod: BrewMethod = "pour_over";
+    const cfg = BREW_METHODS[defaultMethod];
+    setBrewMethod(defaultMethod);
+    setCoffeeAmount("20");
+    setCoffeeUnit("g");
+    setBrewWaterAmount("320");
+    setBrewWaterUnit("ml");
+    setServingAmount("320");
+    setServingUnit("ml");
+    setBeanType("unknown");
+    setArabicaPercent("70");
+    setRobustaPercent("30");
+    setCoffeePrice("");
+    setPriceCurrency("INR");
+    setPriceUnit("kg");
+    setPackageClue("none");
+    setBrewTimeAmount("3.5");
+    setBrewTimeUnit("min");
+    setDilutionAmount("0");
+    setDilutionUnit("ml");
+    setGrindSize(cfg.defaultGrind);
+    setRoastLevel("medium");
+    setTemperatureAmount("94");
+    setTemperatureUnit("c");
+    setExtractionYieldPercent("");
+    setPressureBars("9");
+    setAgitation("none");
+    setWaterMinerals("unknown");
+    setWaterPh("");
+    setFreshness("unknown");
+    setFilterType("paper");
+    setChicoryPercent("20");
+    setFocusTopic("result");
+    setShowAdvanced(false);
+  }
+
   return (
     <div className="min-h-screen bg-[#0c0d0b] text-[#f5f1e8]">
       <section className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8 lg:py-14">
@@ -447,6 +490,69 @@ export function CaffiLabCalculator() {
                 </figcaption>
               </figure>
             </div>
+
+            <div className="grid gap-3 rounded-[8px] border border-[#33392f] bg-[#10120e] p-4">
+              <p className={labelClass}>Articles</p>
+              <div className="grid gap-2">
+                <Link
+                  href="/articles/how-to-use-the-caffilab-caffeine-calculator"
+                  className="flex items-center gap-2 rounded-[6px] border border-[#33392f] bg-[#151812] px-3 py-2.5 text-sm text-[#cbd5c0] transition hover:border-[#9adf8f]/40 hover:text-[#f5f1e8]"
+                >
+                  <BookOpenIcon className="size-4 shrink-0 text-[#9adf8f]" />
+                  How to use CaffiLab
+                </Link>
+                <Link
+                  href="/articles/how-does-caffilab-formula-work"
+                  className="flex items-center gap-2 rounded-[6px] border border-[#33392f] bg-[#151812] px-3 py-2.5 text-sm text-[#cbd5c0] transition hover:border-[#9adf8f]/40 hover:text-[#f5f1e8]"
+                >
+                  <BookOpenIcon className="size-4 shrink-0 text-[#9adf8f]" />
+                  How the formula works
+                </Link>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Link
+                href="/support"
+                className="flex flex-1 items-center justify-center gap-2 rounded-[6px] border border-[#536048] bg-[#151812] px-3 py-2.5 text-sm font-medium text-[#f2c36b] transition hover:border-[#f2c36b]/50 hover:bg-[#1a1e15]"
+              >
+                <HeartIcon className="size-4" />
+                Support us
+              </Link>
+              <Link
+                href="/contact"
+                className="flex flex-1 items-center justify-center gap-2 rounded-[6px] border border-[#3c4337] bg-[#151812] px-3 py-2.5 text-sm font-medium text-[#cbd5c0] transition hover:border-[#9adf8f]/40 hover:text-[#f5f1e8]"
+              >
+                <MessageCircleIcon className="size-4" />
+                Feedback
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid gap-3 rounded-[8px] border border-[#33392f] bg-[#10120e] p-5">
+            <p className={labelClass}>Recommended daily caffeine intake</p>
+            <div className="grid gap-1.5 text-sm text-[#cbd5c0]">
+              <div className="flex justify-between border-b border-[#252a21] pb-1.5">
+                <span>Adults (19+)</span>
+                <span className="font-mono text-[#f5f1e8]">≤ 400 mg</span>
+              </div>
+              <div className="flex justify-between border-b border-[#252a21] pb-1.5">
+                <span>Pregnant / nursing</span>
+                <span className="font-mono text-[#f5f1e8]">≤ 200 mg</span>
+              </div>
+              <div className="flex justify-between border-b border-[#252a21] pb-1.5">
+                <span>Teens (13–18)</span>
+                <span className="font-mono text-[#f5f1e8]">≤ 100 mg</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Children (4–12)</span>
+                <span className="font-mono text-[#f5f1e8]">≤ 2.5 mg/kg</span>
+              </div>
+            </div>
+            <p className="text-xs leading-5 text-[#8f9886]">
+              Sources: FDA (2018), EFSA (2015), Health Canada. Children under 4
+              should avoid caffeine.
+            </p>
           </div>
 
           <div className="grid gap-3 rounded-[8px] border border-[#33392f] bg-[#10120e] p-5">
@@ -479,6 +585,14 @@ export function CaffiLabCalculator() {
                 </p>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="mt-2 inline-flex items-center gap-1.5 self-start rounded-[6px] border border-[#3c4337] bg-[#11130f] px-3 py-1.5 text-xs font-medium text-[#a9b39c] transition hover:border-[#9adf8f]/50 hover:text-[#f5f1e8]"
+            >
+              <RotateCcwIcon className="size-3" />
+              Reset all
+            </button>
             <div className="mt-6 grid gap-3">
               <div className="h-3 overflow-hidden rounded-[6px] bg-[#252a21]">
                 <div
@@ -624,12 +738,23 @@ export function CaffiLabCalculator() {
             </div>
 
             <div className="grid gap-4 border-t border-[#33392f] pt-5">
-              <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced((prev) => !prev)}
+                className="flex w-full items-center gap-2 text-left"
+              >
                 <SlidersHorizontalIcon className="size-4 text-[#f2c36b]" />
                 <h2 className="text-lg font-semibold text-[#f7f3ea] [letter-spacing:0]">
                   Advanced inputs
                 </h2>
-              </div>
+                <ChevronDownIcon
+                  className={cn(
+                    "ml-auto size-5 text-[#a9b39c] transition-transform duration-200",
+                    showAdvanced && "rotate-180",
+                  )}
+                />
+              </button>
+              {showAdvanced && (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {beanType === "unknown" ? (
                   <Field
@@ -1019,6 +1144,7 @@ export function CaffiLabCalculator() {
                   </p>
                 </div>
               </div>
+              )}
             </div>
 
             <div className="rounded-[8px] border border-[#33392f] bg-[#10120e] p-4">

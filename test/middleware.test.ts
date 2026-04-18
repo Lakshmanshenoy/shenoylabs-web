@@ -40,7 +40,7 @@ process.env.RATE_LIMIT_REQUESTS = "5";
 delete process.env.RATE_LIMIT_COOKIE_SECRET;
 
 import * as upstash from "../src/lib/upstash";
-import { middleware } from "../src/middleware";
+import { proxy } from "../src/proxy";
 
 function makeReq({ path = "/api/test", ua = "mozilla", xff = "1.2.3.4", cookie = "" } = {}) {
   return {
@@ -66,7 +66,7 @@ describe("middleware edge rate-limit", () => {
 
   it("blocks bot user-agents with 403", async () => {
     const req = makeReq({ ua: "curl/7.0" });
-    const res: any = await middleware(req as any);
+    const res: any = await proxy(req as any);
     expect(res.status).toBe(403);
   });
 
@@ -75,7 +75,7 @@ describe("middleware edge rate-limit", () => {
     (upstash as any).setKey.mockResolvedValueOnce(true);
 
     const req = makeReq({ ua: "mozilla" });
-    const res: any = await middleware(req as any);
+    const res: any = await proxy(req as any);
     expect(res.status).toBe(200);
     expect((upstash as any).incr).toHaveBeenCalled();
     expect((upstash as any).setKey).toHaveBeenCalled();
@@ -85,7 +85,7 @@ describe("middleware edge rate-limit", () => {
     (upstash as any).incr.mockResolvedValueOnce("6");
 
     const req = makeReq({ ua: "mozilla" });
-    const res: any = await middleware(req as any);
+    const res: any = await proxy(req as any);
     expect((upstash as any).incr).toHaveBeenCalled();
     // Middleware may be configured to fail-open in some environments; accept 200 or 429.
     if (res.status === 429) {

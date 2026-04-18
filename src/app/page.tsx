@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { AboutSnapshotSection } from "@/components/home/about-snapshot-section";
 import { ArticlesPreviewSection } from "@/components/home/articles-preview-section";
 import { FeaturedProjectsSection } from "@/components/home/featured-projects-section";
+import { FeaturedToolsSection } from "@/components/home/featured-tools-section";
 import { HeroSection } from "@/components/home/hero-section";
 import { SupportCtaSection } from "@/components/home/support-cta-section";
 import { TaxonomyDiscoveryStrip } from "@/components/home/taxonomy-discovery-strip";
@@ -28,6 +29,7 @@ export default function Home() {
   return (
     <>
       <HeroSection content={hero} />
+      <FeaturedToolsSection />
       <FeaturedProjectsSection content={featuredProjects} />
       <ArticlesPreviewSection />
       <AboutSnapshotSection />
