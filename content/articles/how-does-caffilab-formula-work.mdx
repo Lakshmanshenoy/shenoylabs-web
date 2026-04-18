@@ -1,0 +1,212 @@
+---
+title: "How Does the CaffiLab Formula Work?"
+excerpt: "A deep dive into the extraction science behind CaffiLab's caffeine estimation model — the math, the assumptions, and the research that backs it."
+date: "2025-07-14"
+category: "research"
+primaryCategory: "research"
+tags: ["caffilab", "caffeine", "extraction", "coffee-science", "research"]
+author: "Lakshman Shenoy"
+depthLevel: "advanced"
+coverImage: "/images/caffilab/drip-brewing.jpg"
+coverAlt: "Coffee dripping into a glass vessel on a counter"
+---
+
+## The core model
+
+CaffiLab estimates caffeine using a multiplicative model:
+
+**C = G × F × E × 1000**
+
+Where:
+
+- **C** = estimated caffeine in milligrams
+- **G** = coffee dose in grams
+- **F** = caffeine fraction (the proportion of the bean's dry weight that is caffeine)
+- **E** = caffeine recovery (what fraction of the available caffeine actually ends up in the cup)
+
+The result is multiplied by 1000 to convert from grams to milligrams.
+
+## Caffeine fraction (F)
+
+The caffeine fraction depends on the coffee species:
+
+<table>
+	<thead>
+		<tr>
+			<th>Species</th>
+			<th>Caffeine fraction</th>
+			<th>Source</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Arabica (<em>Coffea arabica</em>)</td>
+			<td>1.2% (0.012)</td>
+			<td>Farah (2012); Ky et al. (2001)</td>
+		</tr>
+		<tr>
+			<td>Robusta (<em>Coffea canephora</em>)</td>
+			<td>2.2% (0.022)</td>
+			<td>Farah (2012); Ky et al. (2001)</td>
+		</tr>
+	</tbody>
+</table>
+
+These are dry-weight averages across commercially available beans. Published ranges are wider — Arabica can range from 0.8% to 1.4%, and Robusta from 1.7% to 4.0% — but CaffiLab uses the central commercial values as sensible defaults.
+
+**Key references:**
+
+- Farah, A. (2012). *Coffee Constituents.* In Y.-F. Chu (Ed.), Coffee: Emerging Health Effects and Disease Prevention. Wiley-Blackwell. Reports typical Arabica caffeine at 1.0–1.3% and Robusta at 1.7–4.0%.
+- Ky, C.-L., et al. (2001). "Caffeine, trigonelline, chlorogenic acids and sucrose diversity in wild *Coffea arabica* L. and *C. canephora* P. accessions." *Food Chemistry*, 75(2), 223–230. Measured caffeine across wild accessions, confirming Arabica typically near 1.2%.
+- Campa, C., et al. (2005). "Trigonelline and sucrose diversity in wild *Coffea* species." *Food Chemistry*, 88(1), 39–43. Extended species-level caffeine measurements.
+
+### Blend handling
+
+For blends, CaffiLab computes a weighted caffeine fraction:
+
+**F_blend = (arabica% × 0.012 + robusta% × 0.022) / 100**
+
+When the user doesn't know the species, CaffiLab uses a fallback hierarchy:
+
+1. **Package clues** (e.g., "specialty single origin" → mostly Arabica; "commercial instant" → Robusta-heavy)
+2. **Price inference** (higher prices correlate with Arabica-forward blends)
+3. **Conservative default** (100% Arabica if nothing is known)
+
+### Chicory adjustment
+
+For Indian filter coffee, chicory is a common additive. Chicory contributes essentially zero caffeine (McCusker et al., 2003), so the effective caffeine fraction is reduced:
+
+**F_effective = F × (1 − chicory% / 100)**
+
+## Caffeine recovery (E)
+
+Caffeine recovery represents how much of the bean's caffeine actually dissolves into the brew. This is the most complex part of the model.
+
+### Base recovery by method
+
+Each brew method has a default recovery based on published extraction data:
+
+<table>
+	<thead>
+		<tr>
+			<th>Method</th>
+			<th>Default recovery</th>
+			<th>Rationale</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Espresso</td>
+			<td>0.67</td>
+			<td>Short contact, high pressure, fine grind. Andueza et al. (2003) measured 50–80% caffeine extraction in espresso.</td>
+		</tr>
+		<tr>
+			<td>Pour over</td>
+			<td>0.82</td>
+			<td>Moderate contact, gravity flow. Gloess et al. (2013) found drip methods typically extract 75–90% of available caffeine.</td>
+		</tr>
+		<tr>
+			<td>French press</td>
+			<td>0.78</td>
+			<td>Full immersion, coarse grind. Slightly lower than drip due to coarser grind.</td>
+		</tr>
+		<tr>
+			<td>Cold brew (12–16h)</td>
+			<td>0.80–0.85</td>
+			<td>Extended contact compensates for low temperature. Fuller & Rao (2017) showed cold brew approaches hot-brew caffeine levels after 6+ hours.</td>
+		</tr>
+		<tr>
+			<td>Drip machine</td>
+			<td>0.85</td>
+			<td>Optimized flow rate and temperature.</td>
+		</tr>
+		<tr>
+			<td>AeroPress</td>
+			<td>0.75</td>
+			<td>Short immersion + pressure, highly variable technique.</td>
+		</tr>
+		<tr>
+			<td>Moka pot</td>
+			<td>0.70</td>
+			<td>Steam pressure, medium-fine grind.</td>
+		</tr>
+		<tr>
+			<td>Turkish</td>
+			<td>0.88</td>
+			<td>Ultra-fine grind, full boiling, unfiltered. Near-complete extraction.</td>
+		</tr>
+		<tr>
+			<td>Indian filter</td>
+			<td>0.72</td>
+			<td>Percolation through metal filter, medium-fine grind.</td>
+		</tr>
+	</tbody>
+</table>
+
+### Adjustment factors
+
+CaffiLab modifies the base recovery with 12 adjustment functions, each applying a small multiplier:
+
+1. **Roast level:** Light roasts can show higher caffeine in comparable brews (Ludwig et al., 2014). CaffiLab applies a small positive adjustment for light and a small negative for dark.
+
+2. **Grind size:** Finer grinds increase surface area and extraction. The adjustment is relative to the method's default grind — going finer than default increases recovery, coarser decreases it.
+
+3. **Brew time:** For hot methods, caffeine extracts rapidly in the first 1–2 minutes, then plateaus (Gloess et al., 2013). CaffiLab uses a logarithmic curve. For cold methods, the model rises quickly early and flattens after ~7 hours (Fuller & Rao, 2017).
+
+4. **Temperature:** Higher temperatures increase extraction rate. The adjustment is calibrated around the method's default temperature.
+
+5. **Brew ratio:** The coffee-to-water ratio affects extraction yield. Ratios tighter than the method default slightly increase recovery; wider ratios decrease it.
+
+6. **Extraction yield:** If the user provides a measured TDS/yield, this is the strongest calibrator — it directly scales recovery.
+
+7. **Pressure (espresso only):** Around 9 bar is the reference. Deviations apply a modest adjustment.
+
+8. **Agitation:** Stirring increases contact efficiency for immersion methods.
+
+9. **Water minerals:** Balanced mineral water extracts more efficiently than very soft or very hard water (Hendon et al., 2014).
+
+10. **Freshness:** Very fresh beans resist even extraction; stale beans extract less predictably.
+
+11. **Filter type:** Paper filters produce slightly lower measured caffeine than metal or no-filter methods.
+
+12. **Water pH:** More acidic water (lower pH) slightly favors caffeine extraction.
+
+### Recovery clamping
+
+After all adjustments, recovery is clamped to the range **0.42–0.97**. This prevents physically implausible values — you can't extract negative caffeine or more than exists.
+
+## Uncertainty model
+
+CaffiLab reports a confidence range, not just a point estimate. The uncertainty percentage starts at a base of 30% and is reduced by:
+
+- Each additional known input (declared, not left at defaults)
+- Brew parameters close to method defaults
+- Having bean species explicitly set rather than inferred
+
+The uncertainty is clamped between **5%** (very high confidence) and **35%** (low confidence).
+
+The range is then:
+
+- **Lower bound** = estimatedMg × (1 − uncertainty%)
+- **Upper bound** = estimatedMg × (1 + uncertainty%)
+
+## Limitations
+
+1. **Cultivar variation:** Even within Arabica, caffeine content varies by variety, growing altitude, and processing method. CaffiLab uses population averages.
+
+2. **Brew geometry:** The shape and flow dynamics of a pour-over dripper or espresso basket affect extraction in ways the model doesn't capture.
+
+3. **Roasting loss:** Roasting converts a small fraction of caffeine to methyluric acids. This is accounted for qualitatively (via the roast adjustment) but not with precise mass-balance.
+
+4. **No lab validation:** CaffiLab's estimates are calibrated against published research, not against HPLC measurements of its own output.
+
+## References
+
+- Andueza, S., et al. (2003). "Influence of extraction temperature on the final quality of espresso coffee." *Journal of the Science of Food and Agriculture*, 83(3), 240–248.
+- Farah, A. (2012). *Coffee Constituents.* In Y.-F. Chu (Ed.), Coffee: Emerging Health Effects and Disease Prevention. Wiley-Blackwell.
+- Fuller, M., & Rao, N. Z. (2017). "The Effect of Time, Roasting Temperature, and Grind Size on Caffeine and Chlorogenic Acid Concentrations in Cold Brew Coffee." *Scientific Reports*, 7, 17979.
+- Gloess, A. N., et al. (2013). "Comparison of nine common coffee extraction methods: instrumental and sensory analysis." *European Food Research and Technology*, 236(4), 607–627.
+- Hendon, C. H., et al. (2014). "The Role of Dissolved Cations in Coffee Extraction." *Journal of Agricultural and Food Chemistry*, 62(21), 4947–4950.
+- Ky, C.-L., et al. (2001). "Caffeine, trigonelline, chlorogenic acids and sucrose diversity in wild *Coffea arabica* L. and *C. canephora* P. accessions." *Food Chemistry*, 75(2), 223–230.
+- Ludwig, I. A., et al. (2014). "Variations in caffeine and chlorogenic acid contents of coffees: what are we drinking?" *Food & Function*, 5(8), 1718–1726.
+- McCusker, R. R., et al. (2003). "Caffeine content of specialty coffees." *Journal of Analytical Toxicology*, 27(7), 520–522.

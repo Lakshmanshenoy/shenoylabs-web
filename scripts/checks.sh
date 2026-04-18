@@ -108,12 +108,12 @@ fi
 
 # Check for hyphenated DOM/SVG attributes in MDX/JSX/TSX which React warns about
 # Looks for common problematic attributes: font-family, font-size, font-weight
-run_cmd hyphenated-dom-attrs bash -lc "HYPN_PATTERN='font-family|font-size|font-weight'; \
+run_cmd hyphenated-dom-attrs bash -lc 'HYPN_PATTERN="font-family|font-size|font-weight"; \
 if command -v rg >/dev/null 2>&1; then \
-  rg -n --hidden -g '!node_modules' -g '!public' -g '!reports' -g '!.git' -g '*.mdx' -g '*.tsx' -g '*.jsx' \"$HYPN_PATTERN\" && exit 1 || exit 0; \
+  rg -n --hidden -g "!node_modules" -g "!public" -g "!reports" -g "!.git" -g "*.mdx" -g "*.tsx" -g "*.jsx" "$HYPN_PATTERN" && exit 1 || exit 0; \
 else \
-  grep -R -n -E --include='*.mdx' --include='*.tsx' --include='*.jsx' \"$HYPN_PATTERN\" . && exit 1 || exit 0; \
-fi"
+  grep -R -n -E --include="*.mdx" --include="*.tsx" --include="*.jsx" "$HYPN_PATTERN" . && exit 1 || exit 0; \
+fi'
 
 # Prettier (optional) — only run if configured in package.json
 if grep -q '"prettier"' package.json 2>/dev/null; then
