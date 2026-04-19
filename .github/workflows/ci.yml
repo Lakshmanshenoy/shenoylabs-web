@@ -51,13 +51,6 @@ jobs:
           echo "allowlist content:"; sed -n '1,200p' .pnpm/allow-builds.json || true
           echo "pnpm allowBuilds config:"; pnpm config get --location=project --json allowBuilds || true
           echo "pnpm onlyBuiltDependenciesFile config:"; pnpm config get --location=project --json onlyBuiltDependenciesFile || true
-
-      - name: Apply pnpm allowlist config
-        run: |
-          # Ensure the project pnpm config explicitly uses the committed allowlist
-          pnpm config set --location=project onlyBuiltDependenciesFile .pnpm/allow-builds.json
-          pnpm config set --location=project allowBuilds "$(cat .pnpm/allow-builds.json)"
-
       - name: Assert pnpm allowlist config
         run: |
           # Fail early if allowlist file is missing or project config isn't set
@@ -66,13 +59,18 @@ jobs:
             ls -la .pnpm || true
             exit 1
           fi
-          onlyBuilt=$(pnpm config get --location=project --json onlyBuiltDependenciesFile || echo null)
-          if [ "$onlyBuilt" != "\".pnpm/allow-builds.json\"" ] && [ "$onlyBuilt" != ".pnpm/allow-builds.json" ]; then
+          onlyBuilt=$(pnpm config get --location=project --json onlyBuiltDependenciesFile 2>/dev/null || echo null)
+          # Strip surrounding JSON quotes if present
+          onlyBuilt=${onlyBuilt#\"}
+          onlyBuilt=${onlyBuilt%\"}
+          # Accept relative path, absolute workspace path, or any value that ends with .pnpm/allow-builds.json
+          if printf '%s' "$onlyBuilt" | grep -q '\.pnpm/allow-builds.json$'; then
+            echo "pnpm allowlist present and project config set."
+          else
             echo "pnpm onlyBuiltDependenciesFile is not set to .pnpm/allow-builds.json (value: $onlyBuilt)" >&2
             pnpm config list --location=project || true
             exit 1
           fi
-          echo "pnpm allowlist present and project config set."
 
 
       - name: Install dependencies
