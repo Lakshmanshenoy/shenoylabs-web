@@ -51,13 +51,6 @@ jobs:
           echo "allowlist content:"; sed -n '1,200p' .pnpm/allow-builds.json || true
           echo "pnpm allowBuilds config:"; pnpm config get --location=project --json allowBuilds || true
           echo "pnpm onlyBuiltDependenciesFile config:"; pnpm config get --location=project --json onlyBuiltDependenciesFile || true
-
-      - name: Apply pnpm allowlist config
-        run: |
-          # Ensure the project pnpm config explicitly uses the committed allowlist
-          pnpm config set --location=project onlyBuiltDependenciesFile .pnpm/allow-builds.json
-          pnpm config set --location=project allowBuilds "$(cat .pnpm/allow-builds.json)"
-
       - name: Assert pnpm allowlist config
         run: |
           # Fail early if allowlist file is missing or project config isn't set
