@@ -14,6 +14,9 @@
 - [ ] Upgrade: TinaCMS packages
 - [ ] Validation: Compile
 - [ ] Validation: Run tests
+- [✅] Upgrade: TinaCMS packages
+- [✅] Validation: Compile
+- [✅] Validation: Run tests
 - [ ] Final Summary & Commit
 - [ ] Generate Upgrade Summary
 
@@ -56,6 +59,8 @@
 - `tinacms`: 2.10.1 -> 3.7.2
 - `@tinacms/datalayer`: 1.4.3 -> 2.0.15
 - `@tinacms/cli`: 1.12.6 -> 2.2.2
+
+**Upgraded (TinaCMS):** `tinacms@3.7.3`, `@tinacms/datalayer@2.0.16`, `@tinacms/cli@2.2.3` — Next build succeeded after upgrades.
 
 ## Notes
 - Patch/minor updates are low-risk; major upgrades (TypeScript, Vitest, ESLint, TinaCMS, @types/node) may require code changes.
