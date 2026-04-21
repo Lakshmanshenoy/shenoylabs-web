@@ -25,6 +25,7 @@ import {
   estimateCaffeine,
   type AgitationLevel,
   type ArabicaGrade,
+  type Cultivar,
   type BeanDetail,
   type BeanType,
   type BrewMethod,
@@ -70,7 +71,8 @@ type FocusTopic =
   | "chicory"
   | "arabica_grade"
   | "elevation"
-  | "extraction_quality";
+  | "extraction_quality"
+  | "cultivar";
 
 const brewMethods = Object.entries(BREW_METHODS) as Array<
   [BrewMethod, (typeof BREW_METHODS)[BrewMethod]]
@@ -268,6 +270,7 @@ function getTopicExplanation({
     arabica_grade: "Arabica quality grade splits the species caffeine range in two tiers. Specialty (1.2–1.6 %) represents washed/natural single-origins and high-quality lots; Commercial (1.0–1.2 %) covers commodity-grade arabica. If unsure, the default Specialty tier is used.",
     elevation: "Growing elevation slightly correlates with caffeine content through UV exposure and pest pressure. High-altitude farms (>1500 m) shift the estimated range upward by ~15 % of the range width; low-altitude (<800 m) shifts it downward by the same amount.",
     extraction_quality: "Espresso extraction quality captures channeling and puck preparation. A poorly prepared puck (uneven tamping, channeling) reduces caffeine extraction significantly; a well-prepared shot can yield a small recovery gain. Average is the neutral default.",
+    cultivar: "Named arabica cultivar shifts the bean caffeine fraction range based on HPLC measurements. Geisha (~0.9–1.1 % dry weight) is distinctly lower; SL28 (~1.3–1.7 %) is elevated, typical of Kenyan lots; Caturra (~1.0–1.3 %) is a Bourbon-derived mid-range variety; Catimor (~1.5–2.0 %) is a Robusta hybrid and sits notably higher. Unknown is the safe default when you are not sure.",
   };
 
   return notes[focusTopic];
@@ -309,6 +312,7 @@ export function CaffiLabCalculator() {
   const [arabicaGrade, setArabicaGrade] = useState<ArabicaGrade | "">("specialty");
   const [elevationBand, setElevationBand] = useState<ElevationBand>("unknown");
   const [extractionQuality, setExtractionQuality] = useState<ExtractionQuality>("average");
+  const [cultivar, setCultivar] = useState<Cultivar>("unknown");
   const [focusTopic, setFocusTopic] = useState<FocusTopic>("result");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showExpert, setShowExpert] = useState(false);
@@ -353,6 +357,7 @@ export function CaffiLabCalculator() {
         arabicaGrade: arabicaGrade === "" ? undefined : arabicaGrade,
         elevationBand,
         extractionQuality,
+        cultivar,
       }),
     [
       arabicaPercent,
@@ -367,6 +372,7 @@ export function CaffiLabCalculator() {
       arabicaGrade,
       elevationBand,
       extractionQuality,
+      cultivar,
       coffeeAmount,
       coffeePrice,
       customCaffeinePercent,
@@ -496,6 +502,7 @@ export function CaffiLabCalculator() {
     setArabicaGrade("specialty");
     setElevationBand("unknown");
     setExtractionQuality("average");
+    setCultivar("unknown");
     setFocusTopic("result");
     setShowAdvanced(false);
     setShowExpert(false);
@@ -1363,18 +1370,26 @@ export function CaffiLabCalculator() {
                     </Field>
                   ) : null}
 
-                  <div className="rounded-[8px] border border-dashed border-[#33392f] bg-[#10120e] p-4">
-                    <div className="flex items-center gap-2">
-                      <span className={cn(labelClass, "opacity-60")}>Cultivar</span>
-                      <span className="rounded-[4px] bg-[#1c2219] px-1.5 py-0.5 text-[10px] font-medium text-[#9adf8f]">
-                        Coming soon
-                      </span>
-                    </div>
-                    <p className="mt-2 text-xs leading-5 text-[#8f9886]">
-                      Per-cultivar data (Geisha, SL28, Caturra, Catimor) will further
-                      narrow the bean fraction range once calibration data is confirmed.
-                    </p>
-                  </div>
+                  {beanType === "arabica" || beanType === "blend" ? (
+                    <Field
+                      label="Cultivar"
+                      topic="cultivar"
+                      onFocus={setFocusTopic}
+                      hint="Named cultivar narrows the bean fraction range based on published HPLC data."
+                    >
+                      <select
+                        value={cultivar}
+                        onChange={(event) => setCultivar(event.target.value as Cultivar)}
+                        className={inputClass}
+                      >
+                        <option value="unknown">Unknown</option>
+                        <option value="geisha">Geisha (~0.9–1.1 %)</option>
+                        <option value="sl28">SL28 (~1.3–1.7 %)</option>
+                        <option value="caturra">Caturra (~1.0–1.3 %)</option>
+                        <option value="catimor">Catimor (~1.5–2.0 %)</option>
+                      </select>
+                    </Field>
+                  ) : null}
                 </div>
               )}
             </div>

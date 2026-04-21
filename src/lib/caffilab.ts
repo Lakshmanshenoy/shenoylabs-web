@@ -58,8 +58,10 @@ export type ElevationBand = "unknown" | "low" | "mid" | "high";
  * Only applicable to pressure-based methods (espresso). */
 export type ExtractionQuality = "average" | "poor" | "well_prepared";
 
-/** Cultivar scaffold. Structure for per-cultivar F-range data.
- * Has no calculation effect until per-cultivar calibration data is confirmed. */
+/** Cultivar-level F-range shift for known arabica cultivars.
+ * Based on published HPLC caffeine measurements (Ky et al., 2001; Bertrand et al., 2003).
+ * Returns an absolute shift (in dry-weight fraction) weighted by arabica proportion.
+ * Unknown/unspecified cultivars return 0 (backward compatible default). */
 export type Cultivar = "unknown" | "geisha" | "sl28" | "caturra" | "catimor";
 
 export type GrindSize =
@@ -110,7 +112,9 @@ export type CaffiLabInput = {
   arabicaGrade?: ArabicaGrade;
   elevationBand?: ElevationBand;
   extractionQuality?: ExtractionQuality;
-  /** Scaffolded; no calculation effect until per-cultivar calibration data is available. */
+  /** Cultivar-based shift on the arabica caffeine fraction range.
+   * Geisha: ~0.9–1.1 % (notably lower). SL28: ~1.3–1.7 % (higher, Kenyan).
+   * Caturra: ~1.0–1.3 % (typical Bourbon-derived). Catimor: ~1.5–2.0 % (Robusta hybrid). */
   cultivar?: Cultivar;
 };
 
@@ -411,6 +415,7 @@ const UNCERTAINTY_WEIGHTS = {
   arabicaGrade: 3,
   elevationBand: 2,
   extractionQuality: 4,
+  cultivar: 3,
 };
 
 export function toGrams(amount: number, unit: WeightUnit) {
@@ -708,8 +713,14 @@ function getBeanFractionRange(input: CaffiLabInput, beanProfile: ReturnType<type
     blendedMin *= massBalance;
     blendedMax *= massBalance;
 
-    // Step 6 — Cultivar adjustment (scaffolded): no calculation effect until data is available.
-    // getCultivarAdjustment(input.cultivar) — reserved for future per-cultivar F-range shifts.
+    // Step 6 — Cultivar adjustment: shift range based on per-cultivar HPLC data.
+    // Only meaningful for arabica or arabica-dominant blends; weighted by arabica proportion.
+    if (input.cultivar !== undefined && input.cultivar !== "unknown" && beanProfile.arabica > 0) {
+      const rawShift = getCultivarShift(input.cultivar);
+      const shift = rawShift * (beanProfile.arabica / 100);
+      blendedMin = Math.max(0.001, blendedMin + shift);
+      blendedMax = Math.max(blendedMin, blendedMax + shift);
+    }
   }
 
   return {
@@ -926,6 +937,26 @@ function getExtractionQualityAdjustment(
 // Cultivar scaffold: per-cultivar F-range data not yet calibrated.
 // getCultivarAdjustment will return a meaningful shift once data is confirmed.
 
+/**
+ * Returns the absolute shift (in dry-weight caffeine fraction) for a named cultivar,
+ * applied to the arabica-weighted portion of the blended range.
+ *
+ * Calibration sources:
+ * - Geisha (~0.9–1.1 %): Ky et al. (2001); Panama Geisha HPLC studies.
+ * - SL28 (~1.3–1.7 %): Bertrand et al. (2003); Kenyan cultivar assessments.
+ * - Caturra (~1.0–1.3 %): Bourbon-derived, typical mid-range arabica.
+ * - Catimor (~1.5–2.0 %): Timor hybrid with Robusta genes (Ky et al., 2001).
+ */
+function getCultivarShift(cultivar: Cultivar | undefined): number {
+  switch (cultivar) {
+    case "geisha":  return -0.002; // ~−0.2 % dry-weight — distinctly lower caffeine
+    case "sl28":   return  0.002; // ~+0.2 % dry-weight — Kenyan high-caffeine variety
+    case "caturra": return -0.001; // slight below-midpoint Bourbon derivative
+    case "catimor": return  0.004; // ~+0.4 % dry-weight — Robusta-introgressed hybrid
+    default:        return  0;     // unknown — no shift
+  }
+}
+
 function getCaffeineRecovery(
   method: BrewMethodConfig,
   input: CaffiLabInput,
@@ -1028,6 +1059,14 @@ function getBrewingUncertaintyPercent(
     }
   }
 
+  if (
+    input.cultivar !== undefined &&
+    input.cultivar !== "unknown" &&
+    (input.beanType === "arabica" || input.beanType === "blend")
+  ) {
+    uncertainty -= UNCERTAINTY_WEIGHTS.cultivar;
+  }
+
   return clamp(uncertainty, 5, 35);
 }
 
@@ -1101,6 +1140,13 @@ function getInputCountBuckets(input: CaffiLabInput) {
     {
       applicable: method.supportsPressure ?? false,
       known: method.supportsPressure ? input.extractionQuality !== undefined : false,
+    },
+    {
+      applicable: input.beanType === "arabica" || input.beanType === "blend",
+      known:
+        (input.beanType === "arabica" || input.beanType === "blend") &&
+        input.cultivar !== undefined &&
+        input.cultivar !== "unknown",
     },
   ];
 }

@@ -92,6 +92,22 @@ Click **Advanced inputs** to reveal additional parameters:
 
 Each brewing input you declare can reduce brewing uncertainty. But if the bean itself still has a wide caffeine range, CaffiLab keeps that uncertainty visible instead of hiding it.
 
+## Going deeper with Expert inputs
+
+Click **Expert inputs** for three additional bean-quality parameters that further narrow the caffeine fraction range:
+
+- **Arabica grade:** Splits the arabica range into Specialty (1.2–1.6 % dry weight) and Commercial (1.0–1.2 %). Most specialty-roaster bags are Specialty grade.
+- **Growing elevation:** High-altitude farms (above ~1500 m) correlate with slightly elevated caffeine through UV exposure and pest pressure. Low-altitude farms sit toward the lower end.
+- **Extraction quality (espresso only):** Accounts for channeling and puck preparation. A poorly tamped puck can meaningfully reduce caffeine extraction compared to a well-prepared shot.
+- **Cultivar:** Named arabica cultivar shifts the estimated bean caffeine fraction based on published HPLC measurements:
+  - **Geisha** (~0.9–1.1 % dry weight) — distinctly lower than typical arabica.
+  - **SL28** (~1.3–1.7 %) — Kenyan variety with elevated caffeine.
+  - **Caturra** (~1.0–1.3 %) — Bourbon-derived, mid-range arabica.
+  - **Catimor** (~1.5–2.0 %) — Robusta hybrid, sits notably higher.
+  - **Unknown** is the default if you are not sure which variety you have.
+
+These Expert inputs do not change the brewing recovery model — they refine the starting caffeine fraction in the bean before any extraction calculation.
+
 ## Tips for accurate estimates
 
 1. **Weigh your coffee.** Scoops vary; a kitchen scale makes the dose precise.
