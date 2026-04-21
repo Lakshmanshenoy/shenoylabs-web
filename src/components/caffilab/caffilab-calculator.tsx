@@ -742,7 +742,13 @@ export function CaffiLabCalculator() {
                 >
                   <select
                     value={beanType}
-                    onChange={(event) => setBeanType(event.target.value as BeanType)}
+                    onChange={(event) => {
+                      const next = event.target.value as BeanType;
+                      setBeanType(next);
+                      if (next === "arabica" || next === "blend") {
+                        setShowExpert(true);
+                      }
+                    }}
                     className={inputClass}
                   >
                     <option value="unknown">Not sure</option>
@@ -1298,6 +1304,11 @@ export function CaffiLabCalculator() {
                 <h2 className="text-lg font-semibold text-[#f7f3ea] [letter-spacing:0]">
                   Expert inputs
                 </h2>
+                {!showExpert && (beanType === "arabica" || beanType === "blend") ? (
+                  <span className="rounded-[4px] border border-[#9adf8f]/25 bg-[#9adf8f]/10 px-2 py-0.5 text-xs text-[#9adf8f]">
+                    Arabica inputs available
+                  </span>
+                ) : null}
                 <ChevronDownIcon
                   className={cn(
                     "ml-auto size-5 text-[#a9b39c] transition-transform duration-200",

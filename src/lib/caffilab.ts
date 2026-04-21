@@ -511,29 +511,19 @@ function getBeanDetailLabel(beanDetail: BeanDetail, customCaffeinePercent: numbe
   return "Generic species range";
 }
 
-function getBeanDetailWindow(_beanDetail: BeanDetail) {
-  // Generic always uses the full species range.
-  // Custom caffeine % bypasses this function entirely (handled in adjustSpeciesRange).
-  return { start: 0, end: 1 };
-}
-
 function adjustSpeciesRange(
   range: { min: number; max: number },
   beanDetail: BeanDetail,
   customCaffeinePercent: number | undefined,
 ) {
   if (beanDetail === "custom") {
+    // User-supplied dry-weight % overrides the species range entirely.
     const fraction = clamp((customCaffeinePercent ?? midpoint(range.min, range.max) * 100) / 100, 0.001, 0.06);
     return { min: fraction, max: fraction };
   }
 
-  const { start, end } = getBeanDetailWindow(beanDetail);
-  const width = range.max - range.min;
-
-  return {
-    min: range.min + width * start,
-    max: range.min + width * end,
-  };
+  // Generic: use the full species range unchanged.
+  return { min: range.min, max: range.max };
 }
 
 function getPackageClueProfile(clue: PackageClue | undefined) {
@@ -671,7 +661,7 @@ function getBeanFractionRange(input: CaffiLabInput, beanProfile: ReturnType<type
       ? getArabicaBaseRange(input.arabicaGrade)
       : F_RANGE.arabica;
 
-  // Step 2 — Apply bean detail window (high_altitude / low_altitude / custom / generic).
+  // Step 2 — Apply bean detail: custom % overrides species range; generic uses it unchanged.
   const arabicaRange = adjustSpeciesRange(arabicaBaseRange, beanDetail, input.customCaffeinePercent);
   const robustaRange = adjustSpeciesRange(F_RANGE.robusta, beanDetail, input.customCaffeinePercent);
 
