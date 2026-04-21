@@ -19,6 +19,8 @@
 
 **Branch**: `appmod/typescript-upgrade-20260422041408`
 
+**Remote branch pushed**: `updt/packages`
+
 ## Package groups and candidates
 
 ### Patch & Minor packages
