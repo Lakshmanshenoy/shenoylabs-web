@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -298,6 +298,7 @@ export function CaffiLabCalculator() {
   const [chicoryPercent, setChicoryPercent] = useState("20");
   const [focusTopic, setFocusTopic] = useState<FocusTopic>("result");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const customCaffeineInputRef = useRef<HTMLInputElement | null>(null);
 
   const method = BREW_METHODS[brewMethod];
   const estimate = useMemo(
@@ -388,6 +389,23 @@ export function CaffiLabCalculator() {
     waterUnit: brewWaterUnit,
   });
 
+  useEffect(() => {
+    if (beanDetail !== "custom" || !showAdvanced) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      customCaffeineInputRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      customCaffeineInputRef.current?.focus();
+      customCaffeineInputRef.current?.select();
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [beanDetail, showAdvanced]);
+
   function handleMethodChange(nextMethod: BrewMethod) {
     const nextConfig = BREW_METHODS[nextMethod];
     const nextTimeUnit = nextConfig.timeSensitivity === "cold" ? "hr" : "min";
@@ -461,8 +479,8 @@ export function CaffiLabCalculator() {
 
   return (
     <div className="min-h-screen bg-[#0c0d0b] text-[#f5f1e8]">
-      <section className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8 lg:py-14">
-        <div className="flex flex-col justify-between gap-8">
+      <section className="mx-auto grid w-full max-w-7xl items-start gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8 lg:py-14">
+        <div className="flex flex-col gap-8 self-start">
           <div className="grid gap-6">
             <div className="inline-flex w-fit items-center gap-2 rounded-[6px] border border-[#46503f] bg-[#151812] px-3 py-1 text-xs font-medium text-[#c7d2ba]">
               <BeakerIcon className="size-4 text-[#9adf8f]" />
@@ -695,11 +713,23 @@ export function CaffiLabCalculator() {
                   label="Bean detail"
                   topic="bean_detail"
                   onFocus={setFocusTopic}
-                  hint="Optional. Use this only if you know the bean tends lower or higher in caffeine, or you have a measured caffeine percentage."
+                  hint={
+                    beanDetail === "custom"
+                      ? "Custom selected. Enter the value in the Custom caffeine % field below in Advanced inputs."
+                      : "Optional. Use this only if you know the bean tends lower or higher in caffeine, or you have a measured caffeine percentage."
+                  }
                 >
                   <select
                     value={beanDetail}
-                    onChange={(event) => setBeanDetail(event.target.value as BeanDetail)}
+                    onChange={(event) => {
+                      const nextDetail = event.target.value as BeanDetail;
+                      setBeanDetail(nextDetail);
+                      setFocusTopic("bean_detail");
+
+                      if (nextDetail === "custom") {
+                        setShowAdvanced(true);
+                      }
+                    }}
                     className={inputClass}
                   >
                     <option value="generic">Generic range</option>
@@ -918,6 +948,7 @@ export function CaffiLabCalculator() {
                     hint="Enter the dry-weight caffeine percentage if you have a measured or published value for this bean."
                   >
                     <input
+                      ref={customCaffeineInputRef}
                       aria-label="Custom caffeine percentage"
                       value={customCaffeinePercent}
                       onChange={(event) => setCustomCaffeinePercent(event.target.value)}
