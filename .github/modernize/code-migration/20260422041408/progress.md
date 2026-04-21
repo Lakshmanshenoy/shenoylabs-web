@@ -10,7 +10,7 @@
 - [✅] Upgrade: Patch & Minor
 - [✅] Upgrade: @types packages
 - [⌛️] Upgrade: Build tools & Linters
-- [ ] Upgrade: Testing (vitest)
+- [✅] Upgrade: Testing (vitest)
 - [ ] Upgrade: TinaCMS packages
 - [ ] Validation: Compile
 - [ ] Validation: Run tests
@@ -49,6 +49,8 @@
 
 ### Testing
 - `vitest`: 1.6.1 -> 4.1.5
+
+**Upgraded (testing):** `vitest@4.1.5`; added `vite@6.4.2` to satisfy peer deps; test run: 14 passed (all tests).
 
 ### TinaCMS
 - `tinacms`: 2.10.1 -> 3.7.2
