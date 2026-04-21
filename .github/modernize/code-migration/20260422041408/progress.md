@@ -20,8 +20,8 @@
 - [✅] Upgrade: TinaCMS packages
 - [✅] Validation: Compile
 - [✅] Validation: Run tests
-- [ ] Final Summary & Commit
-- [ ] Generate Upgrade Summary
+- [✅] Final Summary & Commit
+- [✅] Generate Upgrade Summary
 
 **Branch**: `appmod/typescript-upgrade-20260422041408`
 
