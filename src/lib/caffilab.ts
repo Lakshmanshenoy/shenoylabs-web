@@ -117,6 +117,7 @@ export type CaffiLabEstimate = {
   beverageMl: number;
   dilutionMl: number;
   knownInputs: number;
+  availableInputs: number;
   assumedBeanProfile: string;
   beanDetailLabel: string;
   extractionYieldPercent: number;
@@ -905,27 +906,62 @@ function getBeanUncertaintyPercent(caffeineFractionMin: number, caffeineFraction
   return ((caffeineFractionMax - caffeineFractionMin) / (2 * fractionMid)) * 100;
 }
 
-function getKnownInputCount(input: CaffiLabInput) {
+function getInputCountBuckets(input: CaffiLabInput) {
+  const method = BREW_METHODS[input.brewMethod];
+
   return [
-    input.beanType !== "unknown" ||
-      Boolean(input.coffeePrice) ||
-      (input.packageClue !== undefined && input.packageClue !== "none"),
-    input.brewTimeAmount !== undefined,
-    input.dilutionAmount !== undefined,
-    input.coffeeAmount > 0 && input.brewWaterAmount > 0,
-    Boolean(input.grindSize),
-    Boolean(input.roastLevel),
-    input.temperatureAmount !== undefined,
-    input.extractionYieldPercent !== undefined,
-    input.pressureBars !== undefined && BREW_METHODS[input.brewMethod].supportsPressure,
-    input.agitation !== "none",
-    input.waterMinerals !== "unknown" || input.waterPh !== undefined,
-    input.freshness !== "unknown",
-    Boolean(input.filterType),
-    input.beanDetail !== undefined && input.beanDetail !== "generic",
-    input.beanDetail !== "custom" || input.customCaffeinePercent !== undefined,
-    input.brewMethod !== "indian_filter" || input.chicoryPercent !== undefined,
-  ].filter(Boolean).length;
+    {
+      applicable: true,
+      known:
+        input.beanType !== "unknown" ||
+        Boolean(input.coffeePrice) ||
+        (input.packageClue !== undefined && input.packageClue !== "none"),
+    },
+    { applicable: true, known: input.brewTimeAmount !== undefined },
+    { applicable: true, known: input.dilutionAmount !== undefined },
+    {
+      applicable: true,
+      known: input.coffeeAmount > 0 && input.brewWaterAmount > 0,
+    },
+    { applicable: true, known: Boolean(input.grindSize) },
+    { applicable: true, known: Boolean(input.roastLevel) },
+    { applicable: true, known: input.temperatureAmount !== undefined },
+    { applicable: true, known: input.extractionYieldPercent !== undefined },
+    {
+      applicable: method.supportsPressure ?? false,
+      known: method.supportsPressure ? input.pressureBars !== undefined : false,
+    },
+    {
+      applicable: method.supportsAgitation ?? false,
+      known: method.supportsAgitation ? input.agitation !== "none" : false,
+    },
+    {
+      applicable: true,
+      known: input.waterMinerals !== "unknown" || input.waterPh !== undefined,
+    },
+    { applicable: true, known: input.freshness !== "unknown" },
+    { applicable: true, known: Boolean(input.filterType) },
+    {
+      applicable: true,
+      known: input.beanDetail !== undefined && input.beanDetail !== "generic",
+    },
+    {
+      applicable: input.beanDetail === "custom",
+      known: input.beanDetail === "custom" && input.customCaffeinePercent !== undefined,
+    },
+    {
+      applicable: input.brewMethod === "indian_filter",
+      known: input.brewMethod === "indian_filter" && input.chicoryPercent !== undefined,
+    },
+  ];
+}
+
+function getKnownInputCount(input: CaffiLabInput) {
+  return getInputCountBuckets(input).filter((bucket) => bucket.applicable && bucket.known).length;
+}
+
+function getAvailableInputCount(input: CaffiLabInput) {
+  return getInputCountBuckets(input).filter((bucket) => bucket.applicable).length;
 }
 
 function buildExplanation(
@@ -1041,6 +1077,7 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
     beverageMl: Number(beverageMl.toFixed(1)),
     dilutionMl: Number(dilutionMl.toFixed(1)),
     knownInputs: getKnownInputCount(input),
+    availableInputs: getAvailableInputCount(input),
     assumedBeanProfile: beanProfile.label,
     beanDetailLabel: beanFractionRange.detailLabel,
     extractionYieldPercent: Number(extractionYieldPercent.toFixed(1)),

@@ -1235,11 +1235,12 @@ export function CaffiLabCalculator() {
                     <p className={labelClass}>Known inputs</p>
                   </div>
                   <p className="mt-3 font-mono text-3xl font-semibold text-[#f5f1e8] [letter-spacing:0]">
-                    {estimate.knownInputs}/16
+                    {estimate.knownInputs}/{estimate.availableInputs}
                   </p>
                   <p className="mt-1 text-xs leading-5 text-[#8f9886]">
-                    More declared brewing inputs reduce the brewing uncertainty,
-                    but bean variability still sets a hard floor.
+                    Counts only the inputs that apply to this recipe. More declared
+                    brewing inputs reduce the brewing uncertainty, but bean variability
+                    still sets a hard floor.
                   </p>
                 </div>
               </div>
