@@ -43,10 +43,12 @@ describe("CaffiLab estimator", () => {
       filterType: "metal",
     });
 
-    expect(estimate.estimatedMg).toBe(151);
-    expect(estimate.lowerMg).toBe(144);
-    expect(estimate.upperMg).toBe(159);
-    expect(estimate.confidenceLabel).toBe("Very High");
+    expect(estimate.estimatedMg).toBe(164);
+    expect(estimate.lowerMg).toBe(126);
+    expect(estimate.upperMg).toBe(202);
+    expect(estimate.beanUncertaintyPercent).toBe(23.1);
+    expect(estimate.brewingUncertaintyPercent).toBe(5);
+    expect(estimate.confidenceLabel).toBe("Medium");
   });
 
   it("keeps unknown inputs conservative with a wider range", () => {
@@ -62,11 +64,14 @@ describe("CaffiLab estimator", () => {
       temperatureAmount: undefined,
     });
 
-    expect(estimate.estimatedMg).toBe(198);
-    expect(estimate.confidencePercent).toBe(19);
+    expect(estimate.estimatedMg).toBe(215);
+    expect(estimate.confidencePercent).toBe(23.1);
     expect(estimate.confidenceLabel).toBe("Medium");
-    expect(estimate.lowerMg).toBe(161);
-    expect(estimate.upperMg).toBe(236);
+    expect(estimate.lowerMg).toBe(165);
+    expect(estimate.upperMg).toBe(264);
+    expect(estimate.beanUncertaintyPercent).toBeGreaterThan(
+      estimate.brewingUncertaintyPercent,
+    );
   });
 
   it("uses brew water for ratio while dilution only changes concentration", () => {
@@ -140,7 +145,9 @@ describe("CaffiLab estimator", () => {
     });
 
     expect(withChicory.estimatedMg).toBeLessThan(withoutChicory.estimatedMg);
-    expect(withChicory.estimatedMg).toBe(192);
+    expect(withChicory.estimatedMg).toBe(207);
+    expect(withChicory.beanLowerMg).toBe(167);
+    expect(withChicory.beanUpperMg).toBe(247);
   });
 
   it("prefers package clues over price for unknown bean species", () => {
@@ -162,5 +169,27 @@ describe("CaffiLab estimator", () => {
 
     expect(estimate.assumedBeanProfile).toContain("robusta-forward");
     expect(estimate.estimatedMg).toBeGreaterThan(250);
+  });
+
+  it("lets custom bean detail remove bean variability while preserving brewing uncertainty", () => {
+    const estimate = estimateCaffeine({
+      ...baseInput,
+      brewMethod: "pour_over",
+      coffeeAmount: 20,
+      brewWaterAmount: 320,
+      servingAmount: 320,
+      beanType: "arabica",
+      beanDetail: "custom",
+      customCaffeinePercent: 1.3,
+      brewTimeAmount: 3.5,
+      grindSize: "medium_fine",
+      temperatureAmount: 94,
+    });
+
+    expect(estimate.lowerMg).toBe(estimate.upperMg);
+    expect(estimate.beanUncertaintyPercent).toBe(0);
+    expect(estimate.brewingUncertaintyPercent).toBe(5);
+    expect(estimate.confidencePercent).toBe(5);
+    expect(estimate.confidenceLabel).toBe("Very High");
   });
 });

@@ -13,46 +13,52 @@ coverAlt: "Coffee dripping into a glass vessel on a counter"
 
 ## The core model
 
-CaffiLab estimates caffeine using a multiplicative model:
+CaffiLab now estimates caffeine with a range-aware multiplicative model:
 
-**C = G × F × E × 1000**
+- **Estimate** = **G × F_mid × E × 1000**
+- **Bean lower bound** = **G × F_min × E × 1000**
+- **Bean upper bound** = **G × F_max × E × 1000**
 
 Where:
 
-- **C** = estimated caffeine in milligrams
 - **G** = coffee dose in grams
-- **F** = caffeine fraction (the proportion of the bean's dry weight that is caffeine)
+- **F_min / F_max / F_mid** = the bean caffeine range and its midpoint
 - **E** = caffeine recovery (what fraction of the available caffeine actually ends up in the cup)
 
 The result is multiplied by 1000 to convert from grams to milligrams.
 
-## Caffeine fraction (F)
+This matters because coffee beans do not have a single fixed caffeine value. Even before brewing starts, species, growing conditions, and blend composition create a real baseline range.
 
-The caffeine fraction depends on the coffee species:
+## Caffeine fraction range (F_range)
+
+The caffeine fraction depends on the coffee species, and CaffiLab models it as a range instead of a single fixed number:
 
 <table>
 	<thead>
 		<tr>
 			<th>Species</th>
-			<th>Caffeine fraction</th>
+			<th>Caffeine range</th>
+			<th>Midpoint used for estimate</th>
 			<th>Source</th>
 		</tr>
 	</thead>
 	<tbody>
 		<tr>
 			<td>Arabica (<em>Coffea arabica</em>)</td>
-			<td>1.2% (0.012)</td>
+			<td>1.0% to 1.6%</td>
+			<td>1.3%</td>
 			<td>Farah (2012); Ky et al. (2001)</td>
 		</tr>
 		<tr>
 			<td>Robusta (<em>Coffea canephora</em>)</td>
-			<td>2.2% (0.022)</td>
+			<td>2.0% to 2.7%</td>
+			<td>2.35%</td>
 			<td>Farah (2012); Ky et al. (2001)</td>
 		</tr>
 	</tbody>
 </table>
 
-These are dry-weight averages across commercially available beans. Published ranges are wider — Arabica can range from 0.8% to 1.4%, and Robusta from 1.7% to 4.0% — but CaffiLab uses the central commercial values as sensible defaults.
+These are dry-weight working ranges used by the calculator. They are intentionally narrower than the full botanical extremes reported in the literature, because CaffiLab is trying to represent realistic consumer coffee while avoiding false precision.
 
 **Key references:**
 
@@ -62,15 +68,30 @@ These are dry-weight averages across commercially available beans. Published ran
 
 ### Blend handling
 
-For blends, CaffiLab computes a weighted caffeine fraction:
+For blends, CaffiLab computes a weighted range:
 
-**F_blend = (arabica% × 0.012 + robusta% × 0.022) / 100**
+**F_min,blend = (arabica% × F_min,arabica + robusta% × F_min,robusta) / 100**
+
+**F_max,blend = (arabica% × F_max,arabica + robusta% × F_max,robusta) / 100**
+
+**F_mid,blend = (F_min,blend + F_max,blend) / 2**
 
 When the user doesn't know the species, CaffiLab uses a fallback hierarchy:
 
 1. **Package clues** (e.g., "specialty single origin" → mostly Arabica; "commercial instant" → Robusta-heavy)
 2. **Price inference** (higher prices correlate with Arabica-forward blends)
 3. **Conservative default** (100% Arabica if nothing is known)
+
+### Bean detail input
+
+The advanced panel adds an optional **Bean detail** input:
+
+- **Generic range:** Uses the full species range.
+- **High-altitude:** Biases toward the lower-caffeine half of the species range.
+- **Low-altitude:** Biases toward the higher-caffeine half of the species range.
+- **Custom caffeine %:** Uses a user-supplied dry-weight caffeine percentage.
+
+This lets the model acknowledge bean-level variability directly instead of pretending the species average is exact.
 
 ### Chicory adjustment
 
@@ -177,22 +198,48 @@ After all adjustments, recovery is clamped to the range **0.42–0.97**. This pr
 
 ## Uncertainty model
 
-CaffiLab reports a confidence range, not just a point estimate. The uncertainty percentage starts at a base of 30% and is reduced by:
+CaffiLab now splits uncertainty into two sources:
 
-- Each additional known input (declared, not left at defaults)
-- Brew parameters close to method defaults
-- Having bean species explicitly set rather than inferred
+1. **Bean variability**: an irreducible floor based on the caffeine range itself.
+2. **Brewing uncertainty**: a reducible layer based on how many brewing details you provide.
 
-The uncertainty is clamped between **5%** (very high confidence) and **35%** (low confidence).
+### Bean variability uncertainty
 
-The range is then:
+Bean variability is computed as:
 
-- **Lower bound** = estimatedMg × (1 − uncertainty%)
-- **Upper bound** = estimatedMg × (1 + uncertainty%)
+**bean_uncertainty = (F_max − F_min) / (2 × F_mid)**
+
+This means confidence cannot become artificially high if the bean itself still has a meaningful caffeine spread.
+
+### Brewing uncertainty
+
+Brewing uncertainty still reflects what you do and do not know about the recipe. It starts broad and shrinks when you declare more useful inputs, such as:
+
+- brew time
+- extraction yield
+- grind size
+- pressure
+- water chemistry
+- freshness
+- filter type
+- and other brewing controls
+
+### Applied confidence cap
+
+The calculator then uses:
+
+**total_uncertainty = max(bean_uncertainty, brewing_uncertainty)**
+
+So even if the brewing inputs are excellent, confidence is capped by the bean variability floor unless you narrow that floor with bean detail or a custom caffeine percentage.
+
+That produces two useful outputs:
+
+- **Bean-driven range:** based only on the bean caffeine range.
+- **Practical range:** based on the final applied uncertainty cap.
 
 ## Limitations
 
-1. **Cultivar variation:** Even within Arabica, caffeine content varies by variety, growing altitude, and processing method. CaffiLab uses population averages.
+1. **Cultivar variation:** Even with a range model, bean chemistry still varies by cultivar, growing altitude, and processing method.
 
 2. **Brew geometry:** The shape and flow dynamics of a pour-over dripper or espresso basket affect extraction in ways the model doesn't capture.
 
