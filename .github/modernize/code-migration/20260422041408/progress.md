@@ -6,8 +6,8 @@
 
 ## Progress
 - [✅] Generate Upgrade Plan
-- [⌛️] Version Control Setup
-- [ ] Upgrade: Patch & Minor
+- [✅] Version Control Setup
+- [⌛️] Upgrade: Patch & Minor
 - [ ] Upgrade: @types packages
 - [ ] Upgrade: Build tools & Linters
 - [ ] Upgrade: Testing (vitest)
