@@ -587,13 +587,25 @@ export function CaffiLabCalculator() {
           <div className="grid gap-3 rounded-[8px] border border-[#33392f] bg-[#10120e] p-5">
             <p className={labelClass}>Model</p>
             <p className="font-mono text-sm text-[#cbd5c0]">
-              C = dose x bean caffeine range midpoint x recovery
+              Estimate = G × F_mid × E × 1000
             </p>
             <p className="text-sm leading-7 text-[#aeb8a5]">
-              Caffeine fraction is modeled as a range from Arabica/Robusta
-              literature. Brew water sets extraction ratio; dilution only
-              changes final cup concentration.
+              G = coffee dose (g). F is the bean caffeine fraction modeled as a
+              species range (Arabica 1.0–1.6% → midpoint 1.3%; Robusta 2.0–2.7% →
+              midpoint 2.35%). Blends use a weighted F range; chicory reduces
+              effective F. E is caffeine recovery (method base × small
+              adjustments), clamped to 0.42–0.97.
             </p>
+            <p className="text-sm leading-7 text-[#aeb8a5]">
+              Uncertainty is split into bean variability and brewing uncertainty —
+              the calculator applies the larger of the two as the final cap.
+            </p>
+            <Link
+              href="/articles/how-does-caffilab-formula-work"
+              className="mt-2 text-sm text-[#9adf8f] underline underline-offset-2"
+            >
+              Read the full model
+            </Link>
           </div>
         </div>
 
