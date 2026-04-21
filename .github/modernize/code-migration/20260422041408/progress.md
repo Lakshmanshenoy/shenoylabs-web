@@ -45,6 +45,8 @@
 - `eslint`: 9.39.4 -> 10.2.1
 - `typescript`: 5.9.3 -> 6.0.3
 
+**Upgraded (build tools):** `typescript@6.0.3` (typecheck passed)
+
 ### Testing
 - `vitest`: 1.6.1 -> 4.1.5
 
