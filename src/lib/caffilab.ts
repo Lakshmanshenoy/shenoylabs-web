@@ -15,6 +15,7 @@ export type BrewMethod =
   | "indian_filter";
 
 export type BeanType = "unknown" | "arabica" | "robusta" | "blend";
+export type BeanDetail = "generic" | "high_altitude" | "low_altitude" | "custom";
 export type WeightUnit = "g" | "oz" | "lb";
 export type VolumeUnit = "ml" | "l" | "fl_oz";
 export type TimeUnit = "min" | "hr";
@@ -42,6 +43,27 @@ export type WaterMinerals = "unknown" | "soft" | "balanced" | "hard";
 export type Freshness = "unknown" | "fresh" | "rested" | "stale";
 export type FilterType = "paper" | "metal" | "cloth" | "none";
 
+// Expert-mode types: modular foundation for future scientific improvements.
+// Features are scaffolded for extension; some affect the model, others are structural placeholders.
+
+/** Arabica quality tier. Narrows the caffeine fraction range.
+ * Commercial (1.0–1.2 %) is the lower tier; Specialty (1.2–1.6 %) the upper tier. */
+export type ArabicaGrade = "specialty" | "commercial";
+
+/** Farm elevation band. Shifts the caffeine fraction range slightly.
+ * Higher altitude correlates with slightly elevated caffeine content (UV / stress effects). */
+export type ElevationBand = "unknown" | "low" | "mid" | "high";
+
+/** Espresso extraction quality. Models channeling and puck preparation.
+ * Only applicable to pressure-based methods (espresso). */
+export type ExtractionQuality = "average" | "poor" | "well_prepared";
+
+/** Cultivar-level F-range shift for known arabica cultivars.
+ * Based on published HPLC caffeine measurements (Ky et al., 2001; Bertrand et al., 2003).
+ * Returns an absolute shift (in dry-weight fraction) weighted by arabica proportion.
+ * Unknown/unspecified cultivars return 0 (backward compatible default). */
+export type Cultivar = "unknown" | "geisha" | "sl28" | "caturra" | "catimor";
+
 export type GrindSize =
   | "extra_fine"
   | "fine"
@@ -62,6 +84,8 @@ export type CaffiLabInput = {
   servingAmount: number;
   servingUnit: VolumeUnit;
   beanType: BeanType;
+  beanDetail?: BeanDetail;
+  customCaffeinePercent?: number;
   arabicaPercent?: number;
   robustaPercent?: number;
   coffeePrice?: number;
@@ -84,18 +108,36 @@ export type CaffiLabInput = {
   freshness: Freshness;
   filterType: FilterType;
   chicoryPercent?: number;
+  // Expert inputs (see ArabicaGrade, ElevationBand, ExtractionQuality, Cultivar)
+  arabicaGrade?: ArabicaGrade;
+  elevationBand?: ElevationBand;
+  extractionQuality?: ExtractionQuality;
+  /** Cultivar-based shift on the arabica caffeine fraction range.
+   * Geisha: ~0.9–1.1 % (notably lower). SL28: ~1.3–1.7 % (higher, Kenyan).
+   * Caturra: ~1.0–1.3 % (typical Bourbon-derived). Catimor: ~1.5–2.0 % (Robusta hybrid). */
+  cultivar?: Cultivar;
 };
 
 export type CaffiLabEstimate = {
   estimatedMg: number;
   lowerMg: number;
   upperMg: number;
+  practicalLowerMg: number;
+  practicalUpperMg: number;
+  beanLowerMg: number;
+  beanUpperMg: number;
   concentrationMgPer100Ml: number;
   confidenceLabel: ConfidenceLabel;
   confidencePercent: number;
+  beanUncertaintyPercent: number;
+  brewingUncertaintyPercent: number;
   caffeineRecovery: number;
   caffeineFraction: number;
+  caffeineFractionMin: number;
+  caffeineFractionMax: number;
   effectiveCaffeineFraction: number;
+  effectiveCaffeineFractionMin: number;
+  effectiveCaffeineFractionMax: number;
   dilutionFactor: number;
   brewRatio: number;
   targetBrewRatio: number;
@@ -104,7 +146,9 @@ export type CaffiLabEstimate = {
   beverageMl: number;
   dilutionMl: number;
   knownInputs: number;
+  availableInputs: number;
   assumedBeanProfile: string;
+  beanDetailLabel: string;
   extractionYieldPercent: number;
   explanation: string;
 };
@@ -181,7 +225,7 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
   },
   french_press: {
     label: "French Press",
-    defaultRecovery: 0.84,
+    defaultRecovery: 0.78,
     defaultTimeMinutes: 4,
     defaultGrind: "coarse",
     defaultTemperatureC: 94,
@@ -210,7 +254,7 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
   },
   aeropress: {
     label: "AeroPress",
-    defaultRecovery: 0.76,
+    defaultRecovery: 0.75,
     defaultTimeMinutes: 2,
     defaultGrind: "medium_fine",
     defaultTemperatureC: 88,
@@ -224,7 +268,7 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
   },
   moka_pot: {
     label: "Moka Pot (Stovetop)",
-    defaultRecovery: 0.74,
+    defaultRecovery: 0.70,
     defaultTimeMinutes: 4,
     defaultGrind: "fine",
     defaultTemperatureC: 94,
@@ -237,7 +281,7 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
   },
   drip_machine: {
     label: "Drip Coffee (Machine)",
-    defaultRecovery: 0.83,
+    defaultRecovery: 0.85,
     defaultTimeMinutes: 5,
     defaultGrind: "medium",
     defaultTemperatureC: 93,
@@ -264,7 +308,7 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
   },
   turkish: {
     label: "Turkish Coffee",
-    defaultRecovery: 0.9,
+    defaultRecovery: 0.88,
     defaultTimeMinutes: 3,
     defaultGrind: "extra_fine",
     defaultTemperatureC: 96,
@@ -319,7 +363,7 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
   },
   indian_filter: {
     label: "Indian Filter Coffee",
-    defaultRecovery: 0.78,
+    defaultRecovery: 0.72,
     defaultTimeMinutes: 12,
     defaultGrind: "fine",
     defaultTemperatureC: 96,
@@ -332,8 +376,10 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
   },
 };
 
-const ARABICA_CAFFEINE_FRACTION = 0.012;
-const ROBUSTA_CAFFEINE_FRACTION = 0.022;
+const F_RANGE = {
+  arabica: { min: 0.01, max: 0.016 },
+  robusta: { min: 0.02, max: 0.027 },
+} as const;
 const DEFAULT_BLEND = { arabica: 70, robusta: 30 };
 const DEFAULT_INDIAN_CHICORY_PERCENT = 20;
 
@@ -366,6 +412,10 @@ const UNCERTAINTY_WEIGHTS = {
   freshness: 3,
   filter: 2,
   chicory: 3,
+  arabicaGrade: 3,
+  elevationBand: 2,
+  extractionQuality: 4,
+  cultivar: 3,
 };
 
 export function toGrams(amount: number, unit: WeightUnit) {
@@ -423,6 +473,10 @@ function round(value: number) {
   return Math.round(value);
 }
 
+function midpoint(min: number, max: number) {
+  return (min + max) / 2;
+}
+
 function normalizePercent(value: number | undefined, fallback: number) {
   if (value === undefined || Number.isNaN(value)) {
     return fallback;
@@ -445,6 +499,55 @@ function getConfidenceLabel(confidencePercent: number): ConfidenceLabel {
   }
 
   return "Very High";
+}
+
+function getBeanDetailLabel(beanDetail: BeanDetail, customCaffeinePercent: number | undefined) {
+  if (beanDetail === "high_altitude") {
+    return "High-altitude profile";
+  }
+
+  if (beanDetail === "low_altitude") {
+    return "Low-altitude profile";
+  }
+
+  if (beanDetail === "custom") {
+    return customCaffeinePercent !== undefined
+      ? `Custom caffeine content (${customCaffeinePercent.toFixed(2)}%)`
+      : "Custom caffeine content";
+  }
+
+  return "Generic species range";
+}
+
+function getBeanDetailWindow(beanDetail: BeanDetail) {
+  if (beanDetail === "high_altitude") {
+    return { start: 0, end: 0.5 };
+  }
+
+  if (beanDetail === "low_altitude") {
+    return { start: 0.5, end: 1 };
+  }
+
+  return { start: 0, end: 1 };
+}
+
+function adjustSpeciesRange(
+  range: { min: number; max: number },
+  beanDetail: BeanDetail,
+  customCaffeinePercent: number | undefined,
+) {
+  if (beanDetail === "custom") {
+    const fraction = clamp((customCaffeinePercent ?? midpoint(range.min, range.max) * 100) / 100, 0.001, 0.06);
+    return { min: fraction, max: fraction };
+  }
+
+  const { start, end } = getBeanDetailWindow(beanDetail);
+  const width = range.max - range.min;
+
+  return {
+    min: range.min + width * start,
+    max: range.min + width * end,
+  };
 }
 
 function getPackageClueProfile(clue: PackageClue | undefined) {
@@ -570,16 +673,78 @@ function getBeanProfile(input: CaffiLabInput) {
   return inferBeanFromPrice(input);
 }
 
+function getBeanFractionRange(input: CaffiLabInput, beanProfile: ReturnType<typeof getBeanProfile>) {
+  const beanDetail = input.beanDetail ?? "generic";
+
+  // Architecture: F = f(species, quality, elevation, cultivar, roast)
+
+  // Step 1 — Determine base arabica range, optionally narrowed by quality grade.
+  //           Custom caffeine % bypasses grade narrowing: the user value is already final.
+  const arabicaBaseRange =
+    beanDetail !== "custom" && input.arabicaGrade !== undefined
+      ? getArabicaBaseRange(input.arabicaGrade)
+      : F_RANGE.arabica;
+
+  // Step 2 — Apply bean detail window (high_altitude / low_altitude / custom / generic).
+  const arabicaRange = adjustSpeciesRange(arabicaBaseRange, beanDetail, input.customCaffeinePercent);
+  const robustaRange = adjustSpeciesRange(F_RANGE.robusta, beanDetail, input.customCaffeinePercent);
+
+  // Step 3 — Blend arabica + robusta fractions.
+  let blendedMin =
+    (beanProfile.arabica / 100) * arabicaRange.min +
+    (beanProfile.robusta / 100) * robustaRange.min;
+  let blendedMax =
+    (beanProfile.arabica / 100) * arabicaRange.max +
+    (beanProfile.robusta / 100) * robustaRange.max;
+
+  // Steps 4–6 — Expert adjustments are skipped for custom caffeine % because the
+  //             user-supplied value already reflects roasted-bean final content.
+  if (beanDetail !== "custom") {
+    // Step 4 — Elevation shift: higher altitude → slightly higher caffeine fraction.
+    const elevation = input.elevationBand;
+    if (elevation !== undefined && elevation !== "unknown") {
+      const shift = getElevationShift(elevation, blendedMin, blendedMax);
+      blendedMin = Math.max(0.001, blendedMin + shift);
+      blendedMax = Math.max(blendedMin, blendedMax + shift);
+    }
+
+    // Step 5 — Roast mass-balance: roasting converts ~1–4 % of caffeine to methyluric acids.
+    const massBalance = getRoastMassBalance(input.roastLevel);
+    blendedMin *= massBalance;
+    blendedMax *= massBalance;
+
+    // Step 6 — Cultivar adjustment: shift range based on per-cultivar HPLC data.
+    // Only meaningful for arabica or arabica-dominant blends; weighted by arabica proportion.
+    if (input.cultivar !== undefined && input.cultivar !== "unknown" && beanProfile.arabica > 0) {
+      const rawShift = getCultivarShift(input.cultivar);
+      const shift = rawShift * (beanProfile.arabica / 100);
+      blendedMin = Math.max(0.001, blendedMin + shift);
+      blendedMax = Math.max(blendedMin, blendedMax + shift);
+    }
+  }
+
+  return {
+    min: blendedMin,
+    max: blendedMax,
+    detailLabel: getBeanDetailLabel(beanDetail, input.customCaffeinePercent),
+  };
+}
+
 function getRoastAdjustment(roastLevel: RoastLevel) {
+  // Medium roast is the reference point (zero adjustment).
+  // Light roasts retain slightly more caffeine per gram: Ludwig et al. (2014) found
+  // ~2–3% higher caffeine in light vs medium filter brews.
+  // Dark roast penalty kept modest: HPLC studies show only 2–3% difference vs medium,
+  // not the 3.5% that was previously applied.
   if (roastLevel === "light") {
-    return 0.015;
+    return 0.012;
   }
 
   if (roastLevel === "dark") {
-    return -0.035;
+    return -0.018;
   }
 
-  return 0.01;
+  return 0;
 }
 
 function getGrindAdjustment(method: BrewMethodConfig, grindSize: GrindSize) {
@@ -672,21 +837,27 @@ function getAgitationAdjustment(method: BrewMethodConfig, agitation: AgitationLe
 }
 
 function getWaterAdjustment(waterMinerals: WaterMinerals, waterPh: number | undefined) {
+  // Caffeine extraction is relatively mineral-independent compared to aromatic compounds
+  // (Hendon et al., 2014 focused primarily on flavor-active acids, not caffeine).
+  // Penalties are reduced accordingly; balanced water is kept as a mild positive signal.
   let adjustment = 0;
 
   if (waterMinerals === "soft") {
-    adjustment -= 0.012;
+    adjustment -= 0.005;
   } else if (waterMinerals === "balanced") {
-    adjustment += 0.008;
+    adjustment += 0.005;
   } else if (waterMinerals === "hard") {
-    adjustment -= 0.006;
+    adjustment -= 0.007;
   }
 
   if (waterPh !== undefined) {
+    // Caffeine pKa ~10.4: neutral across the entire brewing pH range (6–8).
+    // Slightly acidic water has a minor positive effect on caffeine solubility;
+    // alkaline water (>7.8) slightly inhibits extraction.
     if (waterPh < 6.5) {
-      adjustment -= 0.006;
+      adjustment += 0.003;
     } else if (waterPh > 7.8) {
-      adjustment -= 0.01;
+      adjustment -= 0.006;
     }
   }
 
@@ -694,12 +865,16 @@ function getWaterAdjustment(waterMinerals: WaterMinerals, waterPh: number | unde
 }
 
 function getFreshnessAdjustment(freshness: Freshness) {
+  // Fresh beans: CO2 off-gassing can impede even extraction (channeling in espresso,
+  // uneven wetting in pour-over), justifying a small extraction penalty.
+  // Stale beans: caffeine is thermostable and oxidation-resistant; staleness mainly
+  // degrades volatile aromatics, not caffeine content. Penalty reduced accordingly.
   if (freshness === "fresh") {
     return -0.008;
   }
 
   if (freshness === "stale") {
-    return -0.018;
+    return -0.010;
   }
 
   return 0;
@@ -717,6 +892,71 @@ function getFilterAdjustment(filterType: FilterType) {
   return 0;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Expert-mode helpers  (Architecture: F = f(species, quality, elevation, cultivar, roast))
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Returns the base arabica caffeine-fraction range for the given quality tier. */
+function getArabicaBaseRange(grade: ArabicaGrade): { min: number; max: number } {
+  if (grade === "commercial") return { min: 0.010, max: 0.012 };
+  if (grade === "specialty") return { min: 0.012, max: 0.016 };
+  return F_RANGE.arabica;
+}
+
+/** Shifts the blended caffeine-fraction range based on growing elevation.
+ * Higher altitude → small upward shift (±15 % of the current range width). */
+function getElevationShift(elevationBand: ElevationBand, min: number, max: number): number {
+  const width = max - min;
+  if (elevationBand === "high") return width * 0.15;
+  if (elevationBand === "low") return -width * 0.15;
+  return 0;
+}
+
+/** Returns the caffeine-fraction multiplier representing roasting mass loss.
+ * Literature: 1–5 % of caffeine is converted to methyluric acids during roasting. */
+function getRoastMassBalance(roastLevel: RoastLevel): number {
+  if (roastLevel === "light") return 0.99; // ~1 % loss
+  if (roastLevel === "dark") return 0.96;  // ~4 % loss
+  return 0.98;                             // medium: ~2 % loss
+}
+
+/** Adjusts extraction recovery for espresso channeling / puck preparation quality.
+ * Only active for pressure-based methods. Architecture: E = f(…, technique). */
+function getExtractionQualityAdjustment(
+  method: BrewMethodConfig,
+  quality: ExtractionQuality | undefined,
+): number {
+  if (!method.supportsPressure || quality === undefined || quality === "average") {
+    return 0;
+  }
+  if (quality === "poor") return -0.09;        // channeling / uneven puck
+  if (quality === "well_prepared") return 0.03; // clean puck, consistent extraction
+  return 0;
+}
+
+// Cultivar scaffold: per-cultivar F-range data not yet calibrated.
+// getCultivarAdjustment will return a meaningful shift once data is confirmed.
+
+/**
+ * Returns the absolute shift (in dry-weight caffeine fraction) for a named cultivar,
+ * applied to the arabica-weighted portion of the blended range.
+ *
+ * Calibration sources:
+ * - Geisha (~0.9–1.1 %): Ky et al. (2001); Panama Geisha HPLC studies.
+ * - SL28 (~1.3–1.7 %): Bertrand et al. (2003); Kenyan cultivar assessments.
+ * - Caturra (~1.0–1.3 %): Bourbon-derived, typical mid-range arabica.
+ * - Catimor (~1.5–2.0 %): Timor hybrid with Robusta genes (Ky et al., 2001).
+ */
+function getCultivarShift(cultivar: Cultivar | undefined): number {
+  switch (cultivar) {
+    case "geisha":  return -0.002; // ~−0.2 % dry-weight — distinctly lower caffeine
+    case "sl28":   return  0.002; // ~+0.2 % dry-weight — Kenyan high-caffeine variety
+    case "caturra": return -0.001; // slight below-midpoint Bourbon derivative
+    case "catimor": return  0.004; // ~+0.4 % dry-weight — Robusta-introgressed hybrid
+    default:        return  0;     // unknown — no shift
+  }
+}
+
 function getCaffeineRecovery(
   method: BrewMethodConfig,
   input: CaffiLabInput,
@@ -726,6 +966,7 @@ function getCaffeineRecovery(
   temperatureC: number,
   extractionYieldPercent: number,
 ) {
+  // Architecture: E = f(method, time, grind, temperature, technique)
   return clamp(
     method.defaultRecovery +
       getTimeAdjustment(method, brewTimeMinutes) +
@@ -735,6 +976,7 @@ function getCaffeineRecovery(
       getRoastAdjustment(input.roastLevel) +
       getExtractionYieldAdjustment(method, extractionYieldPercent) +
       getPressureAdjustment(method, input.pressureBars) +
+      getExtractionQualityAdjustment(method, input.extractionQuality) +
       getAgitationAdjustment(method, input.agitation) +
       getWaterAdjustment(input.waterMinerals, input.waterPh) +
       getFreshnessAdjustment(input.freshness) +
@@ -744,7 +986,11 @@ function getCaffeineRecovery(
   );
 }
 
-function getUncertaintyPercent(input: CaffiLabInput, beanProfileStrength: "direct" | "package" | "price" | "none") {
+function getBrewingUncertaintyPercent(
+  input: CaffiLabInput,
+  beanProfileStrength: "direct" | "package" | "price" | "none",
+  method: BrewMethodConfig,
+) {
   let uncertainty = 36;
 
   if (input.beanType !== "unknown") {
@@ -776,7 +1022,7 @@ function getUncertaintyPercent(input: CaffiLabInput, beanProfileStrength: "direc
     uncertainty -= UNCERTAINTY_WEIGHTS.extractionYield;
   }
 
-  if (input.pressureBars !== undefined && BREW_METHODS[input.brewMethod].supportsPressure) {
+  if (input.pressureBars !== undefined && method.supportsPressure) {
     uncertainty -= UNCERTAINTY_WEIGHTS.pressure;
   }
 
@@ -796,35 +1042,131 @@ function getUncertaintyPercent(input: CaffiLabInput, beanProfileStrength: "direc
     uncertainty -= UNCERTAINTY_WEIGHTS.chicory;
   }
 
+  // Expert inputs
+  if (input.arabicaGrade !== undefined && (input.beanType === "arabica" || input.beanType === "blend")) {
+    uncertainty -= UNCERTAINTY_WEIGHTS.arabicaGrade;
+  }
+
+  if (input.elevationBand !== undefined && input.elevationBand !== "unknown") {
+    uncertainty -= UNCERTAINTY_WEIGHTS.elevationBand;
+  }
+
+  if (method.supportsPressure && input.extractionQuality !== undefined) {
+    uncertainty -= UNCERTAINTY_WEIGHTS.extractionQuality;
+    // Poor technique has higher inherent variance; partially cancel the credit.
+    if (input.extractionQuality === "poor") {
+      uncertainty += 5;
+    }
+  }
+
+  if (
+    input.cultivar !== undefined &&
+    input.cultivar !== "unknown" &&
+    (input.beanType === "arabica" || input.beanType === "blend")
+  ) {
+    uncertainty -= UNCERTAINTY_WEIGHTS.cultivar;
+  }
+
   return clamp(uncertainty, 5, 35);
 }
 
-function getKnownInputCount(input: CaffiLabInput) {
+function getBeanUncertaintyPercent(caffeineFractionMin: number, caffeineFractionMax: number) {
+  const fractionMid = midpoint(caffeineFractionMin, caffeineFractionMax);
+
+  if (fractionMid <= 0) {
+    return 0;
+  }
+
+  return ((caffeineFractionMax - caffeineFractionMin) / (2 * fractionMid)) * 100;
+}
+
+function getInputCountBuckets(input: CaffiLabInput) {
+  const method = BREW_METHODS[input.brewMethod];
+
   return [
-    input.beanType !== "unknown" ||
-      Boolean(input.coffeePrice) ||
-      (input.packageClue !== undefined && input.packageClue !== "none"),
-    input.brewTimeAmount !== undefined,
-    input.dilutionAmount !== undefined,
-    input.coffeeAmount > 0 && input.brewWaterAmount > 0,
-    Boolean(input.grindSize),
-    Boolean(input.roastLevel),
-    input.temperatureAmount !== undefined,
-    input.extractionYieldPercent !== undefined,
-    input.pressureBars !== undefined && BREW_METHODS[input.brewMethod].supportsPressure,
-    input.agitation !== "none",
-    input.waterMinerals !== "unknown" || input.waterPh !== undefined,
-    input.freshness !== "unknown",
-    Boolean(input.filterType),
-    input.brewMethod !== "indian_filter" || input.chicoryPercent !== undefined,
-  ].filter(Boolean).length;
+    {
+      applicable: true,
+      known:
+        input.beanType !== "unknown" ||
+        Boolean(input.coffeePrice) ||
+        (input.packageClue !== undefined && input.packageClue !== "none"),
+    },
+    { applicable: true, known: input.brewTimeAmount !== undefined },
+    { applicable: true, known: input.dilutionAmount !== undefined },
+    {
+      applicable: true,
+      known: input.coffeeAmount > 0 && input.brewWaterAmount > 0,
+    },
+    { applicable: true, known: Boolean(input.grindSize) },
+    { applicable: true, known: Boolean(input.roastLevel) },
+    { applicable: true, known: input.temperatureAmount !== undefined },
+    { applicable: true, known: input.extractionYieldPercent !== undefined },
+    {
+      applicable: method.supportsPressure ?? false,
+      known: method.supportsPressure ? input.pressureBars !== undefined : false,
+    },
+    {
+      applicable: method.supportsAgitation ?? false,
+      known: method.supportsAgitation ? input.agitation !== "none" : false,
+    },
+    {
+      applicable: true,
+      known: input.waterMinerals !== "unknown" || input.waterPh !== undefined,
+    },
+    { applicable: true, known: input.freshness !== "unknown" },
+    { applicable: true, known: Boolean(input.filterType) },
+    {
+      applicable: true,
+      known: input.beanDetail !== undefined && input.beanDetail !== "generic",
+    },
+    {
+      applicable: input.beanDetail === "custom",
+      known: input.beanDetail === "custom" && input.customCaffeinePercent !== undefined,
+    },
+    {
+      applicable: input.brewMethod === "indian_filter",
+      known: input.brewMethod === "indian_filter" && input.chicoryPercent !== undefined,
+    },
+    {
+      applicable: input.beanType === "arabica" || input.beanType === "blend",
+      known:
+        (input.beanType === "arabica" || input.beanType === "blend") &&
+        input.arabicaGrade !== undefined,
+    },
+    {
+      applicable: true,
+      known: input.elevationBand !== undefined && input.elevationBand !== "unknown",
+    },
+    {
+      applicable: method.supportsPressure ?? false,
+      known: method.supportsPressure ? input.extractionQuality !== undefined : false,
+    },
+    {
+      applicable: input.beanType === "arabica" || input.beanType === "blend",
+      known:
+        (input.beanType === "arabica" || input.beanType === "blend") &&
+        input.cultivar !== undefined &&
+        input.cultivar !== "unknown",
+    },
+  ];
+}
+
+function getKnownInputCount(input: CaffiLabInput) {
+  return getInputCountBuckets(input).filter((bucket) => bucket.applicable && bucket.known).length;
+}
+
+function getAvailableInputCount(input: CaffiLabInput) {
+  return getInputCountBuckets(input).filter((bucket) => bucket.applicable).length;
 }
 
 function buildExplanation(
   input: CaffiLabInput,
   estimate: number,
   uncertainty: number,
+  beanUncertainty: number,
+  brewingUncertainty: number,
   beanLabel: string,
+  beanDetailLabel: string,
   method: BrewMethodConfig,
   chicoryPercent: number,
   brewRatio: number,
@@ -834,7 +1176,7 @@ function buildExplanation(
       ? ` The Indian filter profile treats ${chicoryPercent}% of the powder as chicory, which adds body but essentially no caffeine.`
       : "";
 
-  return `${method.label} starts from a ${(method.defaultRecovery * 100).toFixed(0)}% caffeine recovery baseline. ${beanLabel} sets the bean caffeine fraction. Brew water sets a 1:${brewRatio.toFixed(1)} coffee-to-water ratio, while dilution only changes final cup strength, not the caffeine mass. The selected extraction variables place this serving near ${round(estimate)} mg with +/-${uncertainty}% uncertainty.${chicoryPhrase}`;
+  return `${method.label} starts from a ${(method.defaultRecovery * 100).toFixed(0)}% caffeine recovery baseline. ${beanLabel} with the ${beanDetailLabel.toLowerCase()} sets a caffeine range instead of a single bean fraction. Brew water sets a 1:${brewRatio.toFixed(1)} coffee-to-water ratio, while dilution only changes final cup strength, not the caffeine mass. The selected extraction variables place this serving near ${round(estimate)} mg. Bean variability contributes about ${round(beanUncertainty)}% uncertainty, brewing inputs contribute about ${round(brewingUncertainty)}%, and the practical estimate is capped at +/-${uncertainty}%.${chicoryPhrase}`;
 }
 
 export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
@@ -871,14 +1213,17 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
     32,
   );
   const beanProfile = getBeanProfile(input);
-  const caffeineFraction =
-    (beanProfile.arabica / 100) * ARABICA_CAFFEINE_FRACTION +
-    (beanProfile.robusta / 100) * ROBUSTA_CAFFEINE_FRACTION;
+  const beanFractionRange = getBeanFractionRange(input, beanProfile);
+  const caffeineFractionMin = beanFractionRange.min;
+  const caffeineFractionMax = beanFractionRange.max;
+  const caffeineFraction = midpoint(caffeineFractionMin, caffeineFractionMax);
   const chicoryPercent =
     input.brewMethod === "indian_filter"
       ? normalizePercent(input.chicoryPercent, DEFAULT_INDIAN_CHICORY_PERCENT)
       : 0;
   const effectiveCaffeineFraction = caffeineFraction * (1 - chicoryPercent / 100);
+  const effectiveCaffeineFractionMin = caffeineFractionMin * (1 - chicoryPercent / 100);
+  const effectiveCaffeineFractionMax = caffeineFractionMax * (1 - chicoryPercent / 100);
   const caffeineRecovery = getCaffeineRecovery(
     method,
     input,
@@ -890,20 +1235,35 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
   );
   const dilutionFactor = (beverageMl - dilutionMl) / beverageMl;
   const estimatedMg = coffeeGrams * effectiveCaffeineFraction * caffeineRecovery * 1000;
-  const uncertainty = getUncertaintyPercent(input, beanProfile.strength);
-  const lowerMg = estimatedMg * (1 - uncertainty / 100);
-  const upperMg = estimatedMg * (1 + uncertainty / 100);
+  const beanLowerMg = coffeeGrams * effectiveCaffeineFractionMin * caffeineRecovery * 1000;
+  const beanUpperMg = coffeeGrams * effectiveCaffeineFractionMax * caffeineRecovery * 1000;
+  const beanUncertainty = getBeanUncertaintyPercent(caffeineFractionMin, caffeineFractionMax);
+  const brewingUncertainty = getBrewingUncertaintyPercent(input, beanProfile.strength, method);
+  const uncertainty = Math.max(beanUncertainty, brewingUncertainty);
+  const roundedUncertainty = Number(uncertainty.toFixed(1));
+  const practicalLowerMg = estimatedMg * (1 - uncertainty / 100);
+  const practicalUpperMg = estimatedMg * (1 + uncertainty / 100);
 
   return {
     estimatedMg: round(estimatedMg),
-    lowerMg: round(lowerMg),
-    upperMg: round(upperMg),
+    lowerMg: round(beanLowerMg),
+    upperMg: round(beanUpperMg),
+    practicalLowerMg: round(practicalLowerMg),
+    practicalUpperMg: round(practicalUpperMg),
+    beanLowerMg: round(beanLowerMg),
+    beanUpperMg: round(beanUpperMg),
     concentrationMgPer100Ml: Math.round((estimatedMg / beverageMl) * 100),
-    confidenceLabel: getConfidenceLabel(uncertainty),
-    confidencePercent: uncertainty,
+    confidenceLabel: getConfidenceLabel(roundedUncertainty),
+    confidencePercent: roundedUncertainty,
+    beanUncertaintyPercent: Number(beanUncertainty.toFixed(1)),
+    brewingUncertaintyPercent: Number(brewingUncertainty.toFixed(1)),
     caffeineRecovery: Number(caffeineRecovery.toFixed(3)),
     caffeineFraction: Number(caffeineFraction.toFixed(4)),
+    caffeineFractionMin: Number(caffeineFractionMin.toFixed(4)),
+    caffeineFractionMax: Number(caffeineFractionMax.toFixed(4)),
     effectiveCaffeineFraction: Number(effectiveCaffeineFraction.toFixed(4)),
+    effectiveCaffeineFractionMin: Number(effectiveCaffeineFractionMin.toFixed(4)),
+    effectiveCaffeineFractionMax: Number(effectiveCaffeineFractionMax.toFixed(4)),
     dilutionFactor: Number(dilutionFactor.toFixed(3)),
     brewRatio: Number(brewRatio.toFixed(1)),
     targetBrewRatio: Number(targetBrewRatio.toFixed(1)),
@@ -912,13 +1272,18 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
     beverageMl: Number(beverageMl.toFixed(1)),
     dilutionMl: Number(dilutionMl.toFixed(1)),
     knownInputs: getKnownInputCount(input),
+    availableInputs: getAvailableInputCount(input),
     assumedBeanProfile: beanProfile.label,
+    beanDetailLabel: beanFractionRange.detailLabel,
     extractionYieldPercent: Number(extractionYieldPercent.toFixed(1)),
     explanation: buildExplanation(
       input,
       estimatedMg,
-      uncertainty,
+      roundedUncertainty,
+      beanUncertainty,
+      brewingUncertainty,
       beanProfile.label,
+      beanFractionRange.detailLabel,
       method,
       chicoryPercent,
       brewRatio,

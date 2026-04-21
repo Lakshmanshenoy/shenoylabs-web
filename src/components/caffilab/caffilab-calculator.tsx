@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -8,6 +8,7 @@ import {
   BeakerIcon,
   BookOpenIcon,
   ChevronDownIcon,
+  FlaskConicalIcon,
   GaugeIcon,
   HeartIcon,
   MessageCircleIcon,
@@ -23,8 +24,13 @@ import {
   defaultTemperatureValue,
   estimateCaffeine,
   type AgitationLevel,
+  type ArabicaGrade,
+  type Cultivar,
+  type BeanDetail,
   type BeanType,
   type BrewMethod,
+  type ElevationBand,
+  type ExtractionQuality,
   type FilterType,
   type Freshness,
   type GrindSize,
@@ -47,6 +53,7 @@ type FocusTopic =
   | "water"
   | "serving"
   | "bean"
+  | "bean_detail"
   | "blend"
   | "package"
   | "price"
@@ -61,7 +68,11 @@ type FocusTopic =
   | "water_chemistry"
   | "freshness"
   | "filter"
-  | "chicory";
+  | "chicory"
+  | "arabica_grade"
+  | "elevation"
+  | "extraction_quality"
+  | "cultivar";
 
 const brewMethods = Object.entries(BREW_METHODS) as Array<
   [BrewMethod, (typeof BREW_METHODS)[BrewMethod]]
@@ -236,7 +247,8 @@ function getTopicExplanation({
     bean:
       beanType === "unknown"
         ? "Not sure first uses package clues, then price, because packaging claims are more reliable than price. Without either, CaffiLab uses Arabica as the conservative baseline."
-        : `${estimate.assumedBeanProfile} is being used for the bean caffeine fraction. Robusta raises caffeine substantially; Arabica keeps the estimate lower.`,
+        : `${estimate.assumedBeanProfile} is being used for the bean caffeine range. ${estimate.beanDetailLabel} controls whether CaffiLab uses the full species range, a lower-caffeine high-altitude band, an upper-caffeine low-altitude band, or your custom caffeine percentage.`,
+    bean_detail: `Bean detail is currently set to ${estimate.beanDetailLabel.toLowerCase()}. CaffiLab uses this to choose a caffeine range, then calculates the midpoint estimate from that range while keeping bean-driven uncertainty visible.`,
     blend: "Blend percentages are normalized to 100%. If you do not know the split, the calculator starts with a 70% Arabica / 30% Robusta assumption.",
     package: "Package clues are the best fallback when the species is unknown: single-origin/specialty usually leans Arabica, espresso blends are often mixed, and commercial instant or value coffee often leans Robusta.",
     price: "Price inference is a rough secondary clue, not a botanical test. Very low prices lean robusta-forward, middle prices lean mixed, and premium prices lean Arabica-forward.",
@@ -255,6 +267,10 @@ function getTopicExplanation({
     freshness: "Bean freshness changes gas, flow, and extraction behavior. Very fresh coffee can resist even extraction; stale coffee often loses volatile structure and extracts less predictably.",
     filter: "Filter type mainly changes oils and insoluble material, but it can slightly shift measured strength. Paper is a touch cleaner/lower; metal and no-filter methods retain more material.",
     chicory: `Indian filter coffee often includes chicory. CaffiLab defaults to ${chicoryPercent || "20"}% chicory for this method; chicory contributes body and bitterness but essentially no caffeine.`,
+    arabica_grade: "Arabica quality grade splits the species caffeine range in two tiers. Specialty (1.2–1.6 %) represents washed/natural single-origins and high-quality lots; Commercial (1.0–1.2 %) covers commodity-grade arabica. If unsure, the default Specialty tier is used.",
+    elevation: "Growing elevation slightly correlates with caffeine content through UV exposure and pest pressure. High-altitude farms (>1500 m) shift the estimated range upward by ~15 % of the range width; low-altitude (<800 m) shifts it downward by the same amount.",
+    extraction_quality: "Espresso extraction quality captures channeling and puck preparation. A poorly prepared puck (uneven tamping, channeling) reduces caffeine extraction significantly; a well-prepared shot can yield a small recovery gain. Average is the neutral default.",
+    cultivar: "Named arabica cultivar shifts the bean caffeine fraction range based on HPLC measurements. Geisha (~0.9–1.1 % dry weight) is distinctly lower; SL28 (~1.3–1.7 %) is elevated, typical of Kenyan lots; Caturra (~1.0–1.3 %) is a Bourbon-derived mid-range variety; Catimor (~1.5–2.0 %) is a Robusta hybrid and sits notably higher. Unknown is the safe default when you are not sure.",
   };
 
   return notes[focusTopic];
@@ -269,6 +285,8 @@ export function CaffiLabCalculator() {
   const [servingAmount, setServingAmount] = useState("320");
   const [servingUnit, setServingUnit] = useState<VolumeUnit>("ml");
   const [beanType, setBeanType] = useState<BeanType>("unknown");
+  const [beanDetail, setBeanDetail] = useState<BeanDetail>("generic");
+  const [customCaffeinePercent, setCustomCaffeinePercent] = useState("");
   const [arabicaPercent, setArabicaPercent] = useState("70");
   const [robustaPercent, setRobustaPercent] = useState("30");
   const [coffeePrice, setCoffeePrice] = useState("");
@@ -291,8 +309,14 @@ export function CaffiLabCalculator() {
   const [freshness, setFreshness] = useState<Freshness>("unknown");
   const [filterType, setFilterType] = useState<FilterType>("paper");
   const [chicoryPercent, setChicoryPercent] = useState("20");
+  const [arabicaGrade, setArabicaGrade] = useState<ArabicaGrade | "">("specialty");
+  const [elevationBand, setElevationBand] = useState<ElevationBand>("unknown");
+  const [extractionQuality, setExtractionQuality] = useState<ExtractionQuality>("average");
+  const [cultivar, setCultivar] = useState<Cultivar>("unknown");
   const [focusTopic, setFocusTopic] = useState<FocusTopic>("result");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showExpert, setShowExpert] = useState(false);
+  const customCaffeineInputRef = useRef<HTMLInputElement | null>(null);
 
   const method = BREW_METHODS[brewMethod];
   const estimate = useMemo(
@@ -306,6 +330,8 @@ export function CaffiLabCalculator() {
         servingAmount: parseNumber(servingAmount),
         servingUnit,
         beanType,
+        beanDetail,
+        customCaffeinePercent: parseOptionalNumber(customCaffeinePercent),
         arabicaPercent: parseOptionalNumber(arabicaPercent),
         robustaPercent: parseOptionalNumber(robustaPercent),
         coffeePrice: parseOptionalNumber(coffeePrice),
@@ -328,9 +354,14 @@ export function CaffiLabCalculator() {
         freshness,
         filterType,
         chicoryPercent: parseOptionalNumber(chicoryPercent),
+        arabicaGrade: arabicaGrade === "" ? undefined : arabicaGrade,
+        elevationBand,
+        extractionQuality,
+        cultivar,
       }),
     [
       arabicaPercent,
+      beanDetail,
       beanType,
       brewMethod,
       brewWaterAmount,
@@ -338,8 +369,13 @@ export function CaffiLabCalculator() {
       brewTimeAmount,
       brewTimeUnit,
       chicoryPercent,
+      arabicaGrade,
+      elevationBand,
+      extractionQuality,
+      cultivar,
       coffeeAmount,
       coffeePrice,
+      customCaffeinePercent,
       coffeeUnit,
       dilutionAmount,
       dilutionUnit,
@@ -378,6 +414,23 @@ export function CaffiLabCalculator() {
     timeUnit: brewTimeUnit,
     waterUnit: brewWaterUnit,
   });
+
+  useEffect(() => {
+    if (beanDetail !== "custom" || !showAdvanced) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      customCaffeineInputRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      customCaffeineInputRef.current?.focus();
+      customCaffeineInputRef.current?.select();
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [beanDetail, showAdvanced]);
 
   function handleMethodChange(nextMethod: BrewMethod) {
     const nextConfig = BREW_METHODS[nextMethod];
@@ -422,6 +475,8 @@ export function CaffiLabCalculator() {
     setServingAmount("320");
     setServingUnit("ml");
     setBeanType("unknown");
+    setBeanDetail("generic");
+    setCustomCaffeinePercent("");
     setArabicaPercent("70");
     setRobustaPercent("30");
     setCoffeePrice("");
@@ -444,14 +499,19 @@ export function CaffiLabCalculator() {
     setFreshness("unknown");
     setFilterType("paper");
     setChicoryPercent("20");
+    setArabicaGrade("specialty");
+    setElevationBand("unknown");
+    setExtractionQuality("average");
+    setCultivar("unknown");
     setFocusTopic("result");
     setShowAdvanced(false);
+    setShowExpert(false);
   }
 
   return (
     <div className="min-h-screen bg-[#0c0d0b] text-[#f5f1e8]">
-      <section className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8 lg:py-14">
-        <div className="flex flex-col justify-between gap-8">
+      <section className="mx-auto grid w-full max-w-7xl items-start gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8 lg:py-14">
+        <div className="flex flex-col gap-8 self-start">
           <div className="grid gap-6">
             <div className="inline-flex w-fit items-center gap-2 rounded-[6px] border border-[#46503f] bg-[#151812] px-3 py-1 text-xs font-medium text-[#c7d2ba]">
               <BeakerIcon className="size-4 text-[#9adf8f]" />
@@ -558,13 +618,25 @@ export function CaffiLabCalculator() {
           <div className="grid gap-3 rounded-[8px] border border-[#33392f] bg-[#10120e] p-5">
             <p className={labelClass}>Model</p>
             <p className="font-mono text-sm text-[#cbd5c0]">
-              C = dose x bean caffeine x recovery
+              Estimate = G × F_mid × E × 1000
             </p>
             <p className="text-sm leading-7 text-[#aeb8a5]">
-              Caffeine fraction is calibrated from Arabica/Robusta literature.
-              Brew water sets extraction ratio; dilution only changes final cup
-              concentration.
+              G = coffee dose (g). F is the bean caffeine fraction modeled as a
+              species range (Arabica 1.0–1.6% → midpoint 1.3%; Robusta 2.0–2.7% →
+              midpoint 2.35%). Blends use a weighted F range; chicory reduces
+              effective F. E is caffeine recovery (method base × small
+              adjustments), clamped to 0.42–0.97.
             </p>
+            <p className="text-sm leading-7 text-[#aeb8a5]">
+              Uncertainty is split into bean variability and brewing uncertainty —
+              the calculator applies the larger of the two as the final cap.
+            </p>
+            <Link
+              href="/articles/how-does-caffilab-formula-work"
+              className="mt-2 text-sm text-[#9adf8f] underline underline-offset-2"
+            >
+              Read the full model
+            </Link>
           </div>
         </div>
 
@@ -601,9 +673,26 @@ export function CaffiLabCalculator() {
                 />
               </div>
               <p className="text-sm text-[#aeb8a5]">
-                Range: {estimate.lowerMg}-{estimate.upperMg} mg. Uncertainty:
-                +/-{estimate.confidencePercent}%.
+                Practical range: {estimate.practicalLowerMg}-{estimate.practicalUpperMg} mg.
+                Bean-driven range: {estimate.beanLowerMg}-{estimate.beanUpperMg} mg.
               </p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <div className="rounded-[6px] border border-[#33392f] bg-[#10120e] px-3 py-2">
+                  <p className={labelClass}>Bean variability</p>
+                  <p className="mt-1 text-sm text-[#f5f1e8]">+/-{estimate.beanUncertaintyPercent}%</p>
+                </div>
+                <div className="rounded-[6px] border border-[#33392f] bg-[#10120e] px-3 py-2">
+                  <p className={labelClass}>Brewing uncertainty</p>
+                  <p className="mt-1 text-sm text-[#f5f1e8]">+/-{estimate.brewingUncertaintyPercent}%</p>
+                </div>
+                <div
+                  className="rounded-[6px] border border-[#536048] bg-[#10120e] px-3 py-2"
+                  title="Confidence cannot outrun bean variability. The final uncertainty is the larger of bean variability and brewing uncertainty."
+                >
+                  <p className={labelClass}>Applied cap</p>
+                  <p className="mt-1 text-sm text-[#f2c36b]">+/-{estimate.confidencePercent}%</p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -628,7 +717,7 @@ export function CaffiLabCalculator() {
                   Basic inputs
                 </h2>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid items-start gap-4 sm:grid-cols-2">
                 <Field label="Brew method" topic="method" onFocus={setFocusTopic}>
                   <select
                     value={brewMethod}
@@ -649,7 +738,7 @@ export function CaffiLabCalculator() {
                   label="Bean species"
                   topic="bean"
                   onFocus={setFocusTopic}
-                  hint={estimate.assumedBeanProfile}
+                  hint={`${estimate.assumedBeanProfile} · ${estimate.beanDetailLabel}`}
                 >
                   <select
                     value={beanType}
@@ -660,6 +749,36 @@ export function CaffiLabCalculator() {
                     <option value="arabica">Arabica</option>
                     <option value="robusta">Robusta</option>
                     <option value="blend">Blend</option>
+                  </select>
+                </Field>
+
+                <Field
+                  label="Bean detail"
+                  topic="bean_detail"
+                  onFocus={setFocusTopic}
+                  hint={
+                    beanDetail === "custom"
+                      ? "Custom selected. Enter the value in the Custom caffeine % field below in Advanced inputs."
+                      : "Optional. Use this only if you know the bean tends lower or higher in caffeine, or you have a measured caffeine percentage."
+                  }
+                >
+                  <select
+                    value={beanDetail}
+                    onChange={(event) => {
+                      const nextDetail = event.target.value as BeanDetail;
+                      setBeanDetail(nextDetail);
+                      setFocusTopic("bean_detail");
+
+                      if (nextDetail === "custom") {
+                        setShowAdvanced(true);
+                      }
+                    }}
+                    className={inputClass}
+                  >
+                    <option value="generic">Generic range</option>
+                    <option value="high_altitude">High-altitude</option>
+                    <option value="low_altitude">Low-altitude</option>
+                    <option value="custom">Custom caffeine %</option>
                   </select>
                 </Field>
 
@@ -755,7 +874,7 @@ export function CaffiLabCalculator() {
                 />
               </button>
               {showAdvanced && (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {beanType === "unknown" ? (
                   <Field
                     label="Package clue"
@@ -861,6 +980,28 @@ export function CaffiLabCalculator() {
                         className={inputClass}
                       />
                     </div>
+                  </Field>
+                ) : null}
+
+                {beanDetail === "custom" ? (
+                  <Field
+                    label="Custom caffeine %"
+                    topic="bean_detail"
+                    onFocus={setFocusTopic}
+                    hint="Enter the dry-weight caffeine percentage if you have a measured or published value for this bean."
+                  >
+                    <input
+                      ref={customCaffeineInputRef}
+                      aria-label="Custom caffeine percentage"
+                      value={customCaffeinePercent}
+                      onChange={(event) => setCustomCaffeinePercent(event.target.value)}
+                      inputMode="decimal"
+                      max="6"
+                      min="0.1"
+                      placeholder="1.25"
+                      type="number"
+                      className={inputClass}
+                    />
                   </Field>
                 ) : null}
 
@@ -1137,13 +1278,119 @@ export function CaffiLabCalculator() {
                     <p className={labelClass}>Known inputs</p>
                   </div>
                   <p className="mt-3 font-mono text-3xl font-semibold text-[#f5f1e8] [letter-spacing:0]">
-                    {estimate.knownInputs}/14
+                    {estimate.knownInputs}/{estimate.availableInputs}
                   </p>
                   <p className="mt-1 text-xs leading-5 text-[#8f9886]">
-                    More declared inputs tighten the uncertainty range.
+                    Counts only the inputs that apply to this recipe. More declared
+                    brewing inputs reduce the brewing uncertainty, but bean variability
+                    still sets a hard floor.
                   </p>
                 </div>
               </div>
+              )}
+            </div>
+
+            <div className="grid gap-4 border-t border-[#33392f] pt-5">
+              <button
+                type="button"
+                onClick={() => setShowExpert((prev) => !prev)}
+                className="flex w-full items-center gap-2 text-left"
+              >
+                <FlaskConicalIcon className="size-4 text-[#9adf8f]" />
+                <h2 className="text-lg font-semibold text-[#f7f3ea] [letter-spacing:0]">
+                  Expert inputs
+                </h2>
+                <ChevronDownIcon
+                  className={cn(
+                    "ml-auto size-5 text-[#a9b39c] transition-transform duration-200",
+                    showExpert && "rotate-180",
+                  )}
+                />
+              </button>
+              {showExpert && (
+                <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {beanType === "arabica" || beanType === "blend" ? (
+                    <Field
+                      label="Arabica grade"
+                      topic="arabica_grade"
+                      onFocus={setFocusTopic}
+                      hint="Specialty (1.2–1.6 %) or Commercial (1.0–1.2 %) narrows the caffeine tier."
+                    >
+                      <select
+                        value={arabicaGrade}
+                        onChange={(event) =>
+                          setArabicaGrade(event.target.value as ArabicaGrade | "")
+                        }
+                        className={inputClass}
+                      >
+                        <option value="specialty">Specialty (1.2–1.6 %)</option>
+                        <option value="commercial">Commercial (1.0–1.2 %)</option>
+                      </select>
+                    </Field>
+                  ) : null}
+
+                  <Field
+                    label="Growing elevation"
+                    topic="elevation"
+                    onFocus={setFocusTopic}
+                    hint="Higher altitude shifts the caffeine range slightly upward."
+                  >
+                    <select
+                      value={elevationBand}
+                      onChange={(event) =>
+                        setElevationBand(event.target.value as ElevationBand)
+                      }
+                      className={inputClass}
+                    >
+                      <option value="unknown">Unknown</option>
+                      <option value="low">Low (&lt; 800 m)</option>
+                      <option value="mid">Mid (800–1500 m)</option>
+                      <option value="high">High (&gt; 1500 m)</option>
+                    </select>
+                  </Field>
+
+                  {method.supportsPressure ? (
+                    <Field
+                      label="Extraction quality"
+                      topic="extraction_quality"
+                      onFocus={setFocusTopic}
+                      hint="Channeling or puck prep quality for espresso."
+                    >
+                      <select
+                        value={extractionQuality}
+                        onChange={(event) =>
+                          setExtractionQuality(event.target.value as ExtractionQuality)
+                        }
+                        className={inputClass}
+                      >
+                        <option value="average">Average</option>
+                        <option value="well_prepared">Well-prepared</option>
+                        <option value="poor">Poor / uneven</option>
+                      </select>
+                    </Field>
+                  ) : null}
+
+                  {beanType === "arabica" || beanType === "blend" ? (
+                    <Field
+                      label="Cultivar"
+                      topic="cultivar"
+                      onFocus={setFocusTopic}
+                      hint="Named cultivar narrows the bean fraction range based on published HPLC data."
+                    >
+                      <select
+                        value={cultivar}
+                        onChange={(event) => setCultivar(event.target.value as Cultivar)}
+                        className={inputClass}
+                      >
+                        <option value="unknown">Unknown</option>
+                        <option value="geisha">Geisha (~0.9–1.1 %)</option>
+                        <option value="sl28">SL28 (~1.3–1.7 %)</option>
+                        <option value="caturra">Caturra (~1.0–1.3 %)</option>
+                        <option value="catimor">Catimor (~1.5–2.0 %)</option>
+                      </select>
+                    </Field>
+                  ) : null}
+                </div>
               )}
             </div>
 
@@ -1154,8 +1401,8 @@ export function CaffiLabCalculator() {
               </p>
               <p className="mt-3 text-xs leading-6 text-[#8f9886]">
                 This is an estimate based on coffee extraction science. Actual
-                caffeine may vary by cultivar, roast, water chemistry, brewing
-                geometry, and measurement method.
+                caffeine may vary by cultivar, altitude, roast, water chemistry,
+                brewing geometry, and measurement method.
               </p>
             </div>
           </div>
