@@ -15,7 +15,7 @@ export type BrewMethod =
   | "indian_filter";
 
 export type BeanType = "unknown" | "arabica" | "robusta" | "blend";
-export type BeanDetail = "generic" | "high_altitude" | "low_altitude" | "custom";
+export type BeanDetail = "generic" | "custom";
 export type WeightUnit = "g" | "oz" | "lb";
 export type VolumeUnit = "ml" | "l" | "fl_oz";
 export type TimeUnit = "min" | "hr";
@@ -502,14 +502,6 @@ function getConfidenceLabel(confidencePercent: number): ConfidenceLabel {
 }
 
 function getBeanDetailLabel(beanDetail: BeanDetail, customCaffeinePercent: number | undefined) {
-  if (beanDetail === "high_altitude") {
-    return "High-altitude profile";
-  }
-
-  if (beanDetail === "low_altitude") {
-    return "Low-altitude profile";
-  }
-
   if (beanDetail === "custom") {
     return customCaffeinePercent !== undefined
       ? `Custom caffeine content (${customCaffeinePercent.toFixed(2)}%)`
@@ -519,15 +511,9 @@ function getBeanDetailLabel(beanDetail: BeanDetail, customCaffeinePercent: numbe
   return "Generic species range";
 }
 
-function getBeanDetailWindow(beanDetail: BeanDetail) {
-  if (beanDetail === "high_altitude") {
-    return { start: 0, end: 0.5 };
-  }
-
-  if (beanDetail === "low_altitude") {
-    return { start: 0.5, end: 1 };
-  }
-
+function getBeanDetailWindow(_beanDetail: BeanDetail) {
+  // Generic always uses the full species range.
+  // Custom caffeine % bypasses this function entirely (handled in adjustSpeciesRange).
   return { start: 0, end: 1 };
 }
 

@@ -247,8 +247,8 @@ function getTopicExplanation({
     bean:
       beanType === "unknown"
         ? "Not sure first uses package clues, then price, because packaging claims are more reliable than price. Without either, CaffiLab uses Arabica as the conservative baseline."
-        : `${estimate.assumedBeanProfile} is being used for the bean caffeine range. ${estimate.beanDetailLabel} controls whether CaffiLab uses the full species range, a lower-caffeine high-altitude band, an upper-caffeine low-altitude band, or your custom caffeine percentage.`,
-    bean_detail: `Bean detail is currently set to ${estimate.beanDetailLabel.toLowerCase()}. CaffiLab uses this to choose a caffeine range, then calculates the midpoint estimate from that range while keeping bean-driven uncertainty visible.`,
+        : `${estimate.assumedBeanProfile} is being used for the bean caffeine range. ${estimate.beanDetailLabel} controls whether CaffiLab uses the full species range or your custom caffeine percentage. For altitude, use Growing elevation in Expert inputs.`,
+    bean_detail: `Bean detail is currently set to ${estimate.beanDetailLabel.toLowerCase()}. CaffiLab uses this to choose a caffeine range, then calculates the midpoint estimate from that range while keeping bean-driven uncertainty visible. Altitude is handled separately by Growing elevation in Expert inputs.`,
     blend: "Blend percentages are normalized to 100%. If you do not know the split, the calculator starts with a 70% Arabica / 30% Robusta assumption.",
     package: "Package clues are the best fallback when the species is unknown: single-origin/specialty usually leans Arabica, espresso blends are often mixed, and commercial instant or value coffee often leans Robusta.",
     price: "Price inference is a rough secondary clue, not a botanical test. Very low prices lean robusta-forward, middle prices lean mixed, and premium prices lean Arabica-forward.",
@@ -776,8 +776,6 @@ export function CaffiLabCalculator() {
                     className={inputClass}
                   >
                     <option value="generic">Generic range</option>
-                    <option value="high_altitude">High-altitude</option>
-                    <option value="low_altitude">Low-altitude</option>
                     <option value="custom">Custom caffeine %</option>
                   </select>
                 </Field>
