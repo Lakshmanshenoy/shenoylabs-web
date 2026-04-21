@@ -686,7 +686,7 @@ export function CaffiLabCalculator() {
                   Basic inputs
                 </h2>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid items-start gap-4 sm:grid-cols-2">
                 <Field label="Brew method" topic="method" onFocus={setFocusTopic}>
                   <select
                     value={brewMethod}
