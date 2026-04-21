@@ -8,8 +8,8 @@
 - [✅] Generate Upgrade Plan
 - [✅] Version Control Setup
 - [✅] Upgrade: Patch & Minor
-- [⌛️] Upgrade: @types packages
-- [ ] Upgrade: Build tools & Linters
+- [✅] Upgrade: @types packages
+- [⌛️] Upgrade: Build tools & Linters
 - [ ] Upgrade: Testing (vitest)
 - [ ] Upgrade: TinaCMS packages
 - [ ] Validation: Compile
@@ -36,6 +36,8 @@
 
 ### @types packages
 - `@types/node`: 20.19.39 -> 25.6.0
+
+**Upgraded (types):** `@types/node@25.6.0`
 
 ### Build tools & Linters
 - `eslint`: 9.39.4 -> 10.2.1
