@@ -7,8 +7,8 @@
 ## Progress
 - [✅] Generate Upgrade Plan
 - [✅] Version Control Setup
-- [⌛️] Upgrade: Patch & Minor
-- [ ] Upgrade: @types packages
+- [✅] Upgrade: Patch & Minor
+- [⌛️] Upgrade: @types packages
 - [ ] Upgrade: Build tools & Linters
 - [ ] Upgrade: Testing (vitest)
 - [ ] Upgrade: TinaCMS packages
@@ -31,6 +31,8 @@
 - `lucide-react`: 1.7.0 -> 1.8.0
 - `@base-ui/react`: 1.3.0 -> 1.4.1
 - `shadcn`: 4.1.2 -> 4.4.0
+
+**Upgraded (patch/minor):** `next@16.2.4`, `react@19.2.5`, `react-dom@19.2.5`, `tailwindcss@4.2.4`, `@tailwindcss/postcss@4.2.4`, `eslint-config-next@16.2.4`, `lucide-react@1.8.0`, `@base-ui/react@1.4.1`, `shadcn@4.4.0`
 
 ### @types packages
 - `@types/node`: 20.19.39 -> 25.6.0
