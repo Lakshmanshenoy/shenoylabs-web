@@ -168,7 +168,7 @@ Each brew method has a default recovery based on published extraction data:
 
 CaffiLab modifies the base recovery with 12 adjustment functions, each applying a small multiplier:
 
-1. **Roast level:** Light roasts can show higher caffeine in comparable brews (Ludwig et al., 2014). CaffiLab applies a small positive adjustment for light and a small negative for dark.
+1. **Roast level:** Medium roast is the reference baseline (zero adjustment). Light roasts can show slightly higher caffeine in comparable brews — Ludwig et al. (2014) found ~2–3% higher caffeine in light vs. medium filter brews — so CaffiLab applies a small positive for light. Dark roast receives a modest negative adjustment; HPLC studies (Hečimović et al., 2011; Ludwig et al., 2014) show only a ~2–3% difference vs. medium, so the penalty is kept proportionate.
 
 2. **Grind size:** Finer grinds increase surface area and extraction. The adjustment is relative to the method's default grind — going finer than default increases recovery, coarser decreases it.
 
@@ -190,7 +190,7 @@ CaffiLab modifies the base recovery with 12 adjustment functions, each applying 
 
 11. **Filter type:** Paper filters produce slightly lower measured caffeine than metal or no-filter methods.
 
-12. **Water pH:** More acidic water (lower pH) slightly favors caffeine extraction.
+12. **Water pH:** Caffeine is a weak base with a pKa of ~10.4, meaning it is effectively neutral across the entire brewing pH range (6–8). Slightly acidic water (pH < 6.5) has a minor positive effect on caffeine solubility; alkaline water (pH > 7.8) slightly inhibits extraction. The net effect on caffeine is small compared to temperature or grind size.
 
 ### Recovery clamping
 
@@ -253,6 +253,7 @@ That produces two useful outputs:
 - Farah, A. (2012). *Coffee Constituents.* In Y.-F. Chu (Ed.), Coffee: Emerging Health Effects and Disease Prevention. Wiley-Blackwell.
 - Fuller, M., & Rao, N. Z. (2017). "The Effect of Time, Roasting Temperature, and Grind Size on Caffeine and Chlorogenic Acid Concentrations in Cold Brew Coffee." *Scientific Reports*, 7, 17979.
 - Gloess, A. N., et al. (2013). "Comparison of nine common coffee extraction methods: instrumental and sensory analysis." *European Food Research and Technology*, 236(4), 607–627.
+- Hečimović, I., et al. (2011). "Comparative study of polyphenols and caffeine in different coffee varieties affected by the degree of roasting." *Food Chemistry*, 129(3), 991–1000.
 - Hendon, C. H., et al. (2014). "The Role of Dissolved Cations in Coffee Extraction." *Journal of Agricultural and Food Chemistry*, 62(21), 4947–4950.
 - Ky, C.-L., et al. (2001). "Caffeine, trigonelline, chlorogenic acids and sucrose diversity in wild *Coffea arabica* L. and *C. canephora* P. accessions." *Food Chemistry*, 75(2), 223–230.
 - Ludwig, I. A., et al. (2014). "Variations in caffeine and chlorogenic acid contents of coffees: what are we drinking?" *Food & Function*, 5(8), 1718–1726.

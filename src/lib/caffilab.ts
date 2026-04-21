@@ -196,7 +196,7 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
   },
   french_press: {
     label: "French Press",
-    defaultRecovery: 0.84,
+    defaultRecovery: 0.78,
     defaultTimeMinutes: 4,
     defaultGrind: "coarse",
     defaultTemperatureC: 94,
@@ -225,7 +225,7 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
   },
   aeropress: {
     label: "AeroPress",
-    defaultRecovery: 0.76,
+    defaultRecovery: 0.75,
     defaultTimeMinutes: 2,
     defaultGrind: "medium_fine",
     defaultTemperatureC: 88,
@@ -239,7 +239,7 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
   },
   moka_pot: {
     label: "Moka Pot (Stovetop)",
-    defaultRecovery: 0.74,
+    defaultRecovery: 0.70,
     defaultTimeMinutes: 4,
     defaultGrind: "fine",
     defaultTemperatureC: 94,
@@ -252,7 +252,7 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
   },
   drip_machine: {
     label: "Drip Coffee (Machine)",
-    defaultRecovery: 0.83,
+    defaultRecovery: 0.85,
     defaultTimeMinutes: 5,
     defaultGrind: "medium",
     defaultTemperatureC: 93,
@@ -279,7 +279,7 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
   },
   turkish: {
     label: "Turkish Coffee",
-    defaultRecovery: 0.9,
+    defaultRecovery: 0.88,
     defaultTimeMinutes: 3,
     defaultGrind: "extra_fine",
     defaultTemperatureC: 96,
@@ -334,7 +334,7 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
   },
   indian_filter: {
     label: "Indian Filter Coffee",
-    defaultRecovery: 0.78,
+    defaultRecovery: 0.72,
     defaultTimeMinutes: 12,
     defaultGrind: "fine",
     defaultTemperatureC: 96,
@@ -665,15 +665,20 @@ function getBeanFractionRange(input: CaffiLabInput, beanProfile: ReturnType<type
 }
 
 function getRoastAdjustment(roastLevel: RoastLevel) {
+  // Medium roast is the reference point (zero adjustment).
+  // Light roasts retain slightly more caffeine per gram: Ludwig et al. (2014) found
+  // ~2–3% higher caffeine in light vs medium filter brews.
+  // Dark roast penalty kept modest: HPLC studies show only 2–3% difference vs medium,
+  // not the 3.5% that was previously applied.
   if (roastLevel === "light") {
-    return 0.015;
+    return 0.012;
   }
 
   if (roastLevel === "dark") {
-    return -0.035;
+    return -0.018;
   }
 
-  return 0.01;
+  return 0;
 }
 
 function getGrindAdjustment(method: BrewMethodConfig, grindSize: GrindSize) {
@@ -766,21 +771,27 @@ function getAgitationAdjustment(method: BrewMethodConfig, agitation: AgitationLe
 }
 
 function getWaterAdjustment(waterMinerals: WaterMinerals, waterPh: number | undefined) {
+  // Caffeine extraction is relatively mineral-independent compared to aromatic compounds
+  // (Hendon et al., 2014 focused primarily on flavor-active acids, not caffeine).
+  // Penalties are reduced accordingly; balanced water is kept as a mild positive signal.
   let adjustment = 0;
 
   if (waterMinerals === "soft") {
-    adjustment -= 0.012;
+    adjustment -= 0.005;
   } else if (waterMinerals === "balanced") {
-    adjustment += 0.008;
+    adjustment += 0.005;
   } else if (waterMinerals === "hard") {
-    adjustment -= 0.006;
+    adjustment -= 0.007;
   }
 
   if (waterPh !== undefined) {
+    // Caffeine pKa ~10.4: neutral across the entire brewing pH range (6–8).
+    // Slightly acidic water has a minor positive effect on caffeine solubility;
+    // alkaline water (>7.8) slightly inhibits extraction.
     if (waterPh < 6.5) {
-      adjustment -= 0.006;
+      adjustment += 0.003;
     } else if (waterPh > 7.8) {
-      adjustment -= 0.01;
+      adjustment -= 0.006;
     }
   }
 
@@ -788,12 +799,16 @@ function getWaterAdjustment(waterMinerals: WaterMinerals, waterPh: number | unde
 }
 
 function getFreshnessAdjustment(freshness: Freshness) {
+  // Fresh beans: CO2 off-gassing can impede even extraction (channeling in espresso,
+  // uneven wetting in pour-over), justifying a small extraction penalty.
+  // Stale beans: caffeine is thermostable and oxidation-resistant; staleness mainly
+  // degrades volatile aromatics, not caffeine content. Penalty reduced accordingly.
   if (freshness === "fresh") {
     return -0.008;
   }
 
   if (freshness === "stale") {
-    return -0.018;
+    return -0.010;
   }
 
   return 0;
