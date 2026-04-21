@@ -10,6 +10,9 @@
 - [✅] Upgrade: Patch & Minor
 - [✅] Upgrade: @types packages
 - [⌛️] Upgrade: Build tools & Linters
+- [✅] Upgrade: Patch & Minor
+- [✅] Upgrade: @types packages
+- [✅] Upgrade: Build tools & Linters
 - [✅] Upgrade: Testing (vitest)
 - [ ] Upgrade: TinaCMS packages
 - [ ] Validation: Compile
@@ -49,6 +52,7 @@
 - `typescript`: 5.9.3 -> 6.0.3
 
 **Upgraded (build tools):** `typescript@6.0.3` (typecheck passed)
+**ESLint note:** Attempted upgrade to `eslint@10.x` caused plugin errors; reverted to `eslint@9.x` for compatibility.
 
 ### Testing
 - `vitest`: 1.6.1 -> 4.1.5
