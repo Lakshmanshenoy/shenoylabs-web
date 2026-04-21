@@ -43,9 +43,9 @@ describe("CaffiLab estimator", () => {
       filterType: "metal",
     });
 
-    expect(estimate.estimatedMg).toBe(161);
-    expect(estimate.lowerMg).toBe(124);
-    expect(estimate.upperMg).toBe(199);
+    expect(estimate.estimatedMg).toBe(158);
+    expect(estimate.lowerMg).toBe(122);
+    expect(estimate.upperMg).toBe(195);
     expect(estimate.beanUncertaintyPercent).toBe(23.1);
     expect(estimate.brewingUncertaintyPercent).toBe(5);
     expect(estimate.confidenceLabel).toBe("Medium");
@@ -64,11 +64,11 @@ describe("CaffiLab estimator", () => {
       temperatureAmount: undefined,
     });
 
-    expect(estimate.estimatedMg).toBe(212);
+    expect(estimate.estimatedMg).toBe(208);
     expect(estimate.confidencePercent).toBe(23.1);
     expect(estimate.confidenceLabel).toBe("Medium");
-    expect(estimate.lowerMg).toBe(163);
-    expect(estimate.upperMg).toBe(261);
+    expect(estimate.lowerMg).toBe(160);
+    expect(estimate.upperMg).toBe(256);
     expect(estimate.beanUncertaintyPercent).toBeGreaterThan(
       estimate.brewingUncertaintyPercent,
     );
@@ -145,9 +145,9 @@ describe("CaffiLab estimator", () => {
     });
 
     expect(withChicory.estimatedMg).toBeLessThan(withoutChicory.estimatedMg);
-    expect(withChicory.estimatedMg).toBe(189);
-    expect(withChicory.beanLowerMg).toBe(152);
-    expect(withChicory.beanUpperMg).toBe(226);
+    expect(withChicory.estimatedMg).toBe(185);
+    expect(withChicory.beanLowerMg).toBe(149);
+    expect(withChicory.beanUpperMg).toBe(221);
   });
 
   it("prefers package clues over price for unknown bean species", () => {

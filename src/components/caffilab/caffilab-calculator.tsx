@@ -8,6 +8,7 @@ import {
   BeakerIcon,
   BookOpenIcon,
   ChevronDownIcon,
+  FlaskConicalIcon,
   GaugeIcon,
   HeartIcon,
   MessageCircleIcon,
@@ -23,9 +24,12 @@ import {
   defaultTemperatureValue,
   estimateCaffeine,
   type AgitationLevel,
+  type ArabicaGrade,
   type BeanDetail,
   type BeanType,
   type BrewMethod,
+  type ElevationBand,
+  type ExtractionQuality,
   type FilterType,
   type Freshness,
   type GrindSize,
@@ -63,7 +67,10 @@ type FocusTopic =
   | "water_chemistry"
   | "freshness"
   | "filter"
-  | "chicory";
+  | "chicory"
+  | "arabica_grade"
+  | "elevation"
+  | "extraction_quality";
 
 const brewMethods = Object.entries(BREW_METHODS) as Array<
   [BrewMethod, (typeof BREW_METHODS)[BrewMethod]]
@@ -258,6 +265,9 @@ function getTopicExplanation({
     freshness: "Bean freshness changes gas, flow, and extraction behavior. Very fresh coffee can resist even extraction; stale coffee often loses volatile structure and extracts less predictably.",
     filter: "Filter type mainly changes oils and insoluble material, but it can slightly shift measured strength. Paper is a touch cleaner/lower; metal and no-filter methods retain more material.",
     chicory: `Indian filter coffee often includes chicory. CaffiLab defaults to ${chicoryPercent || "20"}% chicory for this method; chicory contributes body and bitterness but essentially no caffeine.`,
+    arabica_grade: "Arabica quality grade splits the species caffeine range in two tiers. Specialty (1.2–1.6 %) represents washed/natural single-origins and high-quality lots; Commercial (1.0–1.2 %) covers commodity-grade arabica. If unsure, the default Specialty tier is used.",
+    elevation: "Growing elevation slightly correlates with caffeine content through UV exposure and pest pressure. High-altitude farms (>1500 m) shift the estimated range upward by ~15 % of the range width; low-altitude (<800 m) shifts it downward by the same amount.",
+    extraction_quality: "Espresso extraction quality captures channeling and puck preparation. A poorly prepared puck (uneven tamping, channeling) reduces caffeine extraction significantly; a well-prepared shot can yield a small recovery gain. Average is the neutral default.",
   };
 
   return notes[focusTopic];
@@ -296,8 +306,12 @@ export function CaffiLabCalculator() {
   const [freshness, setFreshness] = useState<Freshness>("unknown");
   const [filterType, setFilterType] = useState<FilterType>("paper");
   const [chicoryPercent, setChicoryPercent] = useState("20");
+  const [arabicaGrade, setArabicaGrade] = useState<ArabicaGrade | "">("specialty");
+  const [elevationBand, setElevationBand] = useState<ElevationBand>("unknown");
+  const [extractionQuality, setExtractionQuality] = useState<ExtractionQuality>("average");
   const [focusTopic, setFocusTopic] = useState<FocusTopic>("result");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showExpert, setShowExpert] = useState(false);
   const customCaffeineInputRef = useRef<HTMLInputElement | null>(null);
 
   const method = BREW_METHODS[brewMethod];
@@ -336,6 +350,9 @@ export function CaffiLabCalculator() {
         freshness,
         filterType,
         chicoryPercent: parseOptionalNumber(chicoryPercent),
+        arabicaGrade: arabicaGrade === "" ? undefined : arabicaGrade,
+        elevationBand,
+        extractionQuality,
       }),
     [
       arabicaPercent,
@@ -347,6 +364,9 @@ export function CaffiLabCalculator() {
       brewTimeAmount,
       brewTimeUnit,
       chicoryPercent,
+      arabicaGrade,
+      elevationBand,
+      extractionQuality,
       coffeeAmount,
       coffeePrice,
       customCaffeinePercent,
@@ -473,8 +493,12 @@ export function CaffiLabCalculator() {
     setFreshness("unknown");
     setFilterType("paper");
     setChicoryPercent("20");
+    setArabicaGrade("specialty");
+    setElevationBand("unknown");
+    setExtractionQuality("average");
     setFocusTopic("result");
     setShowAdvanced(false);
+    setShowExpert(false);
   }
 
   return (
@@ -1256,6 +1280,102 @@ export function CaffiLabCalculator() {
                   </p>
                 </div>
               </div>
+              )}
+            </div>
+
+            <div className="grid gap-4 border-t border-[#33392f] pt-5">
+              <button
+                type="button"
+                onClick={() => setShowExpert((prev) => !prev)}
+                className="flex w-full items-center gap-2 text-left"
+              >
+                <FlaskConicalIcon className="size-4 text-[#9adf8f]" />
+                <h2 className="text-lg font-semibold text-[#f7f3ea] [letter-spacing:0]">
+                  Expert inputs
+                </h2>
+                <ChevronDownIcon
+                  className={cn(
+                    "ml-auto size-5 text-[#a9b39c] transition-transform duration-200",
+                    showExpert && "rotate-180",
+                  )}
+                />
+              </button>
+              {showExpert && (
+                <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {beanType === "arabica" || beanType === "blend" ? (
+                    <Field
+                      label="Arabica grade"
+                      topic="arabica_grade"
+                      onFocus={setFocusTopic}
+                      hint="Specialty (1.2–1.6 %) or Commercial (1.0–1.2 %) narrows the caffeine tier."
+                    >
+                      <select
+                        value={arabicaGrade}
+                        onChange={(event) =>
+                          setArabicaGrade(event.target.value as ArabicaGrade | "")
+                        }
+                        className={inputClass}
+                      >
+                        <option value="specialty">Specialty (1.2–1.6 %)</option>
+                        <option value="commercial">Commercial (1.0–1.2 %)</option>
+                      </select>
+                    </Field>
+                  ) : null}
+
+                  <Field
+                    label="Growing elevation"
+                    topic="elevation"
+                    onFocus={setFocusTopic}
+                    hint="Higher altitude shifts the caffeine range slightly upward."
+                  >
+                    <select
+                      value={elevationBand}
+                      onChange={(event) =>
+                        setElevationBand(event.target.value as ElevationBand)
+                      }
+                      className={inputClass}
+                    >
+                      <option value="unknown">Unknown</option>
+                      <option value="low">Low (&lt; 800 m)</option>
+                      <option value="mid">Mid (800–1500 m)</option>
+                      <option value="high">High (&gt; 1500 m)</option>
+                    </select>
+                  </Field>
+
+                  {method.supportsPressure ? (
+                    <Field
+                      label="Extraction quality"
+                      topic="extraction_quality"
+                      onFocus={setFocusTopic}
+                      hint="Channeling or puck prep quality for espresso."
+                    >
+                      <select
+                        value={extractionQuality}
+                        onChange={(event) =>
+                          setExtractionQuality(event.target.value as ExtractionQuality)
+                        }
+                        className={inputClass}
+                      >
+                        <option value="average">Average</option>
+                        <option value="well_prepared">Well-prepared</option>
+                        <option value="poor">Poor / uneven</option>
+                      </select>
+                    </Field>
+                  ) : null}
+
+                  <div className="rounded-[8px] border border-dashed border-[#33392f] bg-[#10120e] p-4">
+                    <div className="flex items-center gap-2">
+                      <span className={cn(labelClass, "opacity-60")}>Cultivar</span>
+                      <span className="rounded-[4px] bg-[#1c2219] px-1.5 py-0.5 text-[10px] font-medium text-[#9adf8f]">
+                        Coming soon
+                      </span>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-[#8f9886]">
+                      Per-cultivar data (Geisha, SL28, Caturra, Catimor) will further
+                      narrow the bean fraction range once calibration data is confirmed.
+                    </p>
+                  </div>
+                </div>
               )}
             </div>
 
