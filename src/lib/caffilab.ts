@@ -15,7 +15,7 @@ export type BrewMethod =
   | "indian_filter";
 
 export type BeanType = "unknown" | "arabica" | "robusta" | "blend";
-export type BeanDetail = "generic" | "custom";
+export type BeanDetail = "generic" | "high_altitude" | "low_altitude" | "custom";
 export type WeightUnit = "g" | "oz" | "lb";
 export type VolumeUnit = "ml" | "l" | "fl_oz";
 export type TimeUnit = "min" | "hr";
@@ -502,6 +502,14 @@ function getConfidenceLabel(confidencePercent: number): ConfidenceLabel {
 }
 
 function getBeanDetailLabel(beanDetail: BeanDetail, customCaffeinePercent: number | undefined) {
+  if (beanDetail === "high_altitude") {
+    return "High-altitude profile";
+  }
+
+  if (beanDetail === "low_altitude") {
+    return "Low-altitude profile";
+  }
+
   if (beanDetail === "custom") {
     return customCaffeinePercent !== undefined
       ? `Custom caffeine content (${customCaffeinePercent.toFixed(2)}%)`
@@ -511,19 +519,35 @@ function getBeanDetailLabel(beanDetail: BeanDetail, customCaffeinePercent: numbe
   return "Generic species range";
 }
 
+function getBeanDetailWindow(beanDetail: BeanDetail) {
+  if (beanDetail === "high_altitude") {
+    return { start: 0, end: 0.5 };
+  }
+
+  if (beanDetail === "low_altitude") {
+    return { start: 0.5, end: 1 };
+  }
+
+  return { start: 0, end: 1 };
+}
+
 function adjustSpeciesRange(
   range: { min: number; max: number },
   beanDetail: BeanDetail,
   customCaffeinePercent: number | undefined,
 ) {
   if (beanDetail === "custom") {
-    // User-supplied dry-weight % overrides the species range entirely.
     const fraction = clamp((customCaffeinePercent ?? midpoint(range.min, range.max) * 100) / 100, 0.001, 0.06);
     return { min: fraction, max: fraction };
   }
 
-  // Generic: use the full species range unchanged.
-  return { min: range.min, max: range.max };
+  const { start, end } = getBeanDetailWindow(beanDetail);
+  const width = range.max - range.min;
+
+  return {
+    min: range.min + width * start,
+    max: range.min + width * end,
+  };
 }
 
 function getPackageClueProfile(clue: PackageClue | undefined) {
@@ -661,7 +685,7 @@ function getBeanFractionRange(input: CaffiLabInput, beanProfile: ReturnType<type
       ? getArabicaBaseRange(input.arabicaGrade)
       : F_RANGE.arabica;
 
-  // Step 2 — Apply bean detail: custom % overrides species range; generic uses it unchanged.
+  // Step 2 — Apply bean detail window (high_altitude / low_altitude / custom / generic).
   const arabicaRange = adjustSpeciesRange(arabicaBaseRange, beanDetail, input.customCaffeinePercent);
   const robustaRange = adjustSpeciesRange(F_RANGE.robusta, beanDetail, input.customCaffeinePercent);
 
