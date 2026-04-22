@@ -302,59 +302,59 @@ Also used by default: filter type = metal, extraction yield = method default (20
 
 For Arabica + Specialty grade, the base range is:
 
-- $F_{min,base}=0.012$
-- $F_{max,base}=0.016$
+- `F_min,base = 0.012`
+- `F_max,base = 0.016`
 
 Bean detail is Generic, so no narrowing window is applied.
 
-Medium roast mass-balance factor is $0.98$, so:
+Medium roast mass-balance factor is `0.98`, so:
 
-- $F_{min}=0.012 \times 0.98 = 0.01176$
-- $F_{max}=0.016 \times 0.98 = 0.01568$
+- `F_min = 0.012 × 0.98 = 0.01176`
+- `F_max = 0.016 × 0.98 = 0.01568`
 
 Midpoint used for estimate:
 
-$$
-F_{mid}=\frac{F_{min}+F_{max}}{2}=\frac{0.01176+0.01568}{2}=0.01372
-$$
+```latex
+F_{mid} = \frac{F_{min} + F_{max}}{2} = \frac{0.01176 + 0.01568}{2} = 0.01372
+```
 
-### Step 2: Recovery $E$
+### Step 2: Recovery E
 
-Espresso default recovery starts at $0.67$.
+Espresso default recovery starts at `0.67`.
 
 For these defaults:
 
-- Time adjustment: $0$ (at method default)
-- Grind adjustment: $0$ (fine is espresso default)
-- Temperature adjustment: $0$ (93 C default)
-- Ratio adjustment: $0$ (43 ml / 20 g = 2.15, exactly method midpoint)
-- Roast adjustment: $0$ (medium reference)
-- Extraction yield adjustment: $0$ (20% default)
-- Pressure adjustment: $+0.012$ (9 bar reference behavior)
-- Extraction quality adjustment: $0$ (average)
-- Water adjustment: $0$ (unknown)
-- Freshness adjustment: $0$ (unknown)
-- Filter adjustment: $+0.006$ (metal)
+- Time adjustment: `0` (at method default)
+- Grind adjustment: `0` (fine is espresso default)
+- Temperature adjustment: `0` (93 C default)
+- Ratio adjustment: `0` (43 ml / 20 g = 2.15, exactly method midpoint)
+- Roast adjustment: `0` (medium reference)
+- Extraction yield adjustment: `0` (20% default)
+- Pressure adjustment: `+0.012` (9 bar reference behavior)
+- Extraction quality adjustment: `0` (average)
+- Water adjustment: `0` (unknown)
+- Freshness adjustment: `0` (unknown)
+- Filter adjustment: `+0.006` (metal)
 
 So:
 
-$$
-E=0.67+0.012+0.006=0.688
-$$
+```text
+E = 0.67 + 0.012 + 0.006 = 0.688
+```
 
 ### Step 3: Main caffeine estimate
 
 Core equation:
 
-$$
-	ext{Estimate}_{mg}=G \times F_{mid} \times E \times 1000
-$$
+```latex
+	ext{Estimate}_{mg} = G \times F_{mid} \times E \times 1000
+```
 
 Substitute values:
 
-$$
-	ext{Estimate}_{mg}=20 \times 0.01372 \times 0.688 \times 1000 = 188.7872
-$$
+```text
+	ext{Estimate}_{mg} = 20 \times 0.01372 \times 0.688 \times 1000 = 188.7872
+```
 
 Rounded result:
 
@@ -364,15 +364,15 @@ Rounded result:
 
 Lower bound:
 
-$$
-20 \times 0.01176 \times 0.688 \times 1000 = 161.8176 \Rightarrow 162\,mg
-$$
+```text
+20 × 0.01176 × 0.688 × 1000 = 161.8176 ⇒ 162 mg
+```
 
 Upper bound:
 
-$$
-20 \times 0.01568 \times 0.688 \times 1000 = 215.7568 \Rightarrow 216\,mg
-$$
+```text
+20 × 0.01568 × 0.688 × 1000 = 215.7568 ⇒ 216 mg
+```
 
 So bean-driven range is:
 
@@ -382,17 +382,16 @@ So bean-driven range is:
 
 Bean variability uncertainty:
 
-$$
-	ext{bean uncertainty}=\frac{F_{max}-F_{min}}{2 \times F_{mid}} \times 100
-=\frac{0.01568-0.01176}{2 \times 0.01372} \times 100
-=14.3\%
-$$
+```text
+bean_uncertainty = ((F_max - F_min) / (2 * F_mid)) * 100
+= ((0.01568 - 0.01176) / (2 * 0.01372)) * 100 ≈ 14.3%
+```
 
 With these defaults, brewing uncertainty reaches its floor (5%), so applied uncertainty is:
 
-$$
-\max(14.3\%, 5.0\%)=14.3\%
-$$
+```text
+max(14.3%, 5.0%) = 14.3%
+```
 
 Practical range therefore remains the same as bean-driven range:
 
