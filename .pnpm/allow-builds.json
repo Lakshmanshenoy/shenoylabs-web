@@ -6,4 +6,10 @@
 	"@playwright/test@1.59.1",
 	"playwright@1.59.1",
 	"playwright-core@1.59.1"
+	,
+	"better-sqlite3@11.10.0",
+	"esbuild@0.18.20",
+	"esbuild@0.24.2",
+	"sharp@0.34.5",
+	"unrs-resolver@1.11.1"
 ]
