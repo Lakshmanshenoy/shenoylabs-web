@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import Toast from "../../../components/ui/Toast";
 
 type FileItem = { filename: string; src: string };
@@ -49,8 +49,9 @@ export default function MediaAdminPage() {
     };
   }, []);
 
-  const addPrLog = (url: string, action: "upload" | "delete", filename?: string) => {
-    const entry: PrLog = { url, action, filename, ts: Date.now() };
+  const addPrLog = useCallback((url: string, action: "upload" | "delete", filename?: string) => {
+    const ts = Date.now();
+    const entry: PrLog = { url, action, filename, ts };
     setPrLogs((prev) => {
       const next = [entry, ...prev].slice(0, 50);
       try {
@@ -58,6 +59,7 @@ export default function MediaAdminPage() {
       } catch (e) {}
       return next;
     });
+
     // try to persist server-side (best-effort)
     (async () => {
       try {
@@ -70,13 +72,15 @@ export default function MediaAdminPage() {
         // ignore failures — localStorage remains as fallback
       }
     })();
-  };
+  }, [setPrLogs]);
 
   useEffect(() => {
     fetchList();
+    // intentionally run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchList = async (targetDir?: string) => {
+  async function fetchList(targetDir?: string) {
     try {
       setLoading(true);
       setError(null);
