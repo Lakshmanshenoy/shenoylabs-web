@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,6 @@ export function ContactForm() {
   const [captchaToken, setCaptchaToken] = useState("");
   const [verificationReady, setVerificationReady] = useState(false);
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
-  const startedAt = useMemo(() => Date.now(), []);
   const turnstileSiteKey = hydrated
     ? isLocalHostname(window.location.hostname)
       ? TURNSTILE_TEST_SITE_KEY
@@ -90,7 +89,7 @@ export function ContactForm() {
         message: String(formData.get("message") ?? "").trim(),
         captchaToken: token,
         website: String(formData.get("website") ?? "").trim(),
-        submittedAt: startedAt,
+        submittedAt: Date.now(),
       };
 
       const res = await fetch("/api/contact", {
