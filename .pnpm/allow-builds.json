@@ -2,5 +2,8 @@
 	"core-js@3.49.0",
 	"esbuild@0.25.12",
 	"msw@2.13.4",
-	"protobufjs@7.5.5"
+	"protobufjs@7.5.5",
+	"@playwright/test@1.59.1",
+	"playwright@1.59.1",
+	"playwright-core@1.59.1"
 ]
