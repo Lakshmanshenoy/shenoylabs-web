@@ -628,8 +628,11 @@ export function CaffiLabCalculator() {
               adjustments), clamped to 0.42–0.97.
             </p>
             <p className="text-sm leading-7 text-[#aeb8a5]">
-              Uncertainty is split into bean variability and brewing uncertainty —
-              the calculator applies the larger of the two as the final cap.
+              Semi-mechanistic model: core extraction behavior is physics-informed;
+              secondary adjustments are empirically calibrated. Uncertainty is split
+              into bean variability and brewing uncertainty — the larger of the two
+              sets the final cap. Ranges are designed to contain real-world
+              measurements rather than predict exact values.
             </p>
             <Link
               href="/articles/how-does-caffilab-formula-work"

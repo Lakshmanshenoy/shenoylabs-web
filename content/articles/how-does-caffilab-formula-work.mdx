@@ -30,6 +30,8 @@ Where:
 
 The recovery term **E** is the most complex part. Because every brew method works differently at a physical level, CaffiLab uses **method-class-specific sub-models** rather than a single additive formula. The next section explains this architecture.
 
+> **Model type:** CaffiLab uses a semi-mechanistic model — core extraction behavior is physics-informed, while secondary adjustments are empirically calibrated.
+
 ---
 
 ## Method physics classes
@@ -197,7 +199,7 @@ Filter type contributes an independent small bounded adjustment (~±0.01):
 ΔFilter = getFilterAdjustment(filterType)
 ```
 
-Both `ΔMinor` and `ΔFilter` enter `totalDelta` separately. Keeping `ΔFilter` distinct ensures the filter-type effect is traceable and uncapped while water and freshness signals are capped together. ΔRoast remains separate because roasting has a larger and more direct effect on soluble-caffeine content.
+Both `ΔMinor` and `ΔFilter` enter `totalDelta` separately. `ΔFilter` is independently bounded (±0.01) and applied separately from `ΔMinor`, allowing its effect to remain visible but controlled. ΔRoast remains separate because roasting has a larger and more direct effect on soluble-caffeine content.
 
 ---
 
@@ -237,7 +239,7 @@ E = clamp(E₀ × (1 + totalDelta), 0.55, 0.97)
 Key characteristics:
 - **Ratio sensitivity is higher** than pressure methods (×0.040 scaling): more water through the same bed volume genuinely extracts a higher percentage of caffeine.
 - **Siphon** (vacuum-assisted): the drawdown ensures consistent contact temperature; its `defaultRecovery` (0.83) reflects this consistency.
-- **Percolator** (recirculating): near-boiling hot-water cycling pushes its `defaultRecovery` (0.90) to the top of the percolation range. Adjustments scale from this high baseline. A **+5 % uncertainty penalty** is applied to reflect high cycle-to-cycle variability (inconsistent cycling rate, temperature stability, and contact time).
+- **Percolator** (recirculating): near-boiling hot-water cycling pushes its `defaultRecovery` (0.90) to the top of the percolation range. Adjustments scale from this high baseline. A **+5 % uncertainty penalty** is applied to reflect high cycle-to-cycle variability (inconsistent cycling rate, temperature stability, and contact time). This reflects both thermal instability and repeated extraction cycles that can vary significantly across devices.
 - **Agitation** (bloom, pour technique) modestly improves extraction uniformity.
 
 ---
@@ -300,7 +302,7 @@ tau = 420 min / tempRatio
 
 This gives `tau ≈ 667 min` (~11 h) at fridge temperature and `tau = 420 min` (~7 h) at room temperature.
 
-Recovery then follows an exponential approach toward a ceiling of 0.88 (cold brew cannot dissolve the same fraction of tightly bound cell-wall caffeine as hot brewing):
+Recovery then follows an exponential approach toward a ceiling of 0.88 (cold brewing reaches a lower practical recovery ceiling due to reduced diffusion rates and incomplete cell-wall solubilization at low temperatures):
 
 ```text
 fractional         = 1 - exp(-brewTime / tau)
@@ -695,6 +697,8 @@ This demonstrates why cold brew concentrate is not the same as "low caffeine" �
 4. **No lab validation:** CaffiLab's estimates are calibrated against published research, not against HPLC measurements of its own output.
 
 5. **Cold brew temperature uncertainty:** Unless the user provides a brew temperature, CaffiLab assumes room temperature (22 °C). The +3 % cold method uncertainty penalty reflects this.
+
+> **Model philosophy:** CaffiLab prioritizes structural accuracy over false precision — ranges are designed to contain real-world measurements rather than predict exact values.
 
 ---
 
