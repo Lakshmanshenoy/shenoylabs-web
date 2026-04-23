@@ -1,9 +1,9 @@
 ---
 title: "How Does the CaffiLab Formula Work?"
-excerpt: "A deep dive into the extraction science behind CaffiLab's caffeine estimation model — the math, the assumptions, and the research that backs it."
+excerpt: "A deep dive into the extraction science behind CaffiLab's caffeine estimation model — the math, the physics classes, the Arrhenius cold-brew model, and the research that backs it."
 date: "2025-07-14"
 createdDate: "2025-07-14"
-lastUpdated: "2026-04-23"
+lastUpdated: "2025-07-14"
 category: "research"
 primaryCategory: "research"
 tags: ["caffilab", "caffeine", "extraction", "coffee-science", "research"]
@@ -12,6 +12,723 @@ depthLevel: "advanced"
 coverImage: "/images/caffilab/drip-brewing.jpg"
 coverAlt: "Coffee dripping into a glass vessel on a counter"
 ---
+
+## The core model
+
+CaffiLab estimates caffeine with a range-aware multiplicative model:
+
+- **Estimate** = **G × F_mid × E × 1000**
+- **Bean lower bound** = **G × F_min × E × 1000**
+- **Bean upper bound** = **G × F_max × E × 1000**
+
+Where:
+
+- **G** = coffee dose in grams
+- **F_min / F_max / F_mid** = the bean caffeine fraction and its midpoint (dry-weight %)
+- **E** = caffeine recovery — the fraction of available caffeine that actually ends up in the cup
+- **× 1000** converts grams to milligrams
+
+The recovery term **E** is the most complex part. Because every brew method works differently at a physical level, CaffiLab uses **method-class-specific sub-models** rather than a single additive formula. The next section explains this architecture.
+
+---
+
+## Method physics classes
+
+CaffiLab assigns every brew method to one of eight physics classes. Each class has its own extraction model that reflects the physical mechanism driving caffeine transfer from bean to cup.
+
+<table>
+	<thead>
+		<tr>
+			<th>Physics class</th>
+			<th>Methods</th>
+			<th>Key driver</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><code>pressure</code></td>
+			<td>Espresso, Moka pot</td>
+			<td>Pressure differential forcing water through a compacted bed</td>
+		</tr>
+		<tr>
+			<td><code>percolation</code></td>
+			<td>Pour over, Chemex, Drip machine</td>
+			<td>Gravity-driven single-pass flow through the coffee bed</td>
+		</tr>
+		<tr>
+			<td><code>immersion</code></td>
+			<td>French press, Siphon, Immersion dripper</td>
+			<td>Coffee steeps until diffusion reaches equilibrium, then is separated</td>
+		</tr>
+		<tr>
+			<td><code>cold_immersion</code></td>
+			<td>Cold brew</td>
+			<td>Immersion at low temperature; rate governed by Arrhenius diffusion scaling</td>
+		</tr>
+		<tr>
+			<td><code>cold_percolation</code></td>
+			<td>Cold drip</td>
+			<td>Cold single-pass percolation; lower equilibrium ceiling than cold immersion</td>
+		</tr>
+		<tr>
+			<td><code>boiling</code></td>
+			<td>Turkish, Percolator</td>
+			<td>Near- or at-boiling sustained exposure; extraction approaches ceiling rapidly</td>
+		</tr>
+		<tr>
+			<td><code>steam_pressure</code></td>
+			<td>Indian filter</td>
+			<td>Low steam pressure with long contact time (~10–20 min)</td>
+		</tr>
+		<tr>
+			<td><code>hybrid_pressure</code></td>
+			<td>AeroPress</td>
+			<td>Immersion steep followed by manual press — combines immersion kinetics with a pressure boost</td>
+		</tr>
+	</tbody>
+</table>
+
+---
+
+## Base recovery by method
+
+Each brew method has a calibrated default recovery (E₀), anchored to published extraction measurements. Adjustments for grind, temperature, time, and other inputs are applied on top of this baseline.
+
+<table>
+	<thead>
+		<tr>
+			<th>Method</th>
+			<th>Physics class</th>
+			<th>Default E₀</th>
+			<th>Literature basis</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Espresso</td>
+			<td><code>pressure</code></td>
+			<td>0.67</td>
+			<td>Andueza et al. (2003): 60–80 % caffeine recovery at 9 bar</td>
+		</tr>
+		<tr>
+			<td>Pour over</td>
+			<td><code>percolation</code></td>
+			<td>0.82</td>
+			<td>Gloess et al. (2013): 75–90 % for filter methods</td>
+		</tr>
+		<tr>
+			<td>Chemex</td>
+			<td><code>percolation</code></td>
+			<td>0.79</td>
+			<td>Gloess et al. (2013): 78–82 % (slower flow, thicker filter)</td>
+		</tr>
+		<tr>
+			<td>French press</td>
+			<td><code>immersion</code></td>
+			<td>0.80</td>
+			<td>Gloess et al. (2013): 78–84 % for full-immersion methods</td>
+		</tr>
+		<tr>
+			<td>Cold brew</td>
+			<td><code>cold_immersion</code></td>
+			<td>0.83 (at 12–16 h reference)</td>
+			<td>Fuller & Rao (2017): 85–90 % at 12–16 h room temperature</td>
+		</tr>
+		<tr>
+			<td>AeroPress</td>
+			<td><code>hybrid_pressure</code></td>
+			<td>0.76</td>
+			<td>Gloess et al. (2013): 72–79 % for standard recipes</td>
+		</tr>
+		<tr>
+			<td>Moka pot</td>
+			<td><code>pressure</code></td>
+			<td>0.70</td>
+			<td>Espinosa-Álvarez et al. (2021): 68–72 % at 1–2 bar</td>
+		</tr>
+		<tr>
+			<td>Drip machine</td>
+			<td><code>percolation</code></td>
+			<td>0.85</td>
+			<td>Ludwig et al. (2014): 85–90 % for optimized drip machines</td>
+		</tr>
+		<tr>
+			<td>Siphon</td>
+			<td><code>immersion</code></td>
+			<td>0.83</td>
+			<td>Immersion analogy; measured range 80–85 %</td>
+		</tr>
+		<tr>
+			<td>Turkish</td>
+			<td><code>boiling</code></td>
+			<td>0.91</td>
+			<td>Gloess et al. (2013): 90–93 % for decoction methods</td>
+		</tr>
+		<tr>
+			<td>Cold drip</td>
+			<td><code>cold_percolation</code></td>
+			<td>0.76</td>
+			<td>Percolation analogy; measured range 70–80 %</td>
+		</tr>
+		<tr>
+			<td>Immersion dripper</td>
+			<td><code>immersion</code></td>
+			<td>0.81</td>
+			<td>French press analogy; immersion with paper filter</td>
+		</tr>
+		<tr>
+			<td>Percolator</td>
+			<td><code>boiling</code></td>
+			<td>0.90</td>
+			<td>Ludwig et al. (2014): 88–93 % with recirculation</td>
+		</tr>
+		<tr>
+			<td>Indian filter</td>
+			<td><code>steam_pressure</code></td>
+			<td>0.73</td>
+			<td>Moka analogy; estimated range 70–75 %</td>
+		</tr>
+	</tbody>
+</table>
+
+---
+
+## Per-class extraction models
+
+### Pressure methods (espresso, moka pot)
+
+Pressure forces water through a compacted bed in seconds to minutes. Andueza et al. (2003) showed that caffeine recovery peaks near 9 bar for espresso; over- and under-extraction both reduce efficiency.
+
+The recovery for pressure methods is computed as:
+
+```text
+E = clamp(
+  E₀ + ΔPressure + ΔGrind + ΔTemp + ΔTime
+     + ΔRatio × 0.025 + ΔYield + ΔTechnique
+     + ΔWater + ΔFreshness + ΔRoast + ΔFilter,
+  0.45, 0.88
+)
+```
+
+Key characteristics:
+- **Ratio sensitivity is intentionally muted** (±0.025 scaling): in espresso, a longer pull produces more concentrated beverage volume, not fundamentally more caffeine recovery percentage.
+- **Grind is the dominant variable** — it controls both surface area and channeling risk.
+- **Pressure adjustment**: peaks at 9 bar for espresso; moka's lower peak pressure (1–2 bar) is already encoded in its lower E₀.
+
+---
+
+### Percolation methods (pour over, Chemex, drip machine)
+
+Water passes through the bed exactly once under gravity. Gloess et al. (2013) measured 75–90 % caffeine recovery for filter methods.
+
+```text
+E = clamp(
+  E₀ + ΔGrind + ΔTemp + ΔTime
+     + ΔRatio × 0.040 + ΔAgitation + ΔYield
+     + ΔWater + ΔFreshness + ΔRoast + ΔFilter,
+  0.55, 0.95
+)
+```
+
+Key characteristics:
+- **Ratio sensitivity is higher** than pressure methods (±0.040 scaling): more water through the same bed volume genuinely extracts a higher percentage of caffeine.
+- **Agitation** (bloom/pour technique) modestly improves extraction uniformity.
+- **Grind**: finer slows flow and increases contact time; coarser speeds flow and can under-extract.
+
+---
+
+### Hot immersion methods (French press, siphon, immersion dripper)
+
+Coffee steeps in water until mechanically separated. Extraction follows a rapid early phase then approaches a diffusion-limited equilibrium. The model uses an exponential saturation curve rather than a linear time adjustment.
+
+The time factor uses:
+
+```text
+tau    = 4.0 min  (time constant: reaches ~63% of equilibrium at 4 min)
+eqTime = method default brew time (the reference equilibrium)
+
+normalized = (1 - exp(-t / tau)) / (1 - exp(-eqTime / tau))
+ΔTime      = clamp((normalized - 1) × 0.07, -0.12, +0.04)
+```
+
+Full recovery:
+
+```text
+E = clamp(
+  E₀ + ΔTime + ΔGrind + ΔTemp
+     + ΔRatio × 0.020 + ΔAgitation + ΔYield
+     + ΔWater + ΔFreshness + ΔRoast + ΔFilter,
+  0.55, 0.95
+)
+```
+
+Key characteristics:
+- **Ratio sensitivity is lowest** of the three hot methods (±0.020): at equilibrium, the same total caffeine is in solution regardless of volume.
+- **Grind has low sensitivity** past ~8 min: finer grind speeds early extraction but adds almost nothing at equilibrium.
+- **Time follows a saturation curve**, not a linear ramp. Adding more time past equilibrium yields no further extraction.
+
+---
+
+### Cold immersion (cold brew)
+
+Cold brew is the most physically distinct method. Low temperature reduces the diffusion coefficient of caffeine from the cell matrix, following the Arrhenius relationship:
+
+```text
+k_hot ∝ exp(-Ea / R·T_hot)
+k_cold ∝ exp(-Ea / R·T_cold)
+```
+
+CaffiLab approximates the temperature scaling factor as:
+
+```text
+tempRatio = exp(0.025 × (T_brew_°C - 22))
+```
+
+At 4 °C (fridge): `tempRatio ≈ 0.63`.
+At 22 °C (room temp): `tempRatio = 1.0`.
+At 30 °C: `tempRatio ≈ 1.22`.
+
+The effective time constant is:
+
+```text
+tau = 420 min / tempRatio
+```
+
+This gives `tau ≈ 667 min` (~11 h) at fridge temperature and `tau = 420 min` (~7 h) at room temperature.
+
+Recovery then follows an exponential approach toward a ceiling of 0.88 (cold brew cannot dissolve the same fraction of tightly bound cell-wall caffeine as hot brewing):
+
+```text
+fractional         = 1 - exp(-brewTime / tau)
+coldBaseRecovery   = 0.88 × fractional
+
+E = clamp(
+  coldBaseRecovery + ΔGrind × 0.3 + ΔAgitation × 0.5
+    + ΔRatio × 0.015
+    + ΔWater + ΔFreshness + ΔRoast + ΔFilter,
+  0.30, 0.90
+)
+```
+
+Key characteristics:
+- **Brew time is the primary driver**, not a modifier. At 6 h at room temperature, only ~60 % of the equilibrium recovery is reached; at 12 h, ~85 %; at 24 h, >95 % of the 0.88 ceiling.
+- **Grind influence is damped** (multiplied by 0.3): after 12+ h, equilibrium is approached regardless of particle size.
+- **Temperature strongly shifts the rate**, not just the final yield.
+
+**Fuller & Rao (2017) validation**: the model is calibrated so that at room temperature (22 °C), 12–16 h yields E ≈ 0.83–0.87, consistent with the paper's finding that cold brew approaches hot-brew caffeine levels after extended steeping.
+
+---
+
+### Cold percolation (cold drip)
+
+Uses the same Arrhenius temperature scaling but each water droplet has limited contact time with any particle — equilibrium is never reached. The ceiling is reduced to 0.80 (versus 0.88 for cold immersion):
+
+```text
+coldBaseRecovery = 0.80 × (1 - exp(-brewTime / tau))
+
+E = clamp(
+  coldBaseRecovery + ΔGrind × 0.2 + ΔRatio × 0.015
+    + ΔWater + ΔFreshness + ΔRoast + ΔFilter,
+  0.25, 0.83
+)
+```
+
+---
+
+### Boiling methods (Turkish, percolator)
+
+Near-boiling or boiling temperatures drive extraction close to its practical ceiling. Gloess et al. (2013) measured Turkish coffee at 90–93 %.
+
+```text
+E = clamp(
+  E₀ + ΔGrind + ΔTemp + ΔTime
+     + ΔRatio × 0.030 + ΔAgitation + ΔYield
+     + ΔWater + ΔFreshness + ΔRoast,
+  0.70, 0.97
+)
+```
+
+Key characteristics:
+- **Grind is the dominant variable**: Turkish ultra-fine grind is the defining differentiator.
+- **Filter adjustment is omitted**: Turkish uses no filter; percolator uses metal. Both are already encoded in E₀.
+- **Ceiling is the highest** of all classes (0.97) — boiling provides enough energy to dissolve nearly all extractable caffeine.
+
+---
+
+### Steam pressure (Indian filter)
+
+Indian filter uses gravity plus boiling water vapour pressure through a fine perforated metal disc (~0.5–1 bar peak pressure, 10–20 min contact time). It sits between moka pot and a slow drip.
+
+```text
+E = clamp(
+  E₀ + ΔGrind + ΔTemp + ΔTime
+     + ΔRatio × 0.030 + ΔYield
+     + ΔWater + ΔFreshness + ΔRoast + ΔFilter,
+  0.50, 0.85
+)
+```
+
+---
+
+### Hybrid pressure (AeroPress)
+
+AeroPress combines an immersion steep with a manual press. The model uses an exponential saturation curve with a shorter time constant than pure immersion (`tau = 2.5 min` vs 4.0 min), reflecting the pressure component accelerating extraction during the press phase.
+
+```text
+normalized = (1 - exp(-t / 2.5)) / (1 - exp(-eqTime / 2.5))
+ΔTime      = clamp((normalized - 1) × 0.08, -0.12, +0.05)
+
+E = clamp(
+  E₀ + ΔTime + ΔGrind + ΔTemp
+     + ΔRatio × 0.025 + ΔAgitation
+     + ΔPressure × 0.5 + ΔYield
+     + ΔWater + ΔFreshness + ΔRoast + ΔFilter,
+  0.48, 0.88
+)
+```
+
+The `ΔPressure × 0.5` scaling reflects that hand pressure is modest and variable compared with a pump-driven espresso machine. The uncertainty model also adds a +5 % base penalty for AeroPress to acknowledge the high recipe variability between techniques (inverted vs standard, wide ratio range, variable steep duration).
+
+---
+
+## Caffeine fraction range (F_range)
+
+The caffeine fraction depends on the coffee species, and CaffiLab models it as a range rather than a single fixed number:
+
+<table>
+	<thead>
+		<tr>
+			<th>Species</th>
+			<th>Caffeine range</th>
+			<th>Midpoint used for estimate</th>
+			<th>Source</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Arabica (<em>Coffea arabica</em>)</td>
+			<td>1.0% to 1.6%</td>
+			<td>1.3%</td>
+			<td>Farah (2012); Ky et al. (2001)</td>
+		</tr>
+		<tr>
+			<td>Robusta (<em>Coffea canephora</em>)</td>
+			<td>2.0% to 2.7%</td>
+			<td>2.35%</td>
+			<td>Farah (2012); Ky et al. (2001)</td>
+		</tr>
+	</tbody>
+</table>
+
+These are dry-weight working ranges used by the calculator. They are intentionally narrower than the full botanical extremes reported in the literature, because CaffiLab is trying to represent realistic consumer coffee while avoiding false precision.
+
+### Blend handling
+
+For blends, CaffiLab computes a weighted range:
+
+```text
+F_min,blend = (arabica% × F_min,arabica + robusta% × F_min,robusta) / 100
+F_max,blend = (arabica% × F_max,arabica + robusta% × F_max,robusta) / 100
+F_mid,blend = (F_min,blend + F_max,blend) / 2
+```
+
+When the user doesn't know the species, CaffiLab uses a fallback hierarchy:
+
+1. **Package clues** (e.g., "specialty single origin" → mostly Arabica; "commercial instant" → Robusta-heavy)
+2. **Price inference** (higher prices correlate with Arabica-forward blends)
+3. **Conservative default** (100% Arabica if nothing is known)
+
+### Bean detail input
+
+The advanced panel adds an optional **Bean detail** input:
+
+- **Generic range:** Uses the full species range.
+- **High-altitude:** Biases toward the lower-caffeine half of the species range.
+- **Low-altitude:** Biases toward the higher-caffeine half of the species range.
+- **Custom caffeine %:** Uses a user-supplied dry-weight caffeine percentage.
+
+### Chicory adjustment
+
+For Indian filter coffee, chicory is a common additive. Chicory contributes essentially zero caffeine (McCusker et al., 2003), so the effective caffeine fraction is reduced:
+
+```text
+F_effective = F × (1 − chicory% / 100)
+```
+
+### Expert-mode bean fraction adjustments
+
+The Expert inputs panel adds three further refinements to the bean caffeine fraction range. These are applied in order after the species and blend steps.
+
+#### Arabica grade
+
+The arabica species range (1.0–1.6 %) is split into two quality tiers:
+
+- **Specialty** (1.2–1.6 %): washed/natural single-origins, high-quality traded lots.
+- **Commercial** (1.0–1.2 %): commodity-grade arabica, typical of mainstream blends.
+
+#### Growing elevation
+
+Farm elevation correlates with caffeine content through UV exposure and pest-pressure stress responses (Bertrand et al., 2003):
+
+- **High** (> 1500 m): shifts the blended range upward by ~15 % of its width.
+- **Mid** (800–1500 m): no shift (reference band).
+- **Low** (< 800 m): shifts the blended range downward by ~15 % of its width.
+
+#### Cultivar
+
+Named arabica cultivars have measurably different caffeine concentrations. CaffiLab applies an absolute shift to the blended F_range, weighted by the arabica proportion of the blend:
+
+<table>
+	<thead>
+		<tr>
+			<th>Cultivar</th>
+			<th>Dry-weight caffeine (approx.)</th>
+			<th>F_range shift</th>
+			<th>Notes</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Unknown</td>
+			<td>—</td>
+			<td>0</td>
+			<td>Default; no shift applied.</td>
+		</tr>
+		<tr>
+			<td>Geisha</td>
+			<td>~0.9–1.1 %</td>
+			<td>−0.002</td>
+			<td>Distinctly lower than typical arabica (Ky et al., 2001; Panama Geisha HPLC studies).</td>
+		</tr>
+		<tr>
+			<td>SL28</td>
+			<td>~1.3–1.7 %</td>
+			<td>+0.002</td>
+			<td>Kenyan cultivar with elevated caffeine (Bertrand et al., 2003).</td>
+		</tr>
+		<tr>
+			<td>Caturra</td>
+			<td>~1.0–1.3 %</td>
+			<td>−0.001</td>
+			<td>Bourbon-derived; typical mid-range arabica.</td>
+		</tr>
+		<tr>
+			<td>Catimor</td>
+			<td>~1.5–2.0 %</td>
+			<td>+0.004</td>
+			<td>Timor hybrid with Robusta genetics; measurably higher caffeine (Ky et al., 2001).</td>
+		</tr>
+	</tbody>
+</table>
+
+For blends, the cultivar shift is weighted by the arabica fraction: `shift_applied = cultivar_shift × (arabica_percent / 100)`.
+
+---
+
+## Uncertainty model
+
+CaffiLab splits uncertainty into two independent sources:
+
+1. **Bean variability**: an irreducible floor based on the caffeine range itself.
+2. **Brewing uncertainty**: a reducible layer based on how many brewing details you provide.
+
+### Bean variability uncertainty
+
+```text
+bean_uncertainty = ((F_max - F_min) / (2 × F_mid)) × 100
+```
+
+This means confidence cannot become artificially high if the bean itself still has a meaningful caffeine spread.
+
+### Brewing uncertainty
+
+Brewing uncertainty starts at 36 % and shrinks as you declare useful inputs. Every input you provide reduces uncertainty:
+
+- Brew time, temperature, extraction yield, pressure (for relevant methods), agitation, water chemistry, freshness, filter type, bean type, grind size, roast level, and chicory percent all contribute credits.
+- The floor is 5 % — you can never achieve zero brewing uncertainty even with every input filled.
+
+**Method-class adjustments to base uncertainty:**
+- **AeroPress** (`hybrid_pressure`): +5 % base penalty. Recipe-style variation (inverted vs standard, ratio range 1:6–1:16, steep time 10 s to 4 min) is the single largest technique uncertainty of all methods.
+- **Cold methods** (`cold_immersion`, `cold_percolation`): +3 % base penalty. Brew temperature is typically unknown, and it strongly governs the extraction rate.
+
+### Applied confidence cap
+
+The calculator then uses:
+
+```text
+total_uncertainty = max(bean_uncertainty, brewing_uncertainty)
+```
+
+So even if the brewing inputs are excellent, confidence is capped by the bean variability floor unless you narrow that floor with bean detail or a custom caffeine percentage.
+
+---
+
+## Worked example: Arabica espresso with all defaults
+
+To make the model fully auditable, here is a complete worked example using espresso with arabica and default values for every applicable input.
+
+### Inputs used
+
+- Brew method: Espresso
+- Coffee dose: 20 g
+- Brew water: 43 ml (midpoint of default ratio range 1.5–2.5 × dose)
+- Bean type: Arabica, Specialty grade
+- Roast level: Medium
+- Grind size: Fine (espresso default)
+- Brew time: 0.5 min (espresso default)
+- Temperature: 93 °C (espresso default)
+- Pressure: 9 bar (espresso reference)
+- Extraction quality: Average
+- All other inputs: unknown / not provided
+
+### Step 1: Bean caffeine fraction range
+
+For Arabica + Specialty grade, the base range is:
+
+- `F_min,base = 0.012`
+- `F_max,base = 0.016`
+
+Bean detail is Generic (no narrowing window). Medium roast mass-balance factor is `0.98`, so:
+
+```text
+F_min = 0.012 × 0.98 = 0.01176
+F_max = 0.016 × 0.98 = 0.01568
+F_mid = (0.01176 + 0.01568) / 2 = 0.01372
+```
+
+### Step 2: Recovery E for espresso (pressure class)
+
+Espresso default recovery: `E₀ = 0.67`.
+
+Adjustments at default inputs:
+- `ΔTime`: 0 (at method default)
+- `ΔGrind`: 0 (fine is espresso default)
+- `ΔTemp`: 0 (93 °C default)
+- `ΔRatio`: 0 (43 ml / 20 g = 2.15, exactly the ratio midpoint)
+- `ΔRoast`: 0 (medium is reference)
+- `ΔYield`: 0 (20 % default)
+- `ΔPressure`: +0.012 (9 bar reference)
+- `ΔTechnique`: 0 (average)
+- `ΔWater`, `ΔFreshness`: 0 (unknown)
+- `ΔFilter`: +0.006 (metal filter)
+
+```text
+E = 0.67 + 0.012 + 0.006 = 0.688
+```
+
+### Step 3: Main caffeine estimate
+
+```text
+Estimate_mg = G × F_mid × E × 1000
+            = 20 × 0.01372 × 0.688 × 1000
+            = 188.8 ≈ 189 mg
+```
+
+### Step 4: Bean-driven lower and upper bounds
+
+```text
+Lower = 20 × 0.01176 × 0.688 × 1000 = 162 mg
+Upper = 20 × 0.01568 × 0.688 × 1000 = 216 mg
+```
+
+### Step 5: Uncertainty
+
+Bean variability uncertainty:
+
+```text
+((0.01568 - 0.01176) / (2 × 0.01372)) × 100 ≈ 14.3 %
+```
+
+Brewing uncertainty at these defaults falls to its floor (5 %).
+
+Applied uncertainty: `max(14.3 %, 5.0 %) = 14.3 %`.
+
+This confirms the 162–216 mg bean-driven range as the practical output range.
+
+---
+
+## Worked example: Cold brew at fridge temperature
+
+### Inputs
+
+- Brew method: Cold brew
+- Coffee dose: 60 g
+- Brew water: 600 ml (ratio 1:10)
+- Bean type: Arabica, Medium roast
+- Brew time: 720 min (12 h)
+- Temperature: 4 °C (fridge)
+
+### Step 1: Bean fraction
+
+```text
+F_min = 0.010, F_max = 0.016, F_mid = 0.013
+(medium roast mass-balance: 0.98 applied to both ends)
+```
+
+### Step 2: Arrhenius temperature scaling
+
+```text
+tempRatio = exp(0.025 × (4 - 22)) = exp(-0.45) ≈ 0.638
+tau = 420 / 0.638 ≈ 659 min
+```
+
+### Step 3: Fractional approach to equilibrium
+
+```text
+fractional = 1 - exp(-720 / 659) ≈ 1 - exp(-1.093) ≈ 0.665
+coldBaseRecovery = 0.88 × 0.665 ≈ 0.585
+```
+
+### Step 4: Final E (no other adjustments active at defaults)
+
+```text
+E ≈ 0.585 (within clamp 0.30–0.90)
+```
+
+### Step 5: Estimate
+
+```text
+Estimate_mg = 60 × 0.013 × 0.585 × 1000 ≈ 456 mg (pre-dilution)
+```
+
+After dilution to a typical 1:1 concentrate dilution:
+
+```text
+Diluted = 456 / 2 ≈ 228 mg per 300 ml serving
+```
+
+This demonstrates why cold brew concentrate is not the same as "low caffeine" — the extended steep at fridge temperature still reaches significant extraction. Extending to 24 h at 4 °C increases `tau`-based fractional to ~0.83, yielding E ≈ 0.73 and ~570 mg total.
+
+---
+
+## Limitations
+
+1. **Remaining variation:** Even with cultivar, grade, and elevation specified, individual lots still vary with processing method, harvest season, and storage. The practical range output reflects this residual uncertainty.
+
+2. **Brew geometry:** The shape and flow dynamics of a pour-over dripper or espresso basket affect extraction in ways the model doesn't capture.
+
+3. **Roasting loss:** Roasting converts a small fraction of caffeine to methyluric acids. This is accounted for qualitatively via the roast adjustment and mass-balance factor but not with precise reaction kinetics.
+
+4. **No lab validation:** CaffiLab's estimates are calibrated against published research, not against HPLC measurements of its own output.
+
+5. **Cold brew temperature uncertainty:** Unless the user provides a brew temperature, CaffiLab assumes room temperature (22 °C). The +3 % cold method uncertainty penalty reflects this.
+
+---
+
+## References
+
+- Andueza, S., et al. (2003). "Influence of extraction temperature on the final quality of espresso coffee." *Journal of the Science of Food and Agriculture*, 83(3), 240–248.
+- Bertrand, B., et al. (2003). "Comparative genetic diversity of two generations of *Coffea arabica* accessions." *Theoretical and Applied Genetics*, 107(5), 2003.
+- Espinosa-Álvarez, C., et al. (2021). "Extraction dynamics and quality of moka pot coffee." *LWT — Food Science and Technology*.
+- Farah, A. (2012). *Coffee Constituents.* In Y.-F. Chu (Ed.), Coffee: Emerging Health Effects and Disease Prevention. Wiley-Blackwell.
+- Fuller, M., & Rao, N. Z. (2017). "The Effect of Time, Roasting Temperature, and Grind Size on Caffeine and Chlorogenic Acid Concentrations in Cold Brew Coffee." *Scientific Reports*, 7, 17979.
+- Gloess, A. N., et al. (2013). "Comparison of nine common coffee extraction methods: instrumental and sensory analysis." *European Food Research and Technology*, 236(4), 607–627.
+- Hečimović, I., et al. (2011). "Comparative study of polyphenols and caffeine in different coffee varieties affected by the degree of roasting." *Food Chemistry*, 129(3), 991–1000.
+- Hendon, C. H., et al. (2014). "The Role of Dissolved Cations in Coffee Extraction." *Journal of Agricultural and Food Chemistry*, 62(21), 4947–4950.
+- Ky, C.-L., et al. (2001). "Caffeine, trigonelline, chlorogenic acids and sucrose diversity in wild *Coffea arabica* L. and *C. canephora* P. accessions." *Food Chemistry*, 75(2), 223–230.
+- Ludwig, I. A., et al. (2014). "Variations in caffeine and chlorogenic acid contents of coffees: what are we drinking?" *Food & Function*, 5(8), 1718–1726.
+- McCusker, R. R., et al. (2003). "Caffeine content of specialty coffees." *Journal of Analytical Toxicology*, 27(7), 520–522.
+
 
 ## The core model
 

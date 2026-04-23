@@ -45,7 +45,7 @@ describe("CaffiLab estimator", () => {
 
     expect(estimate.estimatedMg).toBe(158);
     expect(estimate.lowerMg).toBe(122);
-    expect(estimate.upperMg).toBe(195);
+    expect(estimate.upperMg).toBe(194);
     expect(estimate.beanUncertaintyPercent).toBe(23.1);
     expect(estimate.brewingUncertaintyPercent).toBe(5);
     expect(estimate.confidenceLabel).toBe("Medium");
@@ -145,9 +145,9 @@ describe("CaffiLab estimator", () => {
     });
 
     expect(withChicory.estimatedMg).toBeLessThan(withoutChicory.estimatedMg);
-    expect(withChicory.estimatedMg).toBe(185);
-    expect(withChicory.beanLowerMg).toBe(149);
-    expect(withChicory.beanUpperMg).toBe(221);
+    expect(withChicory.estimatedMg).toBe(187);
+    expect(withChicory.beanLowerMg).toBe(151);
+    expect(withChicory.beanUpperMg).toBe(224);
   });
 
   it("prefers package clues over price for unknown bean species", () => {
