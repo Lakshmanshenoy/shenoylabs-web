@@ -121,8 +121,8 @@ Each brew method has a calibrated default recovery (E₀), anchored to published
 		<tr>
 			<td>Cold brew</td>
 			<td><code>cold_immersion</code></td>
-			<td>0.83 (at 12–16 h reference)</td>
-			<td>Fuller & Rao (2017): 85–90 % at 12–16 h room temperature</td>
+			<td>Dynamic (no fixed baseline)</td>
+			<td>Arrhenius model approaches 0.88 ceiling; Fuller & Rao (2017): 85–90 % at 12–16 h room temperature</td>
 		</tr>
 		<tr>
 			<td>AeroPress</td>
@@ -151,8 +151,8 @@ Each brew method has a calibrated default recovery (E₀), anchored to published
 		<tr>
 			<td>Turkish</td>
 			<td><code>immersion</code></td>
-			<td>0.91</td>
-			<td>Gloess et al. (2013): 90–93 % for decoction methods</td>
+			<td>0.89</td>
+			<td>Gloess et al. (2013): 88–92 %; calibrated to 0.89 to reflect high batch variability</td>
 		</tr>
 		<tr>
 			<td>Cold drip</td>
@@ -185,13 +185,19 @@ Each brew method has a calibrated default recovery (E₀), anchored to published
 
 ## Per-class extraction models
 
-In every class, four secondary variables — water mineralogy, pH, bean freshness, and filter type — are combined into a single bounded term:
+In every class, three secondary variables — water mineralogy, pH, and bean freshness — are combined into a single bounded term:
 
 ```text
-ΔMinor = clamp(ΔWater + ΔFreshness + ΔFilter, −0.02, +0.02)
+ΔMinor = clamp(ΔWater + ΔFreshness, −0.02, +0.02)
 ```
 
-This cap prevents marginal signals from stacking into a spuriously large combined adjustment. ΔRoast remains separate because roasting has a larger and more direct effect on soluble-caffeine content.
+Filter type contributes an independent small bounded adjustment (~±0.01):
+
+```text
+ΔFilter = getFilterAdjustment(filterType)
+```
+
+Both `ΔMinor` and `ΔFilter` enter `totalDelta` separately. Keeping `ΔFilter` distinct ensures the filter-type effect is traceable and uncapped while water and freshness signals are capped together. ΔRoast remains separate because roasting has a larger and more direct effect on soluble-caffeine content.
 
 ---
 
@@ -204,7 +210,7 @@ The recovery for pressure methods is computed as:
 ```text
 totalDelta = ΔPressure_deviation + ΔGrind + ΔTemp + ΔTime
            + ΔRatio × 0.025 + ΔYield + ΔTechnique
-           + ΔRoast + ΔMinor
+           + ΔRoast + ΔFilter + ΔMinor
 
 E = clamp(E₀ × (1 + totalDelta), 0.45, 0.88)
 ```
@@ -223,7 +229,7 @@ Water passes through the bed under gravity, vacuum drawdown (siphon), or repeate
 ```text
 totalDelta = ΔGrind + ΔTemp + ΔTime
            + ΔRatio × 0.040 + ΔAgitation + ΔYield
-           + ΔRoast + ΔMinor
+           + ΔRoast + ΔFilter + ΔMinor
 
 E = clamp(E₀ × (1 + totalDelta), 0.55, 0.97)
 ```
@@ -231,14 +237,14 @@ E = clamp(E₀ × (1 + totalDelta), 0.55, 0.97)
 Key characteristics:
 - **Ratio sensitivity is higher** than pressure methods (×0.040 scaling): more water through the same bed volume genuinely extracts a higher percentage of caffeine.
 - **Siphon** (vacuum-assisted): the drawdown ensures consistent contact temperature; its `defaultRecovery` (0.83) reflects this consistency.
-- **Percolator** (recirculating): near-boiling hot-water cycling pushes its `defaultRecovery` (0.90) to the top of the percolation range. Adjustments scale from this high baseline.
+- **Percolator** (recirculating): near-boiling hot-water cycling pushes its `defaultRecovery` (0.90) to the top of the percolation range. Adjustments scale from this high baseline. A **+5 % uncertainty penalty** is applied to reflect high cycle-to-cycle variability (inconsistent cycling rate, temperature stability, and contact time).
 - **Agitation** (bloom, pour technique) modestly improves extraction uniformity.
 
 ---
 
 ### Hot immersion methods (French press, Turkish, immersion dripper)
 
-Coffee steeps in water until mechanically separated. Extraction follows a rapid early phase then approaches a diffusion-limited equilibrium. The model uses an exponential saturation curve rather than a linear time adjustment. Turkish coffee is classified here because it is a full-immersion method (extra-fine grind, no filtration, near-boiling) — its high `defaultRecovery` (0.91) reflects the combined advantage of fine grind and high temperature, not a separate physics class.
+Coffee steeps in water until mechanically separated. Extraction follows a rapid early phase then approaches a diffusion-limited equilibrium. The model uses an exponential saturation curve rather than a linear time adjustment. Turkish coffee is classified here because it is a full-immersion method (extra-fine grind, no filtration, near-boiling) — its `defaultRecovery` (0.89) reflects the combined advantage of fine grind and high temperature, not a separate physics class.
 
 The time factor uses:
 
@@ -255,7 +261,7 @@ Full recovery:
 ```text
 totalDelta = ΔTime + ΔGrind + ΔTemp
            + ΔRatio × 0.020 + ΔAgitation + ΔYield
-           + ΔRoast + ΔMinor
+           + ΔRoast + ΔFilter + ΔMinor
 
 E = clamp(E₀ × (1 + totalDelta), 0.55, 0.95)
 ```
@@ -302,7 +308,7 @@ coldBaseRecovery   = 0.88 × fractional
 
 totalDelta = ΔGrind × 0.3 + ΔAgitation × 0.5
            + ΔRatio × 0.015
-           + ΔRoast + ΔMinor
+           + ΔRoast + ΔFilter + ΔMinor
 
 E = clamp(coldBaseRecovery × (1 + totalDelta), 0.30, 0.90)
 ```
@@ -324,7 +330,7 @@ Uses the same Arrhenius temperature scaling but each water droplet has limited c
 coldBaseRecovery = 0.80 × (1 - exp(-brewTime / tau))
 
 totalDelta = ΔGrind × 0.2 + ΔRatio × 0.015
-           + ΔRoast + ΔMinor
+           + ΔRoast + ΔFilter + ΔMinor
 
 E = clamp(coldBaseRecovery × (1 + totalDelta), 0.25, 0.83)
 ```
@@ -354,7 +360,7 @@ Full hybrid recovery:
 totalDelta = ΔTime + ΔGrind + ΔTemp
            + ΔRatio × 0.025 + ΔAgitation
            + ΔPressure × 0.5 + ΔYield
-           + ΔRoast + ΔMinor
+           + ΔRoast + ΔFilter + ΔMinor
 
 E = clamp(E₀ × (1 + totalDelta), 0.48, 0.88)
 ```
@@ -517,7 +523,7 @@ This means confidence cannot become artificially high if the bean itself still h
 
 ### Brewing uncertainty
 
-Brewing uncertainty starts at 36 % and shrinks as you declare useful inputs. Every input you provide reduces uncertainty:
+Brewing uncertainty starts at 36 % and shrinks as you declare useful inputs. Each declared input reduces the plausible range of brewing variability based on empirical sensitivity:
 
 - Brew time, temperature, extraction yield, pressure (for relevant methods), agitation, water chemistry, freshness, filter type, bean type, grind size, roast level, and chicory percent all contribute credits.
 - The floor is 5 % — you can never achieve zero brewing uncertainty even with every input filled.
@@ -584,7 +590,8 @@ Adjustments at default inputs:
 - `ΔYield`: 0 (20 % default)
 - `ΔPressure_deviation`: 0 (9 bar is the reference; E₀ already encodes 9 bar performance)
 - `ΔTechnique`: 0 (average)
-- `ΔMinor`: +0.006 (`ΔWater`=0 + `ΔFreshness`=0 + `ΔFilter`=+0.006 metal filter, clamped)
+- `ΔFilter`: +0.006 (metal filter)
+- `ΔMinor`: 0 (`ΔWater`=0 + `ΔFreshness`=0, clamped)
 
 ```text
 totalDelta = 0 + 0.006 = 0.006

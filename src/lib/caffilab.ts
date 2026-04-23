@@ -297,8 +297,9 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
   },
   cold_brew: {
     label: "Cold Brew",
-    // Fuller & Rao (2017): cold brew at 12–16 h approaches 85–90 % of hot-brew
-    // caffeine per gram at equivalent ratios. 0.83 is calibrated midpoint.
+    // Cold brew recovery is computed dynamically from the Arrhenius model:
+    // E = 0.88 × (1 - exp(-t / tau)). defaultRecovery is a nominal fallback only;
+    // it is NOT used as E₀ in the cold_immersion physics sub-model.
     defaultRecovery: 0.83,
     defaultTimeMinutes: 960,
     defaultGrind: "extra_coarse",
@@ -383,9 +384,9 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
   },
   turkish: {
     label: "Turkish Coffee",
-    // Gloess et al. (2013): Turkish coffee 90–93 %.
-    // Extra-fine grind, no filtration, near-boiling with multiple heat cycles.
-    defaultRecovery: 0.91,
+    // Gloess et al. (2013): Turkish coffee 88–92 %. Calibrated to 0.89 to account
+    // for batch-to-batch variability in traditional decoction preparation.
+    defaultRecovery: 0.89,
     defaultTimeMinutes: 3,
     defaultGrind: "extra_fine",
     defaultTemperatureC: 96,
@@ -989,15 +990,12 @@ function getMinorAdjustment(
   waterMinerals: WaterMinerals,
   waterPh: number | undefined,
   freshness: Freshness,
-  filterType: FilterType,
 ): number {
-  // Group weak secondary variables into a single bounded factor.
-  // Each individual source is small; clamping prevents stacking of marginal
-  // signals into a spuriously large combined effect.
+  // Group water-chemistry and freshness signals into a single bounded factor.
+  // Filter type is applied separately as an independent bounded adjustment (~±0.01).
   return clamp(
     getWaterAdjustment(waterMinerals, waterPh) +
-      getFreshnessAdjustment(freshness) +
-      getFilterAdjustment(filterType),
+      getFreshnessAdjustment(freshness),
     -0.02,
     0.02,
   );
@@ -1078,7 +1076,8 @@ function getCaffeineRecovery(
   extractionYieldPercent: number,
 ) {
   // Shared adjustments applied by all sub-models unless overridden.
-  const minorAdj = getMinorAdjustment(input.waterMinerals, input.waterPh, input.freshness, input.filterType);
+  const minorAdj = getMinorAdjustment(input.waterMinerals, input.waterPh, input.freshness);
+  const filterAdj = getFilterAdjustment(input.filterType);
   const roastAdj = getRoastAdjustment(input.roastLevel);
   const yieldAdj = getExtractionYieldAdjustment(method, extractionYieldPercent);
 
@@ -1103,7 +1102,7 @@ function getCaffeineRecovery(
       const totalDelta =
         pressureAdj + grindAdj + tempAdj + timeAdj +
         ratioAdj + yieldAdj + techniqueAdj +
-        roastAdj + minorAdj;
+        roastAdj + filterAdj + minorAdj;
       return clamp(method.defaultRecovery * (1 + totalDelta), 0.45, 0.88);
     }
 
@@ -1128,7 +1127,7 @@ function getCaffeineRecovery(
       const totalDelta =
         grindAdj + tempAdj + timeAdj +
         ratioAdj + agitAdj + yieldAdj +
-        roastAdj + minorAdj;
+        roastAdj + filterAdj + minorAdj;
       return clamp(method.defaultRecovery * (1 + totalDelta), 0.55, 0.97);
     }
 
@@ -1156,7 +1155,7 @@ function getCaffeineRecovery(
       const totalDelta =
         timeAdj + grindAdj + tempAdj +
         ratioAdj + agitAdj + yieldAdj +
-        roastAdj + minorAdj;
+        roastAdj + filterAdj + minorAdj;
       return clamp(method.defaultRecovery * (1 + totalDelta), 0.55, 0.95);
     }
 
@@ -1188,7 +1187,7 @@ function getCaffeineRecovery(
 
       const totalDelta =
         grindAdj + agitAdj + ratioAdj +
-        roastAdj + minorAdj;
+        roastAdj + filterAdj + minorAdj;
       return clamp(coldBaseRecovery * (1 + totalDelta), 0.30, 0.90);
     }
 
@@ -1213,7 +1212,7 @@ function getCaffeineRecovery(
 
       const totalDelta =
         grindAdj + ratioAdj +
-        roastAdj + minorAdj;
+        roastAdj + filterAdj + minorAdj;
       return clamp(coldBaseRecovery * (1 + totalDelta), 0.25, 0.83);
     }
 
@@ -1252,7 +1251,7 @@ function getCaffeineRecovery(
       const totalDelta =
         timeAdj + grindAdj + tempAdj +
         ratioAdj + agitAdj + pressureAdj + yieldAdj +
-        roastAdj + minorAdj;
+        roastAdj + filterAdj + minorAdj;
       return clamp(method.defaultRecovery * (1 + totalDelta), 0.48, 0.88);
     }
   }
@@ -1343,6 +1342,12 @@ function getBrewingUncertaintyPercent(
   // AeroPress (hybrid): recipe-style variation (inverted vs standard, ratio, steep time)
   // is the largest single uncertainty source for this method. Add +5 % base penalty.
   if (method.physics === "hybrid") {
+    uncertainty += 5;
+  }
+
+  // Percolator: near-boiling recirculation adds variability from inconsistent water
+  // cycling rate and temperature control. Add +5 % penalty.
+  if (input.brewMethod === "percolator") {
     uncertainty += 5;
   }
 

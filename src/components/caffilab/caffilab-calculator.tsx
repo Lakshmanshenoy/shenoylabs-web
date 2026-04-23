@@ -1281,9 +1281,9 @@ export function CaffiLabCalculator() {
                     {estimate.knownInputs}/{estimate.availableInputs}
                   </p>
                   <p className="mt-1 text-xs leading-5 text-[#8f9886]">
-                    Counts only the inputs that apply to this recipe. More declared
-                    brewing inputs reduce the brewing uncertainty, but bean variability
-                    still sets a hard floor.
+                    Counts only the inputs that apply to this recipe. Each declared
+                    input reduces the plausible range of brewing variability based on
+                    empirical sensitivity. Bean variability still sets a hard floor.
                   </p>
                 </div>
               </div>
