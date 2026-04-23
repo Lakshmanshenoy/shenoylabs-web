@@ -100,12 +100,27 @@ export function ArticlesFilteredGrid({ articles }: Props) {
                 <p className="text-sm leading-relaxed text-muted-foreground">
                   {article.frontmatter.excerpt}
                 </p>
-                <p className="mt-3 text-xs text-muted-foreground/70">
-                  {new Date(article.frontmatter.date).toLocaleDateString(
-                    "en-US",
-                    { year: "numeric", month: "long", day: "numeric" },
-                  )}
-                </p>
+                <div className="mt-3 space-y-1 text-xs text-muted-foreground/70">
+                  <p>
+                    Created:{" "}
+                    {new Date(article.frontmatter.createdDate ?? article.frontmatter.date).toLocaleDateString(
+                      "en-US",
+                      { year: "numeric", month: "long", day: "numeric" },
+                    )}
+                  </p>
+                  <p>
+                    Last updated:{" "}
+                    {new Date(
+                      article.frontmatter.lastUpdated ??
+                        article.frontmatter.createdDate ??
+                        article.frontmatter.date,
+                    ).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </Link>

@@ -14,6 +14,8 @@ export type ArticleFrontmatter = {
   title: string;
   excerpt: string;
   date: string;
+  createdDate?: string;
+  lastUpdated?: string;
   category: string;
   primaryCategory: PrimaryCategory;
   tags: string[];

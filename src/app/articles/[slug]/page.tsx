@@ -40,6 +40,9 @@ export async function generateMetadata({
   const { slug } = await params;
   try {
     const { frontmatter: fm } = getArticle(slug);
+    const createdDate = fm.createdDate ?? fm.date;
+    const lastUpdated = fm.lastUpdated ?? createdDate;
+
     return {
       title: `${fm.title} — Shenoy Labs`,
       description: fm.excerpt,
@@ -51,7 +54,8 @@ export async function generateMetadata({
         description: fm.excerpt,
         type: "article",
         url: `/articles/${slug}`,
-        publishedTime: fm.date,
+        publishedTime: createdDate,
+        modifiedTime: lastUpdated,
         authors: [fm.author],
         tags: fm.tags,
         images: [fm.coverImage ?? "/og-default.svg"],
@@ -85,6 +89,8 @@ export default async function ArticleDetailPage({
   }
 
   const { frontmatter: fm, readingTime, source } = item;
+  const createdDate = fm.createdDate ?? fm.date;
+  const lastUpdated = fm.lastUpdated ?? createdDate;
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
     { name: "Home", path: "/" },
     { name: "Articles", path: "/articles" },
@@ -133,7 +139,8 @@ export default async function ArticleDetailPage({
     "@type": "Article",
     headline: fm.title,
     description: fm.excerpt,
-    datePublished: fm.date,
+    datePublished: createdDate,
+    dateModified: lastUpdated,
     author: {
       "@type": "Person",
       name: fm.author,
@@ -202,8 +209,13 @@ export default async function ArticleDetailPage({
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">{fm.primaryCategory}</Badge>
           <span className="text-sm text-muted-foreground">
-            {readingTime} ·{" "}
-            {new Date(fm.date).toLocaleDateString("en-US", {
+            {readingTime} · Created{" "}
+            {new Date(createdDate).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })} · Updated{" "}
+            {new Date(lastUpdated).toLocaleDateString("en-US", {
               year: "numeric",
               month: "long",
               day: "numeric",
@@ -238,8 +250,16 @@ export default async function ArticleDetailPage({
           Written by <span className="font-medium text-foreground">{fm.author}</span>
         </p>
         <p>
-          Published{" "}
-          {new Date(fm.date).toLocaleDateString("en-US", {
+          Created{" "}
+          {new Date(createdDate).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </p>
+        <p>
+          Last updated{" "}
+          {new Date(lastUpdated).toLocaleDateString("en-US", {
             year: "numeric",
             month: "long",
             day: "numeric",
