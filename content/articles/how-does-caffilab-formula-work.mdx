@@ -36,7 +36,7 @@ The recovery term **E** is the most complex part. Because every brew method work
 
 ## Method physics classes
 
-CaffiLab assigns every brew method to one of six physics classes. Each class has its own extraction model reflecting the physical mechanism driving caffeine transfer from bean to cup. The model uses a multiplicative formula so adjustments scale proportionally from each method's calibrated baseline — no single variable can dominate extraction alone.
+CaffiLab assigns every brew method to one of six physics classes. Each class has its own extraction model reflecting the physical mechanism driving caffeine transfer from bean to cup. The model uses a multiplicative formula so adjustments scale proportionally from each method's calibrated baseline — no single variable can dominate extraction independently.
 
 <table>
 	<thead>
@@ -525,7 +525,7 @@ This means confidence cannot become artificially high if the bean itself still h
 
 ### Brewing uncertainty
 
-Brewing uncertainty starts at 36 % and shrinks as you declare useful inputs. Each declared input reduces the plausible range of brewing variability based on empirical sensitivity:
+Brewing uncertainty starts at 36 % and shrinks as you declare useful inputs. Each declared input constrains the plausible range of brewing variability based on empirical sensitivity.:
 
 - Brew time, temperature, extraction yield, pressure (for relevant methods), agitation, water chemistry, freshness, filter type, bean type, grind size, roast level, and chicory percent all contribute credits.
 - The floor is 5 % — you can never achieve zero brewing uncertainty even with every input filled.
