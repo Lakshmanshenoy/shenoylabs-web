@@ -373,8 +373,8 @@ function RangeVisualizer({
   return (
     <div className="grid gap-1.5">
       <div
-        className="relative h-3 overflow-hidden rounded-full"
-        style={{ background: "linear-gradient(to right, #f9731618, #f2c36b18, #9adf8f22)" }}
+        className="relative h-4 overflow-hidden rounded-full"
+        style={{ background: "linear-gradient(to right, #f9731628, #f2c36b28, #9adf8f33)" }}
       >
         <div
           className="absolute inset-y-0 rounded-full transition-all duration-500"
@@ -447,16 +447,18 @@ function ExtractionCurve({ physics, extraction }: { physics: BrewPhysics; extrac
             strokeLinecap="round"
             strokeDasharray="400 400"
             strokeDashoffset={drawn ? 0 : 400}
-            style={{ transition: drawn ? "stroke-dashoffset 0.6s ease-out" : "none" }}
+            style={{ transition: drawn ? "stroke-dashoffset 0.3s ease-out" : "none" }}
           />
           <g
             style={{
               transform: `translateX(${Math.max(4, Math.min(196, extraction * 200))}px)`,
               transition: "transform 0.4s ease",
+              filter: "drop-shadow(0 0 4px #f2c36b99)",
             }}
           >
             <line x1="0" y1="76" x2="0" y2="5" stroke="#f2c36b" strokeWidth="1.5" strokeDasharray="3 2" />
-            <circle cx="0" cy="73" r="3" fill="#f2c36b" />
+            <circle cx="0" cy="73" r="8" fill="#f2c36b" className="animate-pulse" style={{ opacity: 0.2 }} />
+            <circle cx="0" cy="73" r="4.5" fill="#f2c36b" />
             <text
               x={Math.max(4, Math.min(196, extraction * 200)) > 150 ? -5 : 5}
               y="16"
@@ -978,26 +980,30 @@ export function CaffiLabCalculator() {
                 {whatChanged.length > 0 && (
                   <div className="mb-4 grid gap-1.5">
                     <p className={labelClass}>What changed</p>
-                    {whatChanged.map((item, i) => (
-                      <div
-                        key={item.id}
-                        className={cn(
-                          "flex items-center justify-between text-xs",
-                          i === 0 && "animate-in fade-in slide-in-from-bottom-2 duration-300",
-                        )}
-                      >
-                        <span className="text-[#8f9886]">{item.label}</span>
-                        <span
+                    {[...whatChanged]
+                      .sort((a, b) => Math.abs(b.deltaMg) - Math.abs(a.deltaMg))
+                      .map((item, i) => (
+                        <div
+                          key={item.id}
                           className={cn(
-                            "font-mono font-medium",
-                            item.deltaMg > 0 ? "text-[#9adf8f]" : "text-[#f87171]",
+                            "flex items-center justify-between text-xs",
+                            i === 0 && "animate-in fade-in slide-in-from-bottom-2 duration-300",
                           )}
                         >
-                          {item.deltaMg > 0 ? "+" : ""}
-                          {item.deltaMg} mg
-                        </span>
-                      </div>
-                    ))}
+                          <span className={cn("font-medium", i === 0 ? "text-[#f2c36b]" : "text-[#8f9886]")}>
+                            {item.label}
+                          </span>
+                          <span
+                            className={cn(
+                              "font-mono font-medium",
+                              item.deltaMg > 0 ? "text-[#9adf8f]" : "text-[#f87171]",
+                            )}
+                          >
+                            {item.deltaMg > 0 ? "+" : ""}
+                            {item.deltaMg} mg
+                          </span>
+                        </div>
+                      ))}
                   </div>
                 )}
                 <button
