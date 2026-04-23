@@ -372,14 +372,16 @@ function RangeVisualizer({
     confidencePercent > 25 ? "#f97316" : confidencePercent > 15 ? "#f2c36b" : "#9adf8f";
   return (
     <div className="grid gap-1.5">
-      <div className="relative h-3 overflow-hidden rounded-full bg-[#252a21]">
+      <div
+        className="relative h-3 overflow-hidden rounded-full"
+        style={{ background: "linear-gradient(to right, #f9731618, #f2c36b18, #9adf8f22)" }}
+      >
         <div
           className="absolute inset-y-0 rounded-full transition-all duration-500"
           style={{
             left: `${leftPct}%`,
             right: `${100 - rightPct}%`,
-            backgroundColor: rangeColor,
-            opacity: 0.5,
+            background: `linear-gradient(to right, ${rangeColor}aa, ${rangeColor}, ${rangeColor}aa)`,
           }}
         />
         <div
@@ -399,6 +401,11 @@ function RangeVisualizer({
 }
 
 function ExtractionCurve({ physics, extraction }: { physics: BrewPhysics; extraction: number }) {
+  const [drawn, setDrawn] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setDrawn(true), 30);
+    return () => clearTimeout(t);
+  }, []);
   const paths: Record<BrewPhysics, string> = {
     pressure: "M 0 72 Q 15 72 28 12 Q 38 4 46 18 Q 60 38 85 44 L 200 46",
     percolation: "M 0 72 Q 35 70 70 32 Q 105 8 145 7 L 200 7",
@@ -438,6 +445,9 @@ function ExtractionCurve({ physics, extraction }: { physics: BrewPhysics; extrac
             stroke="#9adf8f"
             strokeWidth="2"
             strokeLinecap="round"
+            strokeDasharray="400 400"
+            strokeDashoffset={drawn ? 0 : 400}
+            style={{ transition: drawn ? "stroke-dashoffset 0.6s ease-out" : "none" }}
           />
           <g
             style={{
@@ -514,8 +524,11 @@ export function CaffiLabCalculator() {
   const [deltaMg, setDeltaMg] = useState<number | null>(null);
   const prevEstimatedMgRef = useRef<number | null>(null);
   const customCaffeineInputRef = useRef<HTMLInputElement | null>(null);
-  const [whatChanged, setWhatChanged] = useState<Array<{ label: string; deltaMg: number }>>([]);
+  const [whatChanged, setWhatChanged] = useState<Array<{ id: number; label: string; deltaMg: number }>>([]);
   const currentFocusTopicRef = useRef<FocusTopic>("result");
+  const [displayedMg, setDisplayedMg] = useState(0);
+  const countUpRef = useRef<number | null>(null);
+  const changeIdRef = useRef(0);
 
   const method = BREW_METHODS[brewMethod];
   const estimate = useMemo(
@@ -635,17 +648,44 @@ export function CaffiLabCalculator() {
   }, [focusTopic]);
 
   useEffect(() => {
-    if (prevEstimatedMgRef.current !== null) {
-      const delta = estimate.estimatedMg - prevEstimatedMgRef.current;
+    const prev = prevEstimatedMgRef.current;
+    if (prev !== null) {
+      const delta = estimate.estimatedMg - prev;
       if (delta !== 0) {
         setDeltaMg(delta);
         const label = TOPIC_LABELS[currentFocusTopicRef.current] ?? "Input";
-        setWhatChanged((prev) => [{ label, deltaMg: delta }, ...prev].slice(0, 4));
+        setWhatChanged((prevList) => [
+          { id: ++changeIdRef.current, label, deltaMg: delta },
+          ...prevList,
+        ].slice(0, 4));
       } else {
         setDeltaMg(null);
       }
+      // Count-up animation from previous to new estimate
+      const start = prev;
+      const end = estimate.estimatedMg;
+      if (countUpRef.current !== null) cancelAnimationFrame(countUpRef.current);
+      const duration = 350;
+      const startTime = performance.now();
+      const tick = (now: number) => {
+        const elapsed = now - startTime;
+        const p = Math.min(1, elapsed / duration);
+        const eased = 1 - Math.pow(1 - p, 3);
+        setDisplayedMg(Math.round(start + (end - start) * eased));
+        if (p < 1) {
+          countUpRef.current = requestAnimationFrame(tick);
+        } else {
+          countUpRef.current = null;
+        }
+      };
+      countUpRef.current = requestAnimationFrame(tick);
+    } else {
+      setDisplayedMg(estimate.estimatedMg);
     }
     prevEstimatedMgRef.current = estimate.estimatedMg;
+    return () => {
+      if (countUpRef.current !== null) cancelAnimationFrame(countUpRef.current);
+    };
   }, [estimate.estimatedMg]);
 
   function handleMethodChange(nextMethod: BrewMethod) {
@@ -724,6 +764,11 @@ export function CaffiLabCalculator() {
     setShowExpert(false);
     setShowHowCalculated(false);
     setShowScience(false);
+    if (countUpRef.current !== null) {
+      cancelAnimationFrame(countUpRef.current);
+      countUpRef.current = null;
+    }
+    prevEstimatedMgRef.current = null;
     setDeltaMg(null);
     setWhatChanged([]);
   }
@@ -869,12 +914,15 @@ export function CaffiLabCalculator() {
               <div>
                 <p className={labelClass}>Estimated caffeine</p>
                 <p className="mt-2 font-mono text-6xl font-semibold leading-none text-[#9adf8f] [letter-spacing:0] sm:text-7xl">
-                  {estimate.estimatedMg}
+                  <span key={estimate.estimatedMg} className="animate-in fade-in duration-200">
+                    {displayedMg}
+                  </span>
                   <span className="ml-2 text-2xl text-[#cbd5c0]">mg</span>
                   {deltaMg !== null && (
                     <span
+                      key={deltaMg}
                       className={cn(
-                        "ml-3 text-lg font-medium",
+                        "ml-3 text-lg font-medium animate-in fade-in slide-in-from-bottom-1 duration-200",
                         deltaMg > 0 ? "text-[#9adf8f]" : "text-[#f87171]",
                       )}
                     >
@@ -931,7 +979,13 @@ export function CaffiLabCalculator() {
                   <div className="mb-4 grid gap-1.5">
                     <p className={labelClass}>What changed</p>
                     {whatChanged.map((item, i) => (
-                      <div key={i} className="flex items-center justify-between text-xs">
+                      <div
+                        key={item.id}
+                        className={cn(
+                          "flex items-center justify-between text-xs",
+                          i === 0 && "animate-in fade-in slide-in-from-bottom-2 duration-300",
+                        )}
+                      >
                         <span className="text-[#8f9886]">{item.label}</span>
                         <span
                           className={cn(
@@ -1011,7 +1065,7 @@ export function CaffiLabCalculator() {
               />
             </div>
 
-            <ExtractionCurve physics={method.physics} extraction={estimate.caffeineRecovery} />
+            <ExtractionCurve key={method.physics} physics={method.physics} extraction={estimate.caffeineRecovery} />
 
             <div className="grid gap-4 border-t border-[#33392f] pt-5">
               <div className="flex items-center gap-2">

@@ -152,7 +152,7 @@ Every brew method displays an **Extraction profile** chart immediately below the
 - **Cold drip**: a steady rise that never fully plateaus because single-pass contact time is limited.
 - **Hybrid** (AeroPress, Moka pot, Indian filter): a combined shape reflecting the dual extraction mechanism.
 
-A gold **"Your brew" indicator** moves along the curve as you change inputs, showing where your current extraction recovery falls on the time axis. Watch it shift left or right as you adjust brew time, temperature, or grind.
+The curve **draws itself in** each time you switch brew method — a smooth left-to-right animation that makes the extraction shape easy to read. A gold **"Your brew" indicator** moves along the curve as you change inputs, showing where your current extraction recovery falls on the time axis.
 
 ### Method hint
 
@@ -170,19 +170,19 @@ Each factor is shown as a proportional bar so you can see at a glance whether do
 
 ### Confidence range bar
 
-The precision bar below the headline estimate is a colour-coded range visualiser. It shows:
+The range bar below the headline estimate is colour-coded and animated. It shows:
 
-- The **practical range** (min – max) as a coloured band
-- A **marker line** at the estimated value
-- **Colour coding** based on how wide the uncertainty is: green for a narrow range, gold for moderate, orange for wide
+- The **practical range** (min – max) as a gradient band — the band itself transitions smoothly whenever the range widens or narrows.
+- A **marker line** at the estimated value.
+- **Colour coding** based on confidence: green for a narrow range, gold for moderate, orange for wide. The track has a subtle warm gradient so you can see at a glance where on the confidence spectrum your current inputs sit.
 
-The bean-driven range is shown in small text below — a useful reference for how much of the uncertainty comes from the bean itself rather than your brew inputs.
+The bean-driven range is shown in small text below.
 
 ### What changed
 
-Below the confidence bar, a **What changed** list appears as soon as you start adjusting inputs. Each row shows which field you just changed and how much it moved the estimate — for example, "Dose +22 mg" or "Grind size -4 mg". The list keeps the last four changes so you can trace the effect of a series of adjustments without losing track.
+Below the confidence bar, a **What changed** list appears as soon as you start adjusting inputs. Each new row slides up into view, showing which field you just changed and by how much — for example, "Dose +22 mg" or "Grind size -4 mg". The list keeps the last four changes.
 
-The delta badge next to the headline number ("+18" in green or "-12" in red) always reflects the most recent single change.
+The headline caffeine number **counts up or down** to the new value rather than jumping, making the effect of each input change feel immediate and tangible. A small delta badge (+18 in green or -12 in red) fades in next to the number with each change.
 
 ### Advanced science section
 
