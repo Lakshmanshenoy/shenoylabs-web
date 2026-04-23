@@ -43,9 +43,9 @@ describe("CaffiLab estimator", () => {
       filterType: "metal",
     });
 
-    expect(estimate.estimatedMg).toBe(157);
-    expect(estimate.lowerMg).toBe(120);
-    expect(estimate.upperMg).toBe(193);
+    expect(estimate.estimatedMg).toBe(155);
+    expect(estimate.lowerMg).toBe(119);
+    expect(estimate.upperMg).toBe(190);
     expect(estimate.beanUncertaintyPercent).toBe(23.1);
     expect(estimate.brewingUncertaintyPercent).toBe(5);
     expect(estimate.confidenceLabel).toBe("Medium");

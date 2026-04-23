@@ -904,8 +904,9 @@ function getPressureAdjustment(method: BrewMethodConfig, pressureBars: number | 
     return 0;
   }
 
-  const distanceFromNine = Math.abs(pressureBars - 9);
-  return clamp(0.012 - distanceFromNine * 0.006, -0.025, 0.012);
+  // E₀ is already calibrated at 9 bar; model only the signed deviation from reference.
+  // Above 9 bar: modest over-pressure boost. Below 9 bar: under-extraction penalty.
+  return clamp((pressureBars - 9) * 0.004, -0.025, 0.010);
 }
 
 function getAgitationAdjustment(method: BrewMethodConfig, agitation: AgitationLevel) {
@@ -984,6 +985,24 @@ function getFilterAdjustment(filterType: FilterType) {
   return 0;
 }
 
+function getMinorAdjustment(
+  waterMinerals: WaterMinerals,
+  waterPh: number | undefined,
+  freshness: Freshness,
+  filterType: FilterType,
+): number {
+  // Group weak secondary variables into a single bounded factor.
+  // Each individual source is small; clamping prevents stacking of marginal
+  // signals into a spuriously large combined effect.
+  return clamp(
+    getWaterAdjustment(waterMinerals, waterPh) +
+      getFreshnessAdjustment(freshness) +
+      getFilterAdjustment(filterType),
+    -0.02,
+    0.02,
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Expert-mode helpers  (Architecture: F = f(species, quality, elevation, cultivar, roast))
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1059,10 +1078,8 @@ function getCaffeineRecovery(
   extractionYieldPercent: number,
 ) {
   // Shared adjustments applied by all sub-models unless overridden.
-  const waterAdj = getWaterAdjustment(input.waterMinerals, input.waterPh);
-  const freshnessAdj = getFreshnessAdjustment(input.freshness);
+  const minorAdj = getMinorAdjustment(input.waterMinerals, input.waterPh, input.freshness, input.filterType);
   const roastAdj = getRoastAdjustment(input.roastLevel);
-  const filterAdj = getFilterAdjustment(input.filterType);
   const yieldAdj = getExtractionYieldAdjustment(method, extractionYieldPercent);
 
   switch (method.physics) {
@@ -1086,7 +1103,7 @@ function getCaffeineRecovery(
       const totalDelta =
         pressureAdj + grindAdj + tempAdj + timeAdj +
         ratioAdj + yieldAdj + techniqueAdj +
-        waterAdj + freshnessAdj + roastAdj + filterAdj;
+        roastAdj + minorAdj;
       return clamp(method.defaultRecovery * (1 + totalDelta), 0.45, 0.88);
     }
 
@@ -1111,7 +1128,7 @@ function getCaffeineRecovery(
       const totalDelta =
         grindAdj + tempAdj + timeAdj +
         ratioAdj + agitAdj + yieldAdj +
-        waterAdj + freshnessAdj + roastAdj + filterAdj;
+        roastAdj + minorAdj;
       return clamp(method.defaultRecovery * (1 + totalDelta), 0.55, 0.97);
     }
 
@@ -1139,7 +1156,7 @@ function getCaffeineRecovery(
       const totalDelta =
         timeAdj + grindAdj + tempAdj +
         ratioAdj + agitAdj + yieldAdj +
-        waterAdj + freshnessAdj + roastAdj + filterAdj;
+        roastAdj + minorAdj;
       return clamp(method.defaultRecovery * (1 + totalDelta), 0.55, 0.95);
     }
 
@@ -1171,7 +1188,7 @@ function getCaffeineRecovery(
 
       const totalDelta =
         grindAdj + agitAdj + ratioAdj +
-        waterAdj + freshnessAdj + roastAdj + filterAdj;
+        roastAdj + minorAdj;
       return clamp(coldBaseRecovery * (1 + totalDelta), 0.30, 0.90);
     }
 
@@ -1196,7 +1213,7 @@ function getCaffeineRecovery(
 
       const totalDelta =
         grindAdj + ratioAdj +
-        waterAdj + freshnessAdj + roastAdj + filterAdj;
+        roastAdj + minorAdj;
       return clamp(coldBaseRecovery * (1 + totalDelta), 0.25, 0.83);
     }
 
@@ -1235,7 +1252,7 @@ function getCaffeineRecovery(
       const totalDelta =
         timeAdj + grindAdj + tempAdj +
         ratioAdj + agitAdj + pressureAdj + yieldAdj +
-        waterAdj + freshnessAdj + roastAdj + filterAdj;
+        roastAdj + minorAdj;
       return clamp(method.defaultRecovery * (1 + totalDelta), 0.48, 0.88);
     }
   }
@@ -1501,10 +1518,24 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
     temperatureC,
     extractionYieldPercent,
   );
+  if (process.env.NODE_ENV !== "production") {
+    if (caffeineRecovery <= 0 || caffeineRecovery >= 1) {
+      console.error(
+        `[CaffiLab] E out of range (0, 1): ${caffeineRecovery} for method ${input.brewMethod}`,
+      );
+    }
+  }
   const dilutionFactor = (beverageMl - dilutionMl) / beverageMl;
   const estimatedMg = coffeeGrams * effectiveCaffeineFraction * caffeineRecovery * 1000;
   const beanLowerMg = coffeeGrams * effectiveCaffeineFractionMin * caffeineRecovery * 1000;
   const beanUpperMg = coffeeGrams * effectiveCaffeineFractionMax * caffeineRecovery * 1000;
+  if (process.env.NODE_ENV !== "production") {
+    if (estimatedMg < beanLowerMg || estimatedMg > beanUpperMg) {
+      console.error(
+        `[CaffiLab] estimate ${estimatedMg} outside bean bounds [${beanLowerMg}, ${beanUpperMg}]`,
+      );
+    }
+  }
   const beanUncertainty = getBeanUncertaintyPercent(caffeineFractionMin, caffeineFractionMax);
   const brewingUncertainty = getBrewingUncertaintyPercent(input, beanProfile.strength, method);
   // Quadrature combination: independent sources add in orthogonal uncertainty space.
