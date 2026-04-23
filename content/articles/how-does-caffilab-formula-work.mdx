@@ -34,7 +34,7 @@ The recovery term **E** is the most complex part. Because every brew method work
 
 ## Method physics classes
 
-CaffiLab assigns every brew method to one of eight physics classes. Each class has its own extraction model that reflects the physical mechanism driving caffeine transfer from bean to cup.
+CaffiLab assigns every brew method to one of six physics classes. Each class has its own extraction model reflecting the physical mechanism driving caffeine transfer from bean to cup. The model uses a multiplicative formula so adjustments scale proportionally from each method's calibrated baseline — no single variable can dominate extraction alone.
 
 <table>
 	<thead>
@@ -47,17 +47,17 @@ CaffiLab assigns every brew method to one of eight physics classes. Each class h
 	<tbody>
 		<tr>
 			<td><code>pressure</code></td>
-			<td>Espresso, Moka pot</td>
-			<td>Pressure differential forcing water through a compacted bed</td>
+			<td>Espresso</td>
+			<td>High pressure differential forcing water through a compacted bed in seconds</td>
 		</tr>
 		<tr>
 			<td><code>percolation</code></td>
-			<td>Pour over, Chemex, Drip machine</td>
-			<td>Gravity-driven single-pass flow through the coffee bed</td>
+			<td>Pour over, Chemex, Drip machine, Siphon, Percolator</td>
+			<td>Gravity-driven, vacuum-assisted, or recirculating flow through the coffee bed</td>
 		</tr>
 		<tr>
 			<td><code>immersion</code></td>
-			<td>French press, Siphon, Immersion dripper</td>
+			<td>French press, Turkish, Immersion dripper</td>
 			<td>Coffee steeps until diffusion reaches equilibrium, then is separated</td>
 		</tr>
 		<tr>
@@ -68,22 +68,12 @@ CaffiLab assigns every brew method to one of eight physics classes. Each class h
 		<tr>
 			<td><code>cold_percolation</code></td>
 			<td>Cold drip</td>
-			<td>Cold single-pass percolation; lower equilibrium ceiling than cold immersion</td>
+			<td>Cold percolation; shorter per-particle contact time than cold immersion</td>
 		</tr>
 		<tr>
-			<td><code>boiling</code></td>
-			<td>Turkish, Percolator</td>
-			<td>Near- or at-boiling sustained exposure; extraction approaches ceiling rapidly</td>
-		</tr>
-		<tr>
-			<td><code>steam_pressure</code></td>
-			<td>Indian filter</td>
-			<td>Low steam pressure with long contact time (~10–20 min)</td>
-		</tr>
-		<tr>
-			<td><code>hybrid_pressure</code></td>
-			<td>AeroPress</td>
-			<td>Immersion steep followed by manual press — combines immersion kinetics with a pressure boost</td>
+			<td><code>hybrid</code></td>
+			<td>AeroPress, Moka pot, Indian filter</td>
+			<td>Combines two mechanisms: immersion + pressure (AeroPress), pressure-percolation (Moka), or immersion-percolation (Indian filter)</td>
 		</tr>
 	</tbody>
 </table>
@@ -136,13 +126,13 @@ Each brew method has a calibrated default recovery (E₀), anchored to published
 		</tr>
 		<tr>
 			<td>AeroPress</td>
-			<td><code>hybrid_pressure</code></td>
+			<td><code>hybrid</code></td>
 			<td>0.76</td>
 			<td>Gloess et al. (2013): 72–79 % for standard recipes</td>
 		</tr>
 		<tr>
 			<td>Moka pot</td>
-			<td><code>pressure</code></td>
+			<td><code>hybrid</code></td>
 			<td>0.70</td>
 			<td>Espinosa-Álvarez et al. (2021): 68–72 % at 1–2 bar</td>
 		</tr>
@@ -154,13 +144,13 @@ Each brew method has a calibrated default recovery (E₀), anchored to published
 		</tr>
 		<tr>
 			<td>Siphon</td>
-			<td><code>immersion</code></td>
+			<td><code>percolation</code></td>
 			<td>0.83</td>
 			<td>Immersion analogy; measured range 80–85 %</td>
 		</tr>
 		<tr>
 			<td>Turkish</td>
-			<td><code>boiling</code></td>
+			<td><code>immersion</code></td>
 			<td>0.91</td>
 			<td>Gloess et al. (2013): 90–93 % for decoction methods</td>
 		</tr>
@@ -178,13 +168,13 @@ Each brew method has a calibrated default recovery (E₀), anchored to published
 		</tr>
 		<tr>
 			<td>Percolator</td>
-			<td><code>boiling</code></td>
+			<td><code>percolation</code></td>
 			<td>0.90</td>
 			<td>Ludwig et al. (2014): 88–93 % with recirculation</td>
 		</tr>
 		<tr>
 			<td>Indian filter</td>
-			<td><code>steam_pressure</code></td>
+			<td><code>hybrid</code></td>
 			<td>0.73</td>
 			<td>Moka analogy; estimated range 70–75 %</td>
 		</tr>
@@ -195,51 +185,50 @@ Each brew method has a calibrated default recovery (E₀), anchored to published
 
 ## Per-class extraction models
 
-### Pressure methods (espresso, moka pot)
+### Pressure methods (espresso)
 
-Pressure forces water through a compacted bed in seconds to minutes. Andueza et al. (2003) showed that caffeine recovery peaks near 9 bar for espresso; over- and under-extraction both reduce efficiency.
+Pressure forces water through a compacted bed in seconds. Andueza et al. (2003) showed that caffeine recovery peaks near 9 bar for espresso; over- and under-extraction both reduce efficiency.
 
 The recovery for pressure methods is computed as:
 
 ```text
-E = clamp(
-  E₀ + ΔPressure + ΔGrind + ΔTemp + ΔTime
-     + ΔRatio × 0.025 + ΔYield + ΔTechnique
-     + ΔWater + ΔFreshness + ΔRoast + ΔFilter,
-  0.45, 0.88
-)
+totalDelta = ΔPressure + ΔGrind + ΔTemp + ΔTime
+           + ΔRatio × 0.025 + ΔYield + ΔTechnique
+           + ΔWater + ΔFreshness + ΔRoast + ΔFilter
+
+E = clamp(E₀ × (1 + totalDelta), 0.45, 0.88)
 ```
 
 Key characteristics:
-- **Ratio sensitivity is intentionally muted** (±0.025 scaling): in espresso, a longer pull produces more concentrated beverage volume, not fundamentally more caffeine recovery percentage.
+- **Ratio sensitivity is intentionally muted** (×0.025 scaling): a longer pull produces more beverage volume, not fundamentally higher caffeine recovery percentage.
 - **Grind is the dominant variable** — it controls both surface area and channeling risk.
-- **Pressure adjustment**: peaks at 9 bar for espresso; moka's lower peak pressure (1–2 bar) is already encoded in its lower E₀.
+- **Pressure adjustment**: peaks at 9 bar; the multiplicative formula means the same ΔPressure has proportionally larger effect at higher base recoveries.
 
 ---
 
-### Percolation methods (pour over, Chemex, drip machine)
+### Percolation methods (pour over, Chemex, drip machine, siphon, percolator)
 
-Water passes through the bed exactly once under gravity. Gloess et al. (2013) measured 75–90 % caffeine recovery for filter methods.
+Water passes through the bed under gravity, vacuum drawdown (siphon), or repeated hot-water recirculation (percolator). Gloess et al. (2013) measured 75–90 % caffeine recovery for filter methods.
 
 ```text
-E = clamp(
-  E₀ + ΔGrind + ΔTemp + ΔTime
-     + ΔRatio × 0.040 + ΔAgitation + ΔYield
-     + ΔWater + ΔFreshness + ΔRoast + ΔFilter,
-  0.55, 0.95
-)
+totalDelta = ΔGrind + ΔTemp + ΔTime
+           + ΔRatio × 0.040 + ΔAgitation + ΔYield
+           + ΔWater + ΔFreshness + ΔRoast + ΔFilter
+
+E = clamp(E₀ × (1 + totalDelta), 0.55, 0.97)
 ```
 
 Key characteristics:
-- **Ratio sensitivity is higher** than pressure methods (±0.040 scaling): more water through the same bed volume genuinely extracts a higher percentage of caffeine.
-- **Agitation** (bloom/pour technique) modestly improves extraction uniformity.
-- **Grind**: finer slows flow and increases contact time; coarser speeds flow and can under-extract.
+- **Ratio sensitivity is higher** than pressure methods (×0.040 scaling): more water through the same bed volume genuinely extracts a higher percentage of caffeine.
+- **Siphon** (vacuum-assisted): the drawdown ensures consistent contact temperature; its `defaultRecovery` (0.83) reflects this consistency.
+- **Percolator** (recirculating): near-boiling hot-water cycling pushes its `defaultRecovery` (0.90) to the top of the percolation range. Adjustments scale from this high baseline.
+- **Agitation** (bloom, pour technique) modestly improves extraction uniformity.
 
 ---
 
-### Hot immersion methods (French press, siphon, immersion dripper)
+### Hot immersion methods (French press, Turkish, immersion dripper)
 
-Coffee steeps in water until mechanically separated. Extraction follows a rapid early phase then approaches a diffusion-limited equilibrium. The model uses an exponential saturation curve rather than a linear time adjustment.
+Coffee steeps in water until mechanically separated. Extraction follows a rapid early phase then approaches a diffusion-limited equilibrium. The model uses an exponential saturation curve rather than a linear time adjustment. Turkish coffee is classified here because it is a full-immersion method (extra-fine grind, no filtration, near-boiling) — its high `defaultRecovery` (0.91) reflects the combined advantage of fine grind and high temperature, not a separate physics class.
 
 The time factor uses:
 
@@ -254,16 +243,15 @@ normalized = (1 - exp(-t / tau)) / (1 - exp(-eqTime / tau))
 Full recovery:
 
 ```text
-E = clamp(
-  E₀ + ΔTime + ΔGrind + ΔTemp
-     + ΔRatio × 0.020 + ΔAgitation + ΔYield
-     + ΔWater + ΔFreshness + ΔRoast + ΔFilter,
-  0.55, 0.95
-)
+totalDelta = ΔTime + ΔGrind + ΔTemp
+           + ΔRatio × 0.020 + ΔAgitation + ΔYield
+           + ΔWater + ΔFreshness + ΔRoast + ΔFilter
+
+E = clamp(E₀ × (1 + totalDelta), 0.55, 0.95)
 ```
 
 Key characteristics:
-- **Ratio sensitivity is lowest** of the three hot methods (±0.020): at equilibrium, the same total caffeine is in solution regardless of volume.
+- **Ratio sensitivity is lowest** of the hot methods (×0.020): at equilibrium, the same total caffeine is in solution regardless of volume.
 - **Grind has low sensitivity** past ~8 min: finer grind speeds early extraction but adds almost nothing at equilibrium.
 - **Time follows a saturation curve**, not a linear ramp. Adding more time past equilibrium yields no further extraction.
 
@@ -302,12 +290,11 @@ Recovery then follows an exponential approach toward a ceiling of 0.88 (cold bre
 fractional         = 1 - exp(-brewTime / tau)
 coldBaseRecovery   = 0.88 × fractional
 
-E = clamp(
-  coldBaseRecovery + ΔGrind × 0.3 + ΔAgitation × 0.5
-    + ΔRatio × 0.015
-    + ΔWater + ΔFreshness + ΔRoast + ΔFilter,
-  0.30, 0.90
-)
+totalDelta = ΔGrind × 0.3 + ΔAgitation × 0.5
+           + ΔRatio × 0.015
+           + ΔWater + ΔFreshness + ΔRoast + ΔFilter
+
+E = clamp(coldBaseRecovery × (1 + totalDelta), 0.30, 0.90)
 ```
 
 Key characteristics:
@@ -326,68 +313,46 @@ Uses the same Arrhenius temperature scaling but each water droplet has limited c
 ```text
 coldBaseRecovery = 0.80 × (1 - exp(-brewTime / tau))
 
-E = clamp(
-  coldBaseRecovery + ΔGrind × 0.2 + ΔRatio × 0.015
-    + ΔWater + ΔFreshness + ΔRoast + ΔFilter,
-  0.25, 0.83
-)
+totalDelta = ΔGrind × 0.2 + ΔRatio × 0.015
+           + ΔWater + ΔFreshness + ΔRoast + ΔFilter
+
+E = clamp(coldBaseRecovery × (1 + totalDelta), 0.25, 0.83)
 ```
 
 ---
 
-### Boiling methods (Turkish, percolator)
+### Hybrid methods (AeroPress, Moka pot, Indian filter)
 
-Near-boiling or boiling temperatures drive extraction close to its practical ceiling. Gloess et al. (2013) measured Turkish coffee at 90–93 %.
+These three methods each combine two distinct extraction mechanisms, earning their own physics class rather than being forced into `pressure` or `immersion`.
 
-```text
-E = clamp(
-  E₀ + ΔGrind + ΔTemp + ΔTime
-     + ΔRatio × 0.030 + ΔAgitation + ΔYield
-     + ΔWater + ΔFreshness + ΔRoast,
-  0.70, 0.97
-)
-```
+- **AeroPress**: Immersion steep followed by a manual press. The press phase boosts recovery above pure immersion and shortens the effective time constant.
+- **Moka pot**: Steam pressure (1–2 bar) forces near-boiling water upward through a compacted fine-ground basket — a pressure-percolation hybrid distinct from the 9-bar dynamics of espresso.
+- **Indian filter**: Gravity plus mild steam assistance through a fine perforated metal disc (~0.5–1 bar, 10–20 min) — an immersion-percolation hybrid with long contact time.
 
-Key characteristics:
-- **Grind is the dominant variable**: Turkish ultra-fine grind is the defining differentiator.
-- **Filter adjustment is omitted**: Turkish uses no filter; percolator uses metal. Both are already encoded in E₀.
-- **Ceiling is the highest** of all classes (0.97) — boiling provides enough energy to dissolve nearly all extractable caffeine.
-
----
-
-### Steam pressure (Indian filter)
-
-Indian filter uses gravity plus boiling water vapour pressure through a fine perforated metal disc (~0.5–1 bar peak pressure, 10–20 min contact time). It sits between moka pot and a slow drip.
-
-```text
-E = clamp(
-  E₀ + ΔGrind + ΔTemp + ΔTime
-     + ΔRatio × 0.030 + ΔYield
-     + ΔWater + ΔFreshness + ΔRoast + ΔFilter,
-  0.50, 0.85
-)
-```
-
----
-
-### Hybrid pressure (AeroPress)
-
-AeroPress combines an immersion steep with a manual press. The model uses an exponential saturation curve with a shorter time constant than pure immersion (`tau = 2.5 min` vs 4.0 min), reflecting the pressure component accelerating extraction during the press phase.
+**AeroPress** uses an exponential saturation curve with a shorter time constant than pure immersion (`tau = 2.5 min` vs 4.0 min), reflecting the pressure component accelerating extraction during the press phase:
 
 ```text
 normalized = (1 - exp(-t / 2.5)) / (1 - exp(-eqTime / 2.5))
 ΔTime      = clamp((normalized - 1) × 0.08, -0.12, +0.05)
-
-E = clamp(
-  E₀ + ΔTime + ΔGrind + ΔTemp
-     + ΔRatio × 0.025 + ΔAgitation
-     + ΔPressure × 0.5 + ΔYield
-     + ΔWater + ΔFreshness + ΔRoast + ΔFilter,
-  0.48, 0.88
-)
 ```
 
-The `ΔPressure × 0.5` scaling reflects that hand pressure is modest and variable compared with a pump-driven espresso machine. The uncertainty model also adds a +5 % base penalty for AeroPress to acknowledge the high recipe variability between techniques (inverted vs standard, wide ratio range, variable steep duration).
+For **Moka pot** and **Indian filter**, the standard time adjustment is used.
+
+Full hybrid recovery:
+
+```text
+totalDelta = ΔTime + ΔGrind + ΔTemp
+           + ΔRatio × 0.025 + ΔAgitation
+           + ΔPressure × 0.5 + ΔYield
+           + ΔWater + ΔFreshness + ΔRoast + ΔFilter
+
+E = clamp(E₀ × (1 + totalDelta), 0.48, 0.88)
+```
+
+Key characteristics:
+- **ΔPressure × 0.5** scaling: hand pressure (AeroPress) or steam pressure (Moka, Indian filter) is modest and variable compared with a pump-driven espresso machine.
+- **Moka pot** and **Indian filter** each have distinct `defaultRecovery` values (0.70 and 0.73 respectively) that already capture their characteristic extraction levels at reference inputs.
+- **+5 % uncertainty penalty** applies to all three hybrid methods, reflecting the higher recipe variability of combined-mechanism brewing.
 
 ---
 
@@ -548,18 +513,18 @@ Brewing uncertainty starts at 36 % and shrinks as you declare useful inputs. Eve
 - The floor is 5 % — you can never achieve zero brewing uncertainty even with every input filled.
 
 **Method-class adjustments to base uncertainty:**
-- **AeroPress** (`hybrid_pressure`): +5 % base penalty. Recipe-style variation (inverted vs standard, ratio range 1:6–1:16, steep time 10 s to 4 min) is the single largest technique uncertainty of all methods.
-- **Cold methods** (`cold_immersion`, `cold_percolation`): +3 % base penalty. Brew temperature is typically unknown, and it strongly governs the extraction rate.
+- **Hybrid methods** (`hybrid`): +5 % base penalty. AeroPress, Moka pot, and Indian filter each combine two mechanisms, making recipe-style variation (inverted vs standard for AeroPress, grind compaction for Moka, drip rate for Indian filter) the largest source of technique uncertainty.
+- **Cold methods** (`cold_immersion`, `cold_percolation`): +3 % base penalty. Brew temperature is typically unknown, and it strongly governs the extraction rate via the Arrhenius scaling.
 
-### Applied confidence cap
+### Applied confidence
 
-The calculator then uses:
+The two uncertainty sources are independent — bean variability and brewing precision do not correlate — so CaffiLab combines them in quadrature:
 
 ```text
-total_uncertainty = max(bean_uncertainty, brewing_uncertainty)
+total_uncertainty = sqrt(bean_uncertainty² + brewing_uncertainty²)
 ```
 
-So even if the brewing inputs are excellent, confidence is capped by the bean variability floor unless you narrow that floor with bean detail or a custom caffeine percentage.
+This means a method with 15 % bean uncertainty and 10 % brewing uncertainty yields `sqrt(225 + 100) ≈ 18 %` combined, not `max(15, 10) = 15 %`. Both sources genuinely contribute and neither dominates the other artificially.
 
 ---
 
@@ -613,22 +578,23 @@ Adjustments at default inputs:
 - `ΔFilter`: +0.006 (metal filter)
 
 ```text
-E = 0.67 + 0.012 + 0.006 = 0.688
+totalDelta = 0.012 + 0.006 = 0.018
+E = 0.67 × (1 + 0.018) = 0.67 × 1.018 ≈ 0.682
 ```
 
 ### Step 3: Main caffeine estimate
 
 ```text
 Estimate_mg = G × F_mid × E × 1000
-            = 20 × 0.01372 × 0.688 × 1000
-            = 188.8 ≈ 189 mg
+            = 20 × 0.01372 × 0.682 × 1000
+            ≈ 187 mg
 ```
 
 ### Step 4: Bean-driven lower and upper bounds
 
 ```text
-Lower = 20 × 0.01176 × 0.688 × 1000 = 162 mg
-Upper = 20 × 0.01568 × 0.688 × 1000 = 216 mg
+Lower = 20 × 0.01176 × 0.682 × 1000 ≈ 161 mg
+Upper = 20 × 0.01568 × 0.682 × 1000 ≈ 214 mg
 ```
 
 ### Step 5: Uncertainty
@@ -641,9 +607,9 @@ Bean variability uncertainty:
 
 Brewing uncertainty at these defaults falls to its floor (5 %).
 
-Applied uncertainty: `max(14.3 %, 5.0 %) = 14.3 %`.
+Combined uncertainty (quadrature): `sqrt(14.3² + 5.0²) ≈ sqrt(204 + 25) ≈ 15.1 %`.
 
-This confirms the 162–216 mg bean-driven range as the practical output range.
+This confirms the 161–214 mg bean-driven range as the practical output range.
 
 ---
 
@@ -682,7 +648,8 @@ coldBaseRecovery = 0.88 × 0.665 ≈ 0.585
 ### Step 4: Final E (no other adjustments active at defaults)
 
 ```text
-E ≈ 0.585 (within clamp 0.30–0.90)
+totalDelta ≈ 0  (all inputs at default / unknown)
+E = 0.585 × (1 + 0) = 0.585  (within clamp 0.30–0.90)
 ```
 
 ### Step 5: Estimate

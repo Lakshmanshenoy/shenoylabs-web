@@ -25,14 +25,12 @@ Instead of telling you "a cup of coffee has 95 mg," CaffiLab accounts for your s
 
 CaffiLab doesn't use one universal formula. It assigns each brew method to a **physics class** and uses a sub-model appropriate for that class:
 
-- **Pressure methods** (espresso, moka pot): pressure differential drives fast extraction through a compacted bed. Grind is the dominant variable; ratio has a muted effect because wider pulls mainly dilute concentration rather than increase recovery percentage.
-- **Percolation methods** (pour over, Chemex, drip machine): water passes through the bed once under gravity. Ratio matters more than for pressure — more water through the same bed genuinely extracts a higher percentage of caffeine.
-- **Hot immersion methods** (French press, siphon): coffee steeps until separation. Time follows an exponential saturation curve, not a linear ramp. Adding more time past equilibrium yields diminishing returns.
+- **Pressure methods** (espresso): pressure differential drives fast extraction through a compacted bed. Grind is the dominant variable; ratio has a muted effect because wider pulls mainly dilute concentration rather than increase recovery percentage.
+- **Percolation methods** (pour over, Chemex, drip machine, siphon, percolator): water passes through the bed under gravity, vacuum drawdown, or recirculation. Ratio matters more than for pressure — more water through the same bed genuinely extracts a higher percentage of caffeine.
+- **Hot immersion methods** (French press, Turkish, immersion dripper): coffee steeps until separation. Time follows an exponential saturation curve, not a linear ramp. Turkish coffee is classified as immersion because it is a full-immersion method with no filtration — its ultra-fine grind and near-boiling temperature are already encoded in its high base recovery.
 - **Cold brew**: extraction rate scales with temperature following the Arrhenius relationship. At fridge temperature (4 °C) the effective time constant is about 11 hours — meaning a 12-hour fridge brew only reaches about 65 % of the 0.88 equilibrium ceiling. At room temperature (22 °C) the time constant drops to ~7 hours and the same 12-hour steep reaches ~85 % of ceiling.
-- **AeroPress** (hybrid): combines an immersion steep with a manual press. The model uses a shorter time constant than pure immersion (2.5 min vs 4.0 min) and adds a modest pressure contribution. Inherent technique variation is the largest uncertainty source for this method.
-- **Boiling methods** (Turkish, percolator): near- or at-boiling temperatures rapidly drive extraction to the highest practical ceiling (up to 97 %). Ultra-fine grind is the defining differentiator for Turkish.
+- **Hybrid methods** (AeroPress, Moka pot, Indian filter): each combines two extraction mechanisms. AeroPress uses an immersion steep with a manual press; Moka pot uses steam pressure through a compacted basket; Indian filter uses gravity plus mild steam assistance with long contact time. All three carry a +5 % base uncertainty penalty reflecting their higher recipe variability.
 - **Cold drip**: like cold brew but single-pass percolation — equilibrium is never reached, so the ceiling is lower.
-- **Indian filter**: gravity plus low steam pressure with long contact time — between moka pot and slow drip.
 
 ## Getting started: the basic inputs
 
@@ -75,7 +73,7 @@ The final volume of liquid in your cup, including any dilution. This affects con
 
 How long water is in contact with the coffee grounds. The effect depends heavily on the physics class:
 
-- For **hot immersion** (French press, siphon), extraction saturates after about 8 minutes. Going to 20 minutes adds very little.
+- For **hot immersion** (French press, Turkish), extraction saturates after about 8 minutes. Going to 20 minutes adds very little.
 - For **cold brew**, time matters enormously — the difference between 6 h and 18 h at fridge temperature is much larger than the equivalent time range for a hot method.
 - For **pressure methods** (espresso), brew time affects but doesn't dominate — grind size and pressure are the primary controls.
 

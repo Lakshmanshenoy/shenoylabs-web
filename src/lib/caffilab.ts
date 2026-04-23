@@ -154,39 +154,35 @@ export type CaffiLabEstimate = {
 };
 
 /**
- * BrewPhysics describes the dominant extraction mechanism for a brew method.
+ * BrewPhysics describes the dominant extraction mechanism. Four core physics
+ * families (+ cold variants for methods that run at low temperature):
  *
- * - "pressure"     : High-pressure percolation (espresso, moka pot). Extraction rate is
- *                    primarily governed by pressure, grind resistance, and flow dynamics.
- *                    Time sensitivity is high but the brew completes in <60 s (espresso) or
- *                    2–5 min (moka). Temperature above ~88 °C is mandatory.
+ * - "pressure"        : High-pressure percolation (espresso). Extraction is governed by
+ *                       pressure differential, grind resistance, and flow dynamics.
+ *                       Time sensitivity is high but brew completes in < 60 s.
+ *                       Temperature above ~88 °C is mandatory.
  *
- * - "percolation"  : Gravity-driven percolation (pour over, drip, Chemex). Water passes
- *                    once through the bed. Extraction is sensitive to grind, temperature,
- *                    ratio, and flow rate. Time reflects total pour duration.
+ * - "percolation"     : Gravity-driven or vacuum/recirculating flow (pour over, Chemex,
+ *                       drip machine, siphon, percolator). Water passes through the bed
+ *                       once or recycles. Sensitive to grind, temperature, ratio, flow rate.
  *
- * - "immersion"    : Coffee steeps in water until separated (French press, AeroPress short,
- *                    cupping). Extraction follows a rapid initial curve then approaches
- *                    equilibrium. Agitation accelerates early-stage extraction.
+ * - "immersion"       : Coffee steeps until separated (French press, Turkish). Extraction
+ *                       follows an exponential saturation curve (τ ≈ 4 min). Turkish's
+ *                       extra-fine grind and near-boiling temperature drive its default
+ *                       recovery to the top of the immersion range.
  *
- * - "cold_immersion": Cold brew concentrate. Low temperature means caffeine solubility is
- *                    reduced but equilibrium is approached over hours (Fuller & Rao, 2017).
- *                    Time is the dominant driver; grind size has minimal effect past ~8 h.
+ * - "cold_immersion"  : Cold brew. Diffusivity follows Arrhenius kinetics; equilibrium is
+ *                       approached over 8–24 h (Fuller & Rao, 2017). Time is dominant.
  *
- * - "cold_percolation": Cold drip (Kyoto). Slow drip at room/cold temperature. Flow rate
- *                    and bed compaction matter more than grind when at proper coarseness.
+ * - "cold_percolation": Cold drip (Kyoto). Same Arrhenius kinetics but per-particle
+ *                       contact time is shorter, so the equilibrium ceiling is lower.
  *
- * - "boiling"      : Repeated boiling / near-boiling exposure (Turkish, percolator).
- *                    Near-complete caffeine transfer; extra-fine grind and no filtration
- *                    push recovery to its practical ceiling.
- *
- * - "steam_pressure": Indian filter. Gravity + steam-assisted percolation through a fine
- *                    metal filter. Slower than espresso pressure; closer to moka pot in
- *                    extraction dynamics but at lower peak pressure.
- *
- * - "hybrid_pressure": AeroPress inverted/long. Combines a short immersion phase with
- *                    manual pressure assist. Recovery is intermediate; technique variability
- *                    is the largest single uncertainty source.
+ * - "hybrid"          : Combines two extraction mechanisms.
+ *                       • AeroPress: immersion phase + manual pressure.
+ *                       • Moka pot: steam pressure through a compacted basket
+ *                         (pressure-percolation hybrid).
+ *                       • Indian filter: gravity + steam-assisted slow drip with long
+ *                         immersion characteristics (immersion-percolation hybrid).
  */
 export type BrewPhysics =
   | "pressure"
@@ -194,9 +190,7 @@ export type BrewPhysics =
   | "immersion"
   | "cold_immersion"
   | "cold_percolation"
-  | "boiling"
-  | "steam_pressure"
-  | "hybrid_pressure";
+  | "hybrid";
 
 export type BrewMethodConfig = {
   label: string;
@@ -334,9 +328,9 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
     timeSensitivity: "high",
     grindSensitivity: "medium",
     supportsAgitation: true,
-    physics: "hybrid_pressure",
+    physics: "hybrid",
     minBrewTempC: 70,
-    note: "Immersion + manual pressure; technique variance is the largest uncertainty.",
+    note: "Hybrid: immersion phase followed by manual pressure; technique variance is the largest uncertainty source.",
   },
   moka_pot: {
     label: "Moka Pot (Stovetop)",
@@ -350,9 +344,9 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
     defaultFilter: "metal",
     timeSensitivity: "medium",
     grindSensitivity: "medium",
-    physics: "pressure",
+    physics: "hybrid",
     minBrewTempC: 88,
-    note: "1–2 bar steam pressure; fine grind with metal filter basket.",
+    note: "Pressure-percolation hybrid: steam pressure forced through a compacted fine-ground basket.",
   },
   drip_machine: {
     label: "Drip Coffee (Machine)",
@@ -383,9 +377,9 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
     timeSensitivity: "high",
     grindSensitivity: "medium",
     supportsAgitation: true,
-    physics: "immersion",
+    physics: "percolation",
     minBrewTempC: 80,
-    note: "Immersion + vacuum drawdown; consistent temperature boosts recovery.",
+    note: "Vacuum-assisted percolation; drawdown ensures consistent contact temperature.",
   },
   turkish: {
     label: "Turkish Coffee",
@@ -401,9 +395,9 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
     timeSensitivity: "medium",
     grindSensitivity: "high",
     supportsAgitation: true,
-    physics: "boiling",
+    physics: "immersion",
     minBrewTempC: 90,
-    note: "Near-complete extraction: extra-fine grind, near-boiling, no filtration.",
+    note: "Full-immersion at near-boiling; extra-fine grind and no filtration drive recovery to the immersion ceiling.",
   },
   cold_drip: {
     label: "Cold Drip (Kyoto style)",
@@ -451,9 +445,9 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
     defaultFilter: "metal",
     timeSensitivity: "high",
     grindSensitivity: "medium",
-    physics: "boiling",
+    physics: "percolation",
     minBrewTempC: 90,
-    note: "Repeated hot-water cycling; near-boiling temperature drives high extraction.",
+    note: "Recirculating percolation; near-boiling temperature and multiple hot-water passes drive high extraction.",
   },
   indian_filter: {
     label: "Indian Filter Coffee",
@@ -468,9 +462,9 @@ export const BREW_METHODS: Record<BrewMethod, BrewMethodConfig> = {
     defaultFilter: "metal",
     timeSensitivity: "medium",
     grindSensitivity: "medium",
-    physics: "steam_pressure",
+    physics: "hybrid",
     minBrewTempC: 88,
-    note: "Gravity + steam-assisted slow percolation through fine metal filter.",
+    note: "Immersion-percolation hybrid: gravity and steam-assisted slow drip with long contact time.",
   },
 };
 
@@ -1073,60 +1067,39 @@ function getCaffeineRecovery(
 
   switch (method.physics) {
 
-    // ── Pressure-driven (espresso, moka_pot) ────────────────────────────────
+    // ── Pressure-driven (espresso) ───────────────────────────────────────────
     //
-    // Caffeine recovery is primarily governed by the pressure differential driving
-    // water through a compacted bed. Andueza et al. (2003) showed that extraction
-    // yield peaks near 9 bar for standard espresso; under- and over-pressure both
-    // reduce yield. Grind size is the second-most critical variable: finer grinds
-    // increase surface area but also risk channeling. Time matters but is bounded
-    // by the brew window (espresso: 20–35 s; moka: 3–5 min).
+    // E = E_base × (1 + ΔP + ΔG + ΔT + ΔTime + ΔRatio + ΔYield + ΔTechnique + shared)
     //
-    // Model: R = R₀ + ΔP + ΔG + ΔT + ΔTime + ΔYield + ΔTechnique + ΔWater + ΔFreshness
-    //   ΔP (pressure): multiplicative efficiency term — peak at 9 bar for espresso,
-    //      lower for moka (1–2 bar). Moka's defaultRecovery already encodes the
-    //      lower pressure regime; the pressure adjustment only applies when the user
-    //      provides an explicit pressureBars value.
-    //   ΔG (grind): high sensitivity — grind controls both surface area and flow
-    //      resistance (channel formation). Range ±0.045.
-    //   ΔT (temperature): above 93 °C raises solubles but also bitterness; extraction
-    //      itself improves ~0.3 %/°C up to 95 °C then plateaus.
-    //   Ratio: for espresso the output volume IS fixed by the recipe; a wider ratio
-    //      (longer pull) mainly means more dilute beverage, not fundamentally more
-    //      caffeine extracted. Effect is intentionally small (±0.025).
+    // Key physics: pressure differential drives rapid extraction through a compacted bed.
+    // Andueza et al. (2003): extraction peaks near 9 bar. Grind controls flow resistance
+    // and surface area. Time is high-sensitivity but bounded to the pull window (20–35 s).
+    // Ratio effect is muted: a wider pull mainly dilutes rather than raising caffeine %.
     case "pressure": {
       const pressureAdj = getPressureAdjustment(method, input.pressureBars);
       const grindAdj = getGrindAdjustment(method, grindSize);
       const tempAdj = getTemperatureAdjustment(method, temperatureC);
       const timeAdj = getTimeAdjustment(method, brewTimeMinutes);
-      // Ratio sensitivity is muted for pressure methods: wider pulls extract more
-      // dissolved solids but caffeine recovery (as %) barely shifts above the floor.
       const ratioMidpoint = (method.ratioRange[0] + method.ratioRange[1]) / 2;
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.025, -0.025, 0.025);
       const techniqueAdj = getExtractionQualityAdjustment(method, input.extractionQuality);
-      return clamp(
-        method.defaultRecovery +
-          pressureAdj + grindAdj + tempAdj + timeAdj +
-          ratioAdj + yieldAdj + techniqueAdj +
-          waterAdj + freshnessAdj + roastAdj + filterAdj,
-        0.45, 0.88,
-      );
+      const totalDelta =
+        pressureAdj + grindAdj + tempAdj + timeAdj +
+        ratioAdj + yieldAdj + techniqueAdj +
+        waterAdj + freshnessAdj + roastAdj + filterAdj;
+      return clamp(method.defaultRecovery * (1 + totalDelta), 0.45, 0.88);
     }
 
-    // ── Gravity percolation (pour_over, chemex, drip_machine) ───────────────
+    // ── Gravity / vacuum / recirculating percolation ─────────────────────────
+    // (pour_over, chemex, drip_machine, siphon, percolator)
     //
-    // Water passes through the bed once. Extraction rate scales with temperature and
-    // grind surface area; flow rate (a function of grind resistance + pour technique)
-    // determines contact time. Gloess et al. (2013) measured 75–90 % caffeine
-    // recovery for filter methods.
+    // E = E_base × (1 + ΔG + ΔT + ΔTime + ΔRatio + ΔAgitation + ΔYield + shared)
     //
-    // Key physics differences from the pressure model:
-    //   • Ratio has a larger effect: more water through the same bed extracts more
-    //     caffeine (higher ratio = higher extraction yield) up to ~90 % ceiling.
-    //   • Grind: medium sensitivity. Fine grinds slow flow and increase extraction;
-    //     coarse grinds speed flow and under-extract. Range ±0.04.
-    //   • Temperature: above 96 °C risks uneven channeling; below 88 °C under-extracts.
-    //   • Agitation (bloom): pouring technique modestly improves uniformity.
+    // Key physics: water passes through the bed (once for gravity methods; vacuum
+    // drawdown for siphon; recirculating for percolator). Gloess et al. (2013): filter
+    // methods reach 75–90 %. Ratio has a larger effect than for pressure methods since
+    // more solvent through the same bed extracts a higher fraction up to the ceiling.
+    // Percolator's defaultRecovery (0.90) encodes near-boiling + recirculation.
     case "percolation": {
       const grindAdj = getGrindAdjustment(method, grindSize);
       const tempAdj = getTemperatureAdjustment(method, temperatureC);
@@ -1135,31 +1108,22 @@ function getCaffeineRecovery(
       // Higher ratio = more solvent → higher % extraction (up to ceiling).
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.040, -0.035, 0.035);
       const agitAdj = getAgitationAdjustment(method, input.agitation);
-      return clamp(
-        method.defaultRecovery +
-          grindAdj + tempAdj + timeAdj +
-          ratioAdj + agitAdj + yieldAdj +
-          waterAdj + freshnessAdj + roastAdj + filterAdj,
-        0.55, 0.95,
-      );
+      const totalDelta =
+        grindAdj + tempAdj + timeAdj +
+        ratioAdj + agitAdj + yieldAdj +
+        waterAdj + freshnessAdj + roastAdj + filterAdj;
+      return clamp(method.defaultRecovery * (1 + totalDelta), 0.55, 0.97);
     }
 
-    // ── Hot immersion (french_press, siphon, immersion) ─────────────────────
+    // ── Hot immersion (french_press, turkish, immersion) ────────────────────
     //
-    // Coffee steeps in water until mechanically separated. Extraction follows a rapid
-    // initial phase (first 2 min) then approaches a diffusion-limited equilibrium.
-    // After ~8 min at 93–94 °C, nearly all extractable caffeine is in solution.
+    // E = E_base × (1 + ΔTime + ΔG + ΔT + ΔRatio + ΔAgitation + ΔYield + shared)
     //
-    // Key physics differences:
-    //   • Time: saturation curve rather than linear — time adjustment uses the
-    //     existing cold model shape (1 - e^(-t/τ)) but with a much shorter time
-    //     constant (τ = 4 min for hot immersion vs 420 min for cold).
-    //     REPLACED: the existing getTimeAdjustment cold path is repurposed here.
-    //   • Grind: low sensitivity — finer grind speeds early extraction but adds
-    //     almost nothing at equilibrium; coarser grind marginally under-extracts.
-    //   • Ratio: muted — at equilibrium the same total caffeine is extracted
-    //     regardless of volume; concentration changes but recovery % is similar.
-    //   • Agitation: accelerates early-phase extraction; yields a positive boost.
+    // Key physics: coffee steeps in water until mechanically separated. Extraction
+    // follows an exponential saturation curve (τ = 4 min); equilibrium near ~8 min.
+    // Turkish's ultra-fine grind, no filtration, and near-boiling temperature push
+    // its defaultRecovery (0.91) to the top of the immersion range. Adjustments
+    // scale multiplicatively from each method's calibrated baseline.
     case "immersion": {
       const tau = 4.0; // minutes to ~63 % of equilibrium extraction
       const eqTime = method.defaultTimeMinutes; // reference equilibrium time
@@ -1172,34 +1136,19 @@ function getCaffeineRecovery(
       const ratioMidpoint = (method.ratioRange[0] + method.ratioRange[1]) / 2;
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.020, -0.020, 0.020);
       const agitAdj = getAgitationAdjustment(method, input.agitation);
-      return clamp(
-        method.defaultRecovery +
-          timeAdj + grindAdj + tempAdj +
-          ratioAdj + agitAdj + yieldAdj +
-          waterAdj + freshnessAdj + roastAdj + filterAdj,
-        0.55, 0.95,
-      );
+      const totalDelta =
+        timeAdj + grindAdj + tempAdj +
+        ratioAdj + agitAdj + yieldAdj +
+        waterAdj + freshnessAdj + roastAdj + filterAdj;
+      return clamp(method.defaultRecovery * (1 + totalDelta), 0.55, 0.95);
     }
 
     // ── Cold immersion (cold_brew) ───────────────────────────────────────────
     //
-    // Low temperature means caffeine solubility is reduced but still high
-    // (~21 g/L at 20 °C vs ~39 g/L at 80 °C). Diffusivity follows an Arrhenius
-    // relationship; effective diffusion coefficient at 20 °C is roughly 1/4 that
-    // at 80 °C. Fuller & Rao (2017) measured near-hot-brew caffeine recovery after
-    // 12–16 h at room temperature.
-    //
-    // Key physics:
-    //   • Time: exponential saturation with τ = 420 min (7 h) at room temp (22 °C).
-    //     Recovery ceiling: 0.88 (vs ~0.95 for hot immersion — cold brew cannot
-    //     dissolve the same fraction of very tightly bound cell-wall caffeine).
-    //   • Temperature: strongly influences the rate constant. Fridge cold brew
-    //     (4 °C) has ~2× longer τ vs room temp (22 °C). Model applies a temperature
-    //     scaling factor to τ using a simplified Arrhenius term.
-    //   • Grind: almost no effect past ~8 h equilibrium. Kept as a very small nudge.
-    //   • Ratio: muted like hot immersion.
-    //   • Agitation: small positive effect in the first hours only; modelled as a
-    //     small constant since we don't know when agitation occurred.
+    // Diffusivity follows Arrhenius kinetics. Fuller & Rao (2017): cold brew at
+    // 12–16 h approaches hot-brew caffeine recovery at equivalent ratios.
+    // τ = 420 min at 22 °C. Secondary factors applied multiplicatively to the
+    // Arrhenius base (cold base recovery).
     case "cold_immersion": {
       if (brewTimeMinutes <= 0) return method.defaultRecovery - 0.20;
 
@@ -1220,20 +1169,17 @@ function getCaffeineRecovery(
       const ratioMidpoint = (method.ratioRange[0] + method.ratioRange[1]) / 2;
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.015, -0.015, 0.015);
 
-      return clamp(
-        coldBaseRecovery + grindAdj + agitAdj + ratioAdj +
-          waterAdj + freshnessAdj + roastAdj + filterAdj,
-        0.30, 0.90,
-      );
+      const totalDelta =
+        grindAdj + agitAdj + ratioAdj +
+        waterAdj + freshnessAdj + roastAdj + filterAdj;
+      return clamp(coldBaseRecovery * (1 + totalDelta), 0.30, 0.90);
     }
 
     // ── Cold percolation (cold_drip) ─────────────────────────────────────────
     //
-    // Similar diffusion physics to cold immersion but each water drop has limited
-    // contact time with any given particle, so equilibrium is never reached.
-    // Recovery is ~10–15 % lower than cold brew immersion at the same brew time.
-    // Model: uses same Arrhenius τ as cold immersion but applies a percolation
-    // penalty (lower equilibrium ceiling: 0.80 vs 0.88).
+    // Same Arrhenius kinetics as cold immersion but each water drop has limited
+    // contact time per particle — equilibrium is never reached. Recovery ceiling
+    // is lower (0.80 vs 0.88 for cold immersion).
     case "cold_percolation": {
       if (brewTimeMinutes <= 0) return method.defaultRecovery - 0.15;
 
@@ -1248,98 +1194,49 @@ function getCaffeineRecovery(
       const ratioMidpoint = (method.ratioRange[0] + method.ratioRange[1]) / 2;
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.015, -0.015, 0.015);
 
-      return clamp(
-        coldBaseRecovery + grindAdj + ratioAdj +
-          waterAdj + freshnessAdj + roastAdj + filterAdj,
-        0.25, 0.83,
-      );
+      const totalDelta =
+        grindAdj + ratioAdj +
+        waterAdj + freshnessAdj + roastAdj + filterAdj;
+      return clamp(coldBaseRecovery * (1 + totalDelta), 0.25, 0.83);
     }
 
-    // ── Near-boiling decoction (turkish, percolator) ─────────────────────────
+    // ── Hybrid (aeropress, moka_pot, indian_filter) ──────────────────────────
     //
-    // Multiple heat cycles or sustained near-boiling exposure drives extraction
-    // close to its practical ceiling. Gloess et al. (2013): Turkish 90–93 %.
+    // E = E_base × (1 + ΔTime + ΔG + ΔT + ΔRatio + ΔAgitation + ΔPressure + shared)
     //
-    // Key physics:
-    //   • Grind: ultra-fine Turkish grind dramatically increases surface area and
-    //     is the dominant driver differentiating Turkish from coarser methods at
-    //     the same temperature. High grind sensitivity.
-    //   • Temperature: already at/near boiling; small marginal gains.
-    //   • Time: increases extraction further but ceiling is approached quickly.
-    //   • No filtration (Turkish) or metal (percolator) — no filter penalty.
-    //   • Ratio: meaningful for percolator (more recirculation = more extraction);
-    //     less so for Turkish (fixed cezve geometry).
-    case "boiling": {
-      const grindAdj = getGrindAdjustment(method, grindSize);
-      const tempAdj = getTemperatureAdjustment(method, temperatureC);
-      const timeAdj = getTimeAdjustment(method, brewTimeMinutes);
-      const ratioMidpoint = (method.ratioRange[0] + method.ratioRange[1]) / 2;
-      const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.030, -0.025, 0.025);
-      const agitAdj = getAgitationAdjustment(method, input.agitation);
-      // Turkish: filter is "none" so filterAdj would be 0; percolator: metal filterAdj = 0.006.
-      // Omit filterAdj for boiling methods — it's already encoded in defaultRecovery.
-      return clamp(
-        method.defaultRecovery +
-          grindAdj + tempAdj + timeAdj +
-          ratioAdj + agitAdj + yieldAdj +
-          waterAdj + freshnessAdj + roastAdj,
-        0.70, 0.97,
-      );
-    }
-
-    // ── Steam-pressure (indian_filter) ───────────────────────────────────────
-    //
-    // Indian filter uses gravity + boiling-water steam pressure through a
-    // fine perforated metal disc. Lower peak pressure than espresso (~0.5–1 bar)
-    // but much longer contact time (10–20 min). Profile is between moka pot and
-    // slow drip. Recovery ~70–76 %.
-    //
-    // Model: similar to pressure but with lower ratio sensitivity and
-    // a longer time window. Temperature effect is smaller (already at near-boiling).
-    case "steam_pressure": {
-      const grindAdj = getGrindAdjustment(method, grindSize);
-      const tempAdj = getTemperatureAdjustment(method, temperatureC);
-      const timeAdj = getTimeAdjustment(method, brewTimeMinutes);
-      const ratioMidpoint = (method.ratioRange[0] + method.ratioRange[1]) / 2;
-      const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.030, -0.030, 0.030);
-      return clamp(
-        method.defaultRecovery +
-          grindAdj + tempAdj + timeAdj +
-          ratioAdj + yieldAdj +
-          waterAdj + freshnessAdj + roastAdj + filterAdj,
-        0.50, 0.85,
-      );
-    }
-
-    // ── Hybrid pressure (aeropress) ──────────────────────────────────────────
-    //
-    // AeroPress: immersion phase followed by manual press. Technique variation is
-    // the dominant uncertainty (inverted vs standard, 1–4 min steep, 1:6–1:16 ratio).
-    // Recovery range 65–82 % (Gloess et al., 2013 measured 72–79 % for standard recipes).
-    //
-    // Model: immersion saturation curve for the steep phase; pressure provides
-    // a fixed extraction boost (~+0.03 above pure immersion at equivalent time).
-    case "hybrid_pressure": {
-      const tau = 2.5; // shorter τ than pure immersion (pressure accelerates extraction)
-      const eqTime = method.defaultTimeMinutes;
-      const normalized = (1 - Math.exp(-brewTimeMinutes / tau)) /
-                         (1 - Math.exp(-eqTime / tau));
-      const timeAdj = clamp((normalized - 1) * 0.08, -0.12, 0.05);
-
+    // Three hybrid sub-types share this physics class:
+    //   • AeroPress (immersion + pressure): short steep (τ = 2.5 min) + manual press.
+    //     Detected by timeSensitivity === "high" and defaultTimeMinutes ≤ 2.5.
+    //   • Moka pot (pressure-percolation): steam pressure through compacted basket.
+    //     Standard medium-sensitivity time/grind adjustments apply.
+    //   • Indian filter (immersion-percolation): gravity + steam-assisted slow drip.
+    //     Long contact time; standard medium-sensitivity adjustments apply.
+    case "hybrid": {
       const grindAdj = getGrindAdjustment(method, grindSize);
       const tempAdj = getTemperatureAdjustment(method, temperatureC);
       const ratioMidpoint = (method.ratioRange[0] + method.ratioRange[1]) / 2;
-      // Higher ratio → fewer TDS% but not necessarily higher extraction %. Muted.
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.025, -0.025, 0.025);
       const agitAdj = getAgitationAdjustment(method, input.agitation);
-      const pressureAdj = getPressureAdjustment(method, input.pressureBars) * 0.5; // manual pressure, scaled down
-      return clamp(
-        method.defaultRecovery +
-          timeAdj + grindAdj + tempAdj +
-          ratioAdj + agitAdj + pressureAdj + yieldAdj +
-          waterAdj + freshnessAdj + roastAdj + filterAdj,
-        0.48, 0.88,
-      );
+      const pressureAdj = getPressureAdjustment(method, input.pressureBars) * 0.5;
+      // AeroPress: short immersion — exponential saturation curve (τ = 2.5 min).
+      // Moka / Indian Filter: standard linear time adjustment.
+      const isShortImmersion =
+        method.timeSensitivity === "high" && method.defaultTimeMinutes <= 2.5;
+      let timeAdj: number;
+      if (isShortImmersion) {
+        const tau = 2.5;
+        const eqTime = method.defaultTimeMinutes;
+        const normalized = (1 - Math.exp(-brewTimeMinutes / tau)) /
+                           (1 - Math.exp(-eqTime / tau));
+        timeAdj = clamp((normalized - 1) * 0.08, -0.12, 0.05);
+      } else {
+        timeAdj = getTimeAdjustment(method, brewTimeMinutes);
+      }
+      const totalDelta =
+        timeAdj + grindAdj + tempAdj +
+        ratioAdj + agitAdj + pressureAdj + yieldAdj +
+        waterAdj + freshnessAdj + roastAdj + filterAdj;
+      return clamp(method.defaultRecovery * (1 + totalDelta), 0.48, 0.88);
     }
   }
 }
@@ -1426,9 +1323,9 @@ function getBrewingUncertaintyPercent(
   }
 
   // Method-class inherent technique variance adjustments.
-  // AeroPress: recipe-style variation (inverted vs standard, ratio, steep time) is
-  // the largest single uncertainty source for this method. Add +5 % base penalty.
-  if (method.physics === "hybrid_pressure") {
+  // AeroPress (hybrid): recipe-style variation (inverted vs standard, ratio, steep time)
+  // is the largest single uncertainty source for this method. Add +5 % base penalty.
+  if (method.physics === "hybrid") {
     uncertainty += 5;
   }
 
@@ -1610,7 +1507,8 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
   const beanUpperMg = coffeeGrams * effectiveCaffeineFractionMax * caffeineRecovery * 1000;
   const beanUncertainty = getBeanUncertaintyPercent(caffeineFractionMin, caffeineFractionMax);
   const brewingUncertainty = getBrewingUncertaintyPercent(input, beanProfile.strength, method);
-  const uncertainty = Math.max(beanUncertainty, brewingUncertainty);
+  // Quadrature combination: independent sources add in orthogonal uncertainty space.
+  const uncertainty = Math.sqrt(beanUncertainty ** 2 + brewingUncertainty ** 2);
   const roundedUncertainty = Number(uncertainty.toFixed(1));
   const practicalLowerMg = estimatedMg * (1 - uncertainty / 100);
   const practicalUpperMg = estimatedMg * (1 + uncertainty / 100);
