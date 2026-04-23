@@ -101,6 +101,34 @@ const METHOD_DESCRIPTIONS: Record<BrewMethod, string> = {
   indian_filter: "Gravity drip · Slow percolation · Chicory blend tradition",
 };
 
+const TOPIC_LABELS: Partial<Record<FocusTopic, string>> = {
+  method: "Brew method",
+  coffee: "Dose",
+  water: "Brew water",
+  serving: "Serving vol.",
+  bean: "Bean species",
+  bean_detail: "Bean detail",
+  blend: "Blend ratio",
+  package: "Package clue",
+  price: "Price",
+  time: "Brew time",
+  dilution: "Dilution",
+  grind: "Grind size",
+  roast: "Roast level",
+  temperature: "Temperature",
+  yield: "Extr. yield",
+  pressure: "Pressure",
+  agitation: "Agitation",
+  water_chemistry: "Water",
+  freshness: "Freshness",
+  filter: "Filter type",
+  chicory: "Chicory",
+  arabica_grade: "Arabica grade",
+  elevation: "Elevation",
+  extraction_quality: "Extr. quality",
+  cultivar: "Cultivar",
+};
+
 const priceCurrencies: PriceCurrency[] = [
   "INR",
   "USD",
@@ -325,7 +353,52 @@ function CalculationBar({
   );
 }
 
-function ExtractionCurve({ physics }: { physics: BrewPhysics }) {
+function RangeVisualizer({
+  lower,
+  upper,
+  estimateMg,
+  confidencePercent,
+}: {
+  lower: number;
+  upper: number;
+  estimateMg: number;
+  confidencePercent: number;
+}) {
+  const scaleMax = upper * 1.3;
+  const leftPct = Math.max(0, Math.min(100, (lower / scaleMax) * 100));
+  const rightPct = Math.max(0, Math.min(100, (upper / scaleMax) * 100));
+  const markerPct = Math.max(0, Math.min(100, (estimateMg / scaleMax) * 100));
+  const rangeColor =
+    confidencePercent > 25 ? "#f97316" : confidencePercent > 15 ? "#f2c36b" : "#9adf8f";
+  return (
+    <div className="grid gap-1.5">
+      <div className="relative h-3 overflow-hidden rounded-full bg-[#252a21]">
+        <div
+          className="absolute inset-y-0 rounded-full transition-all duration-500"
+          style={{
+            left: `${leftPct}%`,
+            right: `${100 - rightPct}%`,
+            backgroundColor: rangeColor,
+            opacity: 0.5,
+          }}
+        />
+        <div
+          className="absolute inset-y-0 w-0.5 transition-all duration-500"
+          style={{ left: `${markerPct}%`, backgroundColor: rangeColor }}
+        />
+      </div>
+      <div className="flex justify-between text-xs">
+        <span className="font-mono text-[#8f9886]">{lower} mg</span>
+        <span className="font-mono" style={{ color: rangeColor }}>
+          {estimateMg} mg
+        </span>
+        <span className="font-mono text-[#8f9886]">{upper} mg</span>
+      </div>
+    </div>
+  );
+}
+
+function ExtractionCurve({ physics, extraction }: { physics: BrewPhysics; extraction: number }) {
   const paths: Record<BrewPhysics, string> = {
     pressure: "M 0 72 Q 15 72 28 12 Q 38 4 46 18 Q 60 38 85 44 L 200 46",
     percolation: "M 0 72 Q 35 70 70 32 Q 105 8 145 7 L 200 7",
@@ -366,6 +439,25 @@ function ExtractionCurve({ physics }: { physics: BrewPhysics }) {
             strokeWidth="2"
             strokeLinecap="round"
           />
+          <g
+            style={{
+              transform: `translateX(${Math.max(4, Math.min(196, extraction * 200))}px)`,
+              transition: "transform 0.4s ease",
+            }}
+          >
+            <line x1="0" y1="76" x2="0" y2="5" stroke="#f2c36b" strokeWidth="1.5" strokeDasharray="3 2" />
+            <circle cx="0" cy="73" r="3" fill="#f2c36b" />
+            <text
+              x={Math.max(4, Math.min(196, extraction * 200)) > 150 ? -5 : 5}
+              y="16"
+              fill="#f2c36b"
+              fontSize="7"
+              textAnchor={Math.max(4, Math.min(196, extraction * 200)) > 150 ? "end" : "start"}
+              fontFamily="sans-serif"
+            >
+              Your brew
+            </text>
+          </g>
         </svg>
         <div className="flex justify-between text-[10px] text-[#8f9886]">
           <span>Start</span>
@@ -422,6 +514,8 @@ export function CaffiLabCalculator() {
   const [deltaMg, setDeltaMg] = useState<number | null>(null);
   const prevEstimatedMgRef = useRef<number | null>(null);
   const customCaffeineInputRef = useRef<HTMLInputElement | null>(null);
+  const [whatChanged, setWhatChanged] = useState<Array<{ label: string; deltaMg: number }>>([]);
+  const currentFocusTopicRef = useRef<FocusTopic>("result");
 
   const method = BREW_METHODS[brewMethod];
   const estimate = useMemo(
@@ -504,7 +598,6 @@ export function CaffiLabCalculator() {
     ],
   );
 
-  const precision = Math.round(((35 - estimate.confidencePercent) / 30) * 100);
   const explanation = getTopicExplanation({
     beanType,
     brewMethod,
@@ -538,9 +631,19 @@ export function CaffiLabCalculator() {
   }, [beanDetail, showAdvanced]);
 
   useEffect(() => {
+    currentFocusTopicRef.current = focusTopic;
+  }, [focusTopic]);
+
+  useEffect(() => {
     if (prevEstimatedMgRef.current !== null) {
       const delta = estimate.estimatedMg - prevEstimatedMgRef.current;
-      setDeltaMg(delta !== 0 ? delta : null);
+      if (delta !== 0) {
+        setDeltaMg(delta);
+        const label = TOPIC_LABELS[currentFocusTopicRef.current] ?? "Input";
+        setWhatChanged((prev) => [{ label, deltaMg: delta }, ...prev].slice(0, 4));
+      } else {
+        setDeltaMg(null);
+      }
     }
     prevEstimatedMgRef.current = estimate.estimatedMg;
   }, [estimate.estimatedMg]);
@@ -622,6 +725,7 @@ export function CaffiLabCalculator() {
     setShowHowCalculated(false);
     setShowScience(false);
     setDeltaMg(null);
+    setWhatChanged([]);
   }
 
   return (
@@ -796,15 +900,14 @@ export function CaffiLabCalculator() {
               Reset all
             </button>
             <div className="mt-6 grid gap-3">
-              <div className="h-3 overflow-hidden rounded-[6px] bg-[#252a21]">
-                <div
-                  className="h-full rounded-[6px] bg-[#9adf8f] transition-all duration-300"
-                  style={{ width: `${precision}%` }}
-                />
-              </div>
-              <p className="text-sm text-[#aeb8a5]">
-                Practical range: {estimate.practicalLowerMg}-{estimate.practicalUpperMg} mg.
-                Bean-driven range: {estimate.beanLowerMg}-{estimate.beanUpperMg} mg.
+              <RangeVisualizer
+                lower={estimate.practicalLowerMg}
+                upper={estimate.practicalUpperMg}
+                estimateMg={estimate.estimatedMg}
+                confidencePercent={estimate.confidencePercent}
+              />
+              <p className="text-xs text-[#8f9886]">
+                Bean-driven range: {estimate.beanLowerMg}–{estimate.beanUpperMg} mg
               </p>
               <div className="grid gap-2 sm:grid-cols-3">
                 <div className="rounded-[6px] border border-[#33392f] bg-[#10120e] px-3 py-2">
@@ -824,6 +927,25 @@ export function CaffiLabCalculator() {
                 </div>
               </div>
               <div className="border-t border-[#252a21] pt-4">
+                {whatChanged.length > 0 && (
+                  <div className="mb-4 grid gap-1.5">
+                    <p className={labelClass}>What changed</p>
+                    {whatChanged.map((item, i) => (
+                      <div key={i} className="flex items-center justify-between text-xs">
+                        <span className="text-[#8f9886]">{item.label}</span>
+                        <span
+                          className={cn(
+                            "font-mono font-medium",
+                            item.deltaMg > 0 ? "text-[#9adf8f]" : "text-[#f87171]",
+                          )}
+                        >
+                          {item.deltaMg > 0 ? "+" : ""}
+                          {item.deltaMg} mg
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={() => setShowHowCalculated((prev) => !prev)}
@@ -889,7 +1011,7 @@ export function CaffiLabCalculator() {
               />
             </div>
 
-            <ExtractionCurve physics={method.physics} />
+            <ExtractionCurve physics={method.physics} extraction={estimate.caffeineRecovery} />
 
             <div className="grid gap-4 border-t border-[#33392f] pt-5">
               <div className="flex items-center gap-2">
