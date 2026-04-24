@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "dev:tina": "tinacms dev --isomorphicGitBridge -c \"next dev\"",
     "test": "vitest",
     "build": "next build",
@@ -43,6 +43,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9.39.4",
     "eslint-config-next": "16.2.4",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "shadcn": "^4.4.0",
     "tailwindcss": "^4.2.4",
     "typescript": "^6.0.3",
