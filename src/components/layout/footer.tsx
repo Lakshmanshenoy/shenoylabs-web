@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { siteConfig } from "@/lib/site";
+
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/projects", label: "Projects" },
@@ -66,7 +68,7 @@ export function Footer() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="font-heading text-lg font-semibold">Shenoy Labs</h2>
+            <h2 className="font-heading text-lg font-semibold">{siteConfig.name}</h2>
             <p className="mt-2 max-w-lg text-sm text-muted-foreground">
               Hybrid product studio across projects, research, and practical systems.
             </p>
@@ -117,7 +119,7 @@ export function Footer() {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Shenoy Labs. All rights reserved.
+          © {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
         </p>
       </div>
     </footer>

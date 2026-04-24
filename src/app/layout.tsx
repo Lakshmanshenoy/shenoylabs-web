@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Inter, Merriweather } from "next/font/google";
 import Script from "next/script";
 
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
@@ -7,6 +8,19 @@ import { SiteShell } from "@/components/layout/site-shell";
 import { siteConfig } from "@/lib/site";
 
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const merriweather = Merriweather({
+  weight: ["400", "700"],
+  subsets: ["latin"],
+  variable: "--font-heading",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -73,7 +87,7 @@ export default function RootLayout({
       </head>
       {/* suppressHydrationWarning prevents false positives from browser extensions
            that mutate body attributes (e.g. Grammarly) after server render. */}
-      <body className="min-h-full" suppressHydrationWarning>
+      <body className={`min-h-full ${inter.variable} ${merriweather.variable}`} suppressHydrationWarning>
         <CookieBanner />
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
         <SiteShell>{children}</SiteShell>

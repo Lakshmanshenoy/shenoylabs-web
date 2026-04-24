@@ -16,6 +16,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { siteConfig } from "@/lib/site";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -37,7 +38,6 @@ function BrandMark() {
 
 export function Navbar() {
   const pathname = usePathname();
-  const [searchQuery, setSearchQuery] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   function isActive(href: string) {
@@ -51,9 +51,9 @@ export function Navbar() {
         <div className="flex items-center justify-between">
           <Link href="/" className="inline-flex items-center gap-3">
             <BrandMark />
-            <span className="font-heading text-base font-semibold tracking-tight sm:text-lg">
-              Shenoy Labs
-            </span>
+<span className="font-heading text-base font-semibold tracking-tight sm:text-lg">
+                  {siteConfig.name}
+                </span>
           </Link>
 
           <div className="hidden items-center gap-1 md:flex" role="navigation" aria-label="Main">
@@ -129,14 +129,12 @@ export function Navbar() {
           </label>
           <div className="relative">
             <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              id="global-search"
-              name="q"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search articles and projects..."
-              className="h-11 pl-9"
-            />
+<Input
+                  id="global-search"
+                  name="q"
+                  placeholder="Search articles and projects..."
+                  className="h-11 pl-9"
+                />
           </div>
         </form>
       </div>

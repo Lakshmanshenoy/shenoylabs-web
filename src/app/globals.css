@@ -49,10 +49,8 @@
 }
 
 :root {
-  --font-sans:
-    "Segoe UI", Roboto, Helvetica, Arial, system-ui, -apple-system, sans-serif;
-  --font-heading:
-    "Segoe UI", Roboto, Helvetica, Arial, system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-inter), "Segoe UI", Roboto, Helvetica, Arial, system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-heading), "Segoe UI", Roboto, Helvetica, Arial, system-ui, -apple-system, sans-serif;
   --font-mono:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
