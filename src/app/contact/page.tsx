@@ -16,18 +16,17 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Contact — Shenoy Labs",
-    description:
-      "Reach out to Shenoy Labs for collaboration, consulting, and product discussions.",
+    description: "Reach out to Shenoy Labs for collaboration, consulting, and product discussions.",
     type: "website",
     url: "/contact",
-    images: ["/og-default.svg"],
+    images: ["/api/og?title=Contact"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Contact — Shenoy Labs",
     description:
       "Reach out to Shenoy Labs for collaboration, consulting, and product discussions.",
-    images: ["/og-default.svg"],
+    images: ["/api/og?title=Contact"],
   },
 };
 

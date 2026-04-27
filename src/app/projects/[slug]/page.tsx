@@ -48,13 +48,13 @@ export async function generateMetadata({
         description: fm.description,
         type: "website",
         url: `/projects/${slug}`,
-        images: [fm.coverImage ?? "/og-default.svg"],
+        images: [`/api/og?title=${encodeURIComponent(fm.title)}&type=project`],
       },
       twitter: {
         card: "summary_large_image",
         title: fm.title,
         description: fm.description,
-        images: [fm.coverImage ?? "/og-default.svg"],
+        images: [`/api/og?title=${encodeURIComponent(fm.title)}&type=project`],
       },
     };
   } catch {
@@ -169,10 +169,12 @@ export default async function ProjectDetailPage({
           </span>
           <span className="text-sm text-muted-foreground">
             ·{" "}
-            {new Date(fm.date).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-            })}
+            <time dateTime={fm.date}>
+              {new Date(fm.date).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+              })}
+            </time>
           </span>
         </div>
         <h1 className="font-heading text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">

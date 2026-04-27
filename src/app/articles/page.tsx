@@ -20,14 +20,14 @@ export const metadata: Metadata = {
       "In-depth articles on product, engineering, and founder strategy by Lakshman Shenoy.",
     type: "website",
     url: "/articles",
-    images: ["/og-default.svg"],
+    images: ["/api/og?title=Articles"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Articles — Shenoy Labs",
     description:
       "In-depth articles on product, engineering, and founder strategy by Lakshman Shenoy.",
-    images: ["/og-default.svg"],
+    images: ["/api/og?title=Articles"],
   },
 };
 

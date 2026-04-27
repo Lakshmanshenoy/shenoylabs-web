@@ -58,13 +58,13 @@ export async function generateMetadata({
         modifiedTime: lastUpdated,
         authors: [fm.author],
         tags: fm.tags,
-        images: [fm.coverImage ?? "/og-default.svg"],
+        images: [`/api/og?title=${encodeURIComponent(fm.title)}&type=article`],
       },
       twitter: {
         card: "summary_large_image",
         title: fm.title,
         description: fm.excerpt,
-        images: [fm.coverImage ?? "/og-default.svg"],
+        images: [`/api/og?title=${encodeURIComponent(fm.title)}&type=article`],
       },
     };
   } catch {
@@ -210,16 +210,21 @@ export default async function ArticleDetailPage({
           <Badge variant="outline">{fm.primaryCategory}</Badge>
           <span className="text-sm text-muted-foreground">
             {readingTime} · Created{" "}
-            {new Date(createdDate).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })} · Updated{" "}
-            {new Date(lastUpdated).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
+            <time dateTime={createdDate}>
+              {new Date(createdDate).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </time>
+            {" "}· Updated{" "}
+            <time dateTime={lastUpdated}>
+              {new Date(lastUpdated).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </time>
           </span>
         </div>
         <h1 className="font-heading text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
@@ -251,19 +256,23 @@ export default async function ArticleDetailPage({
         </p>
         <p>
           Created{" "}
-          {new Date(createdDate).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
+          <time dateTime={createdDate}>
+            {new Date(createdDate).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </time>
         </p>
         <p>
           Last updated{" "}
-          {new Date(lastUpdated).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
+          <time dateTime={lastUpdated}>
+            {new Date(lastUpdated).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </time>
         </p>
       </footer>
 
