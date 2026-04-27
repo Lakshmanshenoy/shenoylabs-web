@@ -10,8 +10,9 @@ import { siteConfig } from "@/lib/site";
 
 export const dynamic = "force-static";
 
-function escapeXml(str: string): string {
-  return str
+function escapeXml(str: unknown): string {
+  const s = str == null ? "" : String(str);
+  return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -24,21 +25,35 @@ export async function GET() {
 
   const items = articles
     .map((article) => {
-      const fm = article.frontmatter;
-      const pubDate = new Date(
-        fm.createdDate ?? fm.date,
-      ).toUTCString();
+      const fm = article.frontmatter ?? {};
+
+      const rawDate = fm.createdDate ?? fm.date;
+      const dateObj = rawDate ? new Date(rawDate) : new Date();
+      const pubDate = isNaN(dateObj.getTime())
+        ? new Date().toUTCString()
+        : dateObj.toUTCString();
+
       const link = `${siteConfig.url}/articles/${article.slug}`;
-      const ogImage = `${siteConfig.url}/api/og?title=${encodeURIComponent(fm.title)}&type=article`;
+
+      const title = fm.title ?? article.slug ?? siteConfig.name;
+      const ogImage = `${siteConfig.url}/api/og?title=${encodeURIComponent(
+        String(title),
+      )}&type=article`;
+
+      const description = fm.excerpt ?? "";
+
+      const tags = Array.isArray(fm.tags) ? fm.tags : [];
+      const tagsXml = tags.length
+        ? "\n    " + tags.map((t) => `<category>${escapeXml(t)}</category>`).join("\n    ")
+        : "";
 
       return `  <item>
-    <title>${escapeXml(fm.title)}</title>
+    <title>${escapeXml(title)}</title>
     <link>${link}</link>
     <guid isPermaLink="true">${link}</guid>
-    <description>${escapeXml(fm.excerpt)}</description>
+    <description>${escapeXml(description)}</description>
     <pubDate>${pubDate}</pubDate>
-    <author>${escapeXml(siteConfig.author)}</author>
-    ${fm.tags.map((t) => `<category>${escapeXml(t)}</category>`).join("\n    ")}
+    <author>${escapeXml(siteConfig.author ?? "")}</author>${tagsXml}
     <enclosure url="${ogImage}" type="image/png" length="0" />
   </item>`;
     })
