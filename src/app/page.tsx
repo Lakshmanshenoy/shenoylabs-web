@@ -14,8 +14,8 @@ import {
 } from "@/lib/homepage-content";
 
 export const metadata: Metadata = {
-  title: "Home | Shenoy Labs",
-  description: "Premium hybrid product studio by Lakshman Shenoy.",
+  title: "Home — Shenoy Labs",
+  description: "Research, tools, and projects built in public by Lakshman Shenoy.",
   alternates: {
     canonical: "/",
   },

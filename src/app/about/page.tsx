@@ -24,14 +24,14 @@ export const metadata: Metadata = {
       "Lakshman Shenoy is a builder and founder behind Shenoy Labs — a hybrid product studio focused on useful software, research, and tools.",
     type: "profile",
     url: "/about",
-    images: ["/og-default.svg"],
+    images: ["/api/og?title=About+Lakshman+Shenoy&type=site"],
   },
   twitter: {
     card: "summary_large_image",
     title: "About — Shenoy Labs",
     description:
       "Lakshman Shenoy is a builder and founder behind Shenoy Labs — a hybrid product studio focused on useful software, research, and tools.",
-    images: ["/og-default.svg"],
+    images: ["/api/og?title=About+Lakshman+Shenoy&type=site"],
   },
 };
 
@@ -42,6 +42,23 @@ const focusAreas = [
   { label: "Tools", description: "Privacy-safe calculators and decision aids" },
 ];
 
+const personJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Lakshman Shenoy",
+  url: "https://shenoylabs.com",
+  jobTitle: "Founder",
+  worksFor: {
+    "@type": "Organization",
+    name: "Shenoy Labs",
+    url: "https://shenoylabs.com",
+  },
+  sameAs: [
+    "https://github.com/lakshmanshenoy",
+    "https://twitter.com/lakshmanshenoy",
+  ],
+};
+
 export default async function AboutPage() {
   const page = getPageContent("about");
   const { content: prose } = await compileMDX({
@@ -51,6 +68,12 @@ export default async function AboutPage() {
 
   return (
     <SectionContainer className="max-w-3xl">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(personJsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
       <SectionHeader
         badge="About"
         title="Lakshman Shenoy"

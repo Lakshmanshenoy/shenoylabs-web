@@ -18,13 +18,13 @@ export const metadata: Metadata = {
     description: "Optional support channels for Shenoy Labs via Razorpay and UPI.",
     type: "website",
     url: "/support",
-    images: ["/og-default.svg"],
+    images: ["/api/og?title=Support+the+Work"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Support — Shenoy Labs",
     description: "Optional support channels for Shenoy Labs via Razorpay and UPI.",
-    images: ["/og-default.svg"],
+    images: ["/api/og?title=Support+the+Work"],
   },
 };
 
@@ -100,7 +100,7 @@ export default function SupportPage() {
                 sizes="(max-width: 768px) 100vw, 360px"
               />
             </div>
-            <div className="rounded-lg border border-dashed border-border px-4 py-3 text-foreground">
+            <div className="rounded-lg border border-dashed border-border px-4 py-3 font-mono text-sm text-foreground">
               lakshmanshenoy@upi
             </div>
           </CardContent>

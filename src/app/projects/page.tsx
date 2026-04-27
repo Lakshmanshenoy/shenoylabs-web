@@ -28,14 +28,14 @@ export const metadata: Metadata = {
       "Shipped products, ongoing builds, and planned work by Lakshman Shenoy.",
     type: "website",
     url: "/projects",
-    images: ["/og-default.svg"],
+    images: ["/api/og?title=Projects"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Projects — Shenoy Labs",
     description:
       "Shipped products, ongoing builds, and planned work by Lakshman Shenoy.",
-    images: ["/og-default.svg"],
+    images: ["/api/og?title=Projects"],
   },
 };
 

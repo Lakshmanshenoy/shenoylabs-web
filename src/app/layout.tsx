@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import Script from "next/script";
 
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
@@ -7,6 +8,18 @@ import { SiteShell } from "@/components/layout/site-shell";
 import { siteConfig } from "@/lib/site";
 
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -17,6 +30,9 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   alternates: {
     canonical: "/",
+    types: {
+      "application/rss+xml": `${siteConfig.url}/feed.xml`,
+    },
   },
   openGraph: {
     title: siteConfig.name,
@@ -26,7 +42,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: siteConfig.ogImage,
+        url: "/api/og",
         width: 1200,
         height: 630,
         alt: `${siteConfig.name} social preview`,
@@ -37,7 +53,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: siteConfig.name,
     description: siteConfig.description,
-    images: [siteConfig.ogImage],
+    images: ["/api/og"],
   },
   icons: {
     icon: "/favicon.svg",
@@ -53,7 +69,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-scroll-behavior="smooth"
-      className="h-full antialiased"
+      className={`h-full antialiased ${inter.variable} ${plusJakartaSans.variable}`}
       suppressHydrationWarning
     >
       <head>
@@ -69,7 +85,12 @@ export default function RootLayout({
             } catch {}
           `}
         </Script>
-        <link rel="preload" as="image" href={siteConfig.ogImage} />
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title={`${siteConfig.name} — Articles feed`}
+          href="/feed.xml"
+        />
       </head>
       {/* suppressHydrationWarning prevents false positives from browser extensions
            that mutate body attributes (e.g. Grammarly) after server render. */}
