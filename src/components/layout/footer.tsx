@@ -63,7 +63,7 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="footer-reveal border-t border-border/80 bg-background/85 backdrop-blur-md">
+    <footer className="footer-reveal border-t border-border/80 bg-background/85 backdrop-blur-md dark:bg-[#000515]">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -72,7 +72,7 @@ export function Footer() {
               src="/brand/Primary_logo_light.png"
               alt="Shenoy Labs"
               width={220}
-              height={80}
+              height={110}
               className="block dark:hidden"
               style={{ height: "auto" }}
             />
@@ -81,12 +81,12 @@ export function Footer() {
               src="/brand/Primary_logo_dark.png"
               alt="Shenoy Labs"
               width={220}
-              height={80}
+              height={110}
               className="hidden dark:block"
               style={{ height: "auto" }}
             />
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="self-end text-right text-sm text-muted-foreground sm:self-auto">
             Think. <span className="text-blue-500">Learn.</span> Solve.
           </p>
         </div>
