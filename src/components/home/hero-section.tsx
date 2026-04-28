@@ -12,19 +12,19 @@ type Props = { content: HeroContent };
 export function HeroSection({ content }: Props) {
   return (
     <section className="relative overflow-hidden border-b border-border/60">
-      {/* Ambient background blobs */}
+      {/* Ambient background blobs — slow drift brings the hero alive */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
       >
-        <div className="absolute -left-24 -top-24 h-[480px] w-[480px] rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute -right-24 top-32 h-[360px] w-[360px] rounded-full bg-accent/10 blur-3xl" />
+        <div className="blob-drift absolute -left-24 -top-24 h-[480px] w-[480px] rounded-full bg-primary/10 blur-3xl" />
+        <div className="blob-drift-2 absolute -right-24 top-32 h-[360px] w-[360px] rounded-full bg-accent/10 blur-3xl" />
       </div>
 
       <div className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8 lg:py-36">
         <div className="flex flex-col items-start gap-8 lg:flex-row lg:items-center lg:gap-16">
-          {/* Left: headline + CTAs */}
-          <div className="flex-1 space-y-7">
+          {/* Left: headline + CTAs — staggered reveal cascade */}
+          <div className="reveal-group flex-1 space-y-7">
             <Badge
               variant="outline"
               className="gap-1.5 border-primary/30 bg-primary/5 text-primary"
@@ -38,7 +38,11 @@ export function HeroSection({ content }: Props) {
             </h1>
 
             <p className="font-heading text-xl font-semibold tracking-tight text-foreground/90 sm:text-2xl">
-              {content.identityLine}
+              {content.identityLine.replace("Learner", "\x00").split("\x00").map((part, i) =>
+                i === 0
+                  ? <span key={i}>{part}<span className="text-blue-500">Learner</span></span>
+                  : <span key={i}>{part}</span>
+              )}
             </p>
 
             <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
@@ -84,8 +88,8 @@ export function HeroSection({ content }: Props) {
             ) : null}
           </div>
 
-          {/* Right: premium visual + floating cards */}
-          <div className="w-full max-w-sm shrink-0 lg:w-96">
+          {/* Right: premium visual + floating cards — delayed entry */}
+          <div className="reveal-delayed w-full max-w-sm shrink-0 lg:w-96">
             <div className="soft-lift relative overflow-hidden rounded-2xl border border-border/80 bg-card p-6 shadow-sm">
               <div
                 aria-hidden

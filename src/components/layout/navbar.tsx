@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { MenuIcon, SearchIcon, XIcon } from "lucide-react";
 
+import Image from "next/image";
+
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,13 +28,6 @@ const navLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
-function BrandMark() {
-  return (
-    <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-sm">
-      SL
-    </span>
-  );
-}
 
 export function Navbar() {
   const pathname = usePathname();
@@ -97,12 +92,29 @@ export function Navbar() {
         ) : (
           /* Normal nav row */
           <div className="flex items-center justify-between">
-            <Link href="/" className="inline-flex items-center gap-3">
-              <BrandMark />
+<Link href="/" className="inline-flex items-center gap-2" aria-label="Shenoy Labs home">
+              {/* Light mode icon */}
+              <Image
+                src="/brand/icon_logo_light.png"
+                alt=""
+                width={36}
+                height={36}
+                className="block dark:hidden"
+                priority
+              />
+              {/* Dark mode icon */}
+              <Image
+                src="/brand/icon_logo_dark.png"
+                alt=""
+                width={36}
+                height={36}
+                className="hidden dark:block"
+                priority
+              />
               <span className="font-heading text-base font-semibold tracking-tight sm:text-lg">
-                Shenoy Labs
-              </span>
-            </Link>
+                SHENOY<span className="text-blue-500">LABS</span>
+                </span>
+              </Link>
 
             <div className="hidden items-center gap-1 md:flex" role="navigation" aria-label="Main">
               {navLinks.map((link) => (

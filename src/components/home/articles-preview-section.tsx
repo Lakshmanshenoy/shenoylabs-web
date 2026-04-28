@@ -39,7 +39,7 @@ export function ArticlesPreviewSection() {
         </div>
 
         {/* Featured article — wide card — reveal on scroll */}
-        <Link href={`/articles/${lead.slug}`} className="group block">
+        <Link href={`/articles/${lead.slug}`} className="scroll-reveal group block">
           <Card className="soft-lift border border-border/80 bg-card/95 transition-colors group-hover:border-primary/30">
             <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start sm:gap-8">
               {lead.frontmatter.coverImage && (
@@ -91,7 +91,7 @@ export function ArticlesPreviewSection() {
             <Link
               key={article.slug}
               href={`/articles/${article.slug}`}
-              className="group block"
+              className="scroll-reveal group block"
             >
               <Card className="soft-lift h-full border border-border/80 bg-card/95 transition-colors group-hover:border-primary/30">
                 {article.frontmatter.coverImage && (

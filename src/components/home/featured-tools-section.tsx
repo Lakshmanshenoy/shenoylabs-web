@@ -59,7 +59,7 @@ export function FeaturedToolsSection() {
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {featuredTools.map((tool) => (
-            <Link key={tool.slug} href={tool.href} className="group block">
+            <Link key={tool.slug} href={tool.href} className="scroll-reveal group block">
               <Card className="h-full border border-border/80 bg-card/95 transition-colors group-hover:border-primary/30">
                 <CardHeader className="pb-2">
                   <div className="mb-2 flex items-center gap-2">

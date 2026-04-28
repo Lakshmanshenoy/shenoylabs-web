@@ -55,9 +55,7 @@ export const metadata: Metadata = {
     description: siteConfig.description,
     images: ["/api/og"],
   },
-  icons: {
-    icon: "/favicon.svg",
-  },
+
 };
 
 export default function RootLayout({
@@ -68,7 +66,6 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-scroll-behavior="smooth"
       className={`h-full antialiased ${inter.variable} ${plusJakartaSans.variable}`}
       suppressHydrationWarning
     >
