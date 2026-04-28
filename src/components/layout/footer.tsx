@@ -74,6 +74,7 @@ export function Footer() {
               width={220}
               height={80}
               className="block dark:hidden"
+              style={{ height: "auto" }}
             />
             {/* Dark mode primary logo */}
             <Image
@@ -82,6 +83,7 @@ export function Footer() {
               width={220}
               height={80}
               className="hidden dark:block"
+              style={{ height: "auto" }}
             />
           </div>
           <p className="text-sm text-muted-foreground">
