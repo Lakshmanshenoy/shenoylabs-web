@@ -47,19 +47,19 @@ export function FeaturedProjectsSection({ content }: Props) {
               href={`/projects/${project.slug}`}
               className="group block"
             >
-                <Card className="soft-lift h-full border border-border/80 bg-card/95 transition-colors group-hover:border-primary/30">
-                  {project.thumbnail && (
-                    <div className="overflow-hidden rounded-t-xl border-b border-border/70">
-                      <Image
-                        src={project.thumbnail}
-                        alt={project.thumbnailAlt ?? `${project.title} thumbnail`}
-                        width={1200}
-                        height={675}
-                        className="h-auto w-full"
-                      />
-                    </div>
-                  )}
-                  <CardHeader className="pb-2">
+              <Card className="soft-lift h-full border border-border/80 bg-card/95 transition-colors group-hover:border-primary/30">
+                {project.thumbnail && (
+                  <div className="overflow-hidden rounded-t-xl border-b border-border/70">
+                    <Image
+                      src={project.thumbnail}
+                      alt={project.thumbnailAlt ?? `${project.title} thumbnail`}
+                      width={1200}
+                      height={675}
+                      className="h-auto w-full"
+                    />
+                  </div>
+                )}
+                <CardHeader className="pb-2">
                   <div className="mb-2 flex items-center gap-2">
                     <span
                       className={cn(
@@ -71,7 +71,7 @@ export function FeaturedProjectsSection({ content }: Props) {
                       {project.status}
                     </span>
                   </div>
-                  <CardTitle className="text-base font-semibold group-hover:text-primary transition-colors">
+                  <CardTitle className="text-base font-semibold transition-colors group-hover:text-primary">
                     {project.title}
                   </CardTitle>
                   <CardDescription className="leading-relaxed">

@@ -77,7 +77,7 @@ export default async function AboutPage() {
       <SectionHeader
         badge="About"
         title="Lakshman Shenoy"
-        description="Thinker. Learner. Problem solver."
+        description={<>Thinker. <span className="text-blue-500">Learner.</span> Problem solver.</>}
       />
 
       <div className="reveal prose prose-neutral dark:prose-invert mt-8 max-w-none text-muted-foreground">

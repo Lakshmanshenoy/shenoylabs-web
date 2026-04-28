@@ -1,10 +1,12 @@
+import React from "react";
+
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 type SectionHeaderProps = {
   badge?: string;
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   className?: string;
 };
 

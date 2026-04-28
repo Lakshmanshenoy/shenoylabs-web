@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const navLinks = [
@@ -62,17 +63,29 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="footer-reveal border-t border-border/80 bg-card">
+    <footer className="footer-reveal border-t border-border/80 bg-background/85 backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="font-heading text-lg font-semibold">Shenoy Labs</h2>
-            <p className="mt-2 max-w-lg text-sm text-muted-foreground">
-              Hybrid product studio across projects, research, and practical systems.
-            </p>
+            {/* Light mode primary logo */}
+            <Image
+              src="/brand/Primary_logo_light.png"
+              alt="Shenoy Labs"
+              width={220}
+              height={80}
+              className="block dark:hidden"
+            />
+            {/* Dark mode primary logo */}
+            <Image
+              src="/brand/Primary_logo_dark.png"
+              alt="Shenoy Labs"
+              width={220}
+              height={80}
+              className="hidden dark:block"
+            />
           </div>
           <p className="text-sm text-muted-foreground">
-            Think. Learn. Solve.
+            Think. <span className="text-blue-500">Learn.</span> Solve.
           </p>
         </div>
 

@@ -56,59 +56,61 @@
   --font-mono:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
-  --background: #fcfcfd;
-  --foreground: #0f172a;
+  /* Brand palette: Deep Navy #0B0F1A | Primary Blue #3B82F6 | Light Blue #60A5FA | Light Gray #E5E7EB */
+  --background: #ffffff;
+  --foreground: #0b0f1a;
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #0b0f1a;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
+  --popover-foreground: #0b0f1a;
   --primary: #3b82f6;
-  --primary-foreground: #0f172a;
-  --secondary: #f8fafc;
-  --secondary-foreground: #0f172a;
-  --muted: #f8fafc;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0b0f1a;
+  --muted: #f1f5f9;
   --muted-foreground: #475569;
-  --accent: #bfdbfe;
-  --accent-foreground: #0f172a;
+  --accent: #dbeafe;
+  --accent-foreground: #0b0f1a;
   --destructive: #ef4444;
-  --border: #cbd5e1;
-  --input: #cbd5e1;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
   --ring: #3b82f6;
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --chart-1: #3b82f6;
+  --chart-2: #60a5fa;
+  --chart-3: #93c5fd;
+  --chart-4: #bfdbfe;
+  --chart-5: #dbeafe;
   --radius: 0.85rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #f8fafc;
+  --sidebar-foreground: #0b0f1a;
+  --sidebar-primary: #3b82f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #dbeafe;
+  --sidebar-accent-foreground: #0b0f1a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #3b82f6;
 }
 
 .dark {
-  --background: #0f172a;
-  --foreground: #f8fafc;
-  --card: #111c2f;
-  --card-foreground: #f8fafc;
-  --popover: #111c2f;
-  --popover-foreground: #f8fafc;
-  --primary: #7dd3fc;
-  --primary-foreground: #0f172a;
-  --secondary: #162338;
-  --secondary-foreground: #f8fafc;
-  --muted: #1b2a41;
-  --muted-foreground: #cbd5e1;
-  --accent: #1e293b;
-  --accent-foreground: #f8fafc;
+  /* Brand palette: Deep Navy #0B0F1A | Light Blue #60A5FA | Light Gray #E5E7EB */
+  --background: #0b0f1a;
+  --foreground: #e5e7eb;
+  --card: #0e1525;
+  --card-foreground: #e5e7eb;
+  --popover: #0e1525;
+  --popover-foreground: #e5e7eb;
+  --primary: #60a5fa;
+  --primary-foreground: #0b0f1a;
+  --secondary: #131b2e;
+  --secondary-foreground: #e5e7eb;
+  --muted: #131b2e;
+  --muted-foreground: #9ca3af;
+  --accent: #1a2744;
+  --accent-foreground: #e5e7eb;
   --destructive: #f87171;
-  --border: #334155;
-  --input: #334155;
-  --ring: #7dd3fc;
+  --border: #1e2d47;
+  --input: #1e2d47;
+  --ring: #60a5fa;
 }
 
 @layer base {
@@ -130,11 +132,11 @@
     line-height: 1.72;
     font-weight: 400;
     background-image:
-      radial-gradient(circle at 0% 0%, rgba(96, 165, 250, 0.12), transparent 38%),
-      radial-gradient(circle at 100% 0%, rgba(147, 197, 253, 0.1), transparent 40%);
+      radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--primary) 12%, transparent), transparent 38%),
+      radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 40%);
     text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: auto;
-    -moz-osx-font-smoothing: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   h1,
   h2,
@@ -171,7 +173,9 @@
 
 .soft-lift:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px -18px rgba(15, 23, 42, 0.35);
+  box-shadow:
+    0 8px 24px -8px color-mix(in srgb, var(--primary) 20%, transparent),
+    0 4px 12px -4px color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 /* Lightweight CSS-only entry animation. Avoids client-side class mutations
@@ -188,9 +192,18 @@
 }
 
 .reveal-group > *:nth-child(1) { animation-delay: 0ms; }
-.reveal-group > *:nth-child(2) { animation-delay: 60ms; }
-.reveal-group > *:nth-child(3) { animation-delay: 120ms; }
-.reveal-group > *:nth-child(4) { animation-delay: 180ms; }
+.reveal-group > *:nth-child(2) { animation-delay: 80ms; }
+.reveal-group > *:nth-child(3) { animation-delay: 160ms; }
+.reveal-group > *:nth-child(4) { animation-delay: 240ms; }
+.reveal-group > *:nth-child(5) { animation-delay: 320ms; }
+.reveal-group > *:nth-child(6) { animation-delay: 400ms; }
+
+/* Hero right panel — enters after the headline stagger settles */
+.reveal-delayed {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: enter-up 560ms ease-out 280ms both;
+}
 
 /* Render optimization for below-the-fold sections to improve first paint.
    Content is skipped until needed, while preserving layout via intrinsic size. */
@@ -205,6 +218,42 @@
   animation: enter-up 480ms ease-out 120ms forwards;
 }
 
+/* ── Ambient blob drift ───────────────────────────────────────────────────── */
+/* Very slow, organic float. Applied to hero background blobs so the hero
+   feels alive without distracting from content. */
+@keyframes blob-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(20px, -18px) scale(1.04); }
+  66%       { transform: translate(-14px, 10px) scale(0.97); }
+}
+
+@keyframes blob-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40%       { transform: translate(-18px, 14px) scale(1.06); }
+  75%       { transform: translate(12px, -10px) scale(0.96); }
+}
+
+.blob-drift {
+  animation: blob-drift 28s ease-in-out infinite;
+}
+
+.blob-drift-2 {
+  animation: blob-drift-2 36s ease-in-out infinite;
+}
+
+/* ── CSS scroll-driven reveals ────────────────────────────────────────────── */
+/* Uses the native Scroll-driven Animations API (Chrome 115+, Safari 18+).
+   Falls back to static (fully visible) in unsupported browsers. */
+@supports (animation-timeline: view()) {
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: enter-up 0.7s ease-out both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 28%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
@@ -213,7 +262,19 @@
     scroll-behavior: auto !important;
   }
 
+  .blob-drift,
+  .blob-drift-2 {
+    animation: none !important;
+  }
+
+  .scroll-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+
   .reveal,
+  .reveal-delayed,
   .reveal-group > * {
     opacity: 1 !important;
     transform: none !important;
