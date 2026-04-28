@@ -23,6 +23,11 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
+  icons: {
+    icon: [{ url: "/brand/Favicon_32_light.png", type: "image/png" }],
+    shortcut: [{ url: "/brand/Favicon_32_light.png", type: "image/png" }],
+    apple: [{ url: "/brand/Favicon_32_light.png", type: "image/png" }],
+  },
   title: {
     default: siteConfig.name,
     template: `%s`,
@@ -55,7 +60,6 @@ export const metadata: Metadata = {
     description: siteConfig.description,
     images: ["/api/og"],
   },
-
 };
 
 export default function RootLayout({
@@ -73,12 +77,45 @@ export default function RootLayout({
         <Script id="theme-init" strategy="beforeInteractive">
           {`
             try {
+              var lightFavicon = "/brand/Favicon_32_light.png";
+              var darkFavicon = "/brand/Favicon_32_dark.png";
+
+              function setFavicon(theme) {
+                var href = theme === "dark" ? darkFavicon : lightFavicon;
+                var rels = ["icon", "shortcut icon", "apple-touch-icon"];
+
+                rels.forEach(function (rel) {
+                  var selector = 'link[rel="' + rel + '"]';
+                  var link = document.head.querySelector(selector);
+                  if (!link) {
+                    link = document.createElement("link");
+                    link.setAttribute("rel", rel);
+                    document.head.appendChild(link);
+                  }
+                  link.setAttribute("href", href);
+                  if (rel !== "apple-touch-icon") {
+                    link.setAttribute("type", "image/png");
+                  }
+                });
+              }
+
               var stored = window.localStorage.getItem("theme");
               var theme = stored === "dark" || stored === "light"
                 ? stored
                 : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
               document.documentElement.classList.toggle("dark", theme === "dark");
               document.documentElement.style.colorScheme = theme;
+
+              setFavicon(theme);
+
+              var observer = new MutationObserver(function () {
+                var isDark = document.documentElement.classList.contains("dark");
+                setFavicon(isDark ? "dark" : "light");
+              });
+              observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ["class"],
+              });
             } catch {}
           `}
         </Script>
