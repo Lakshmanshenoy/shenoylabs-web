@@ -124,6 +124,11 @@ Click **Expert inputs** for three additional bean-quality parameters that furthe
   - **Caturra** (~1.0–1.3 %) — Bourbon-derived, mid-range arabica.
   - **Catimor** (~1.5–2.0 %) — Robusta hybrid, sits notably higher.
   - **Unknown** is the default if you are not sure which variety you have.
+- **Origin / Region:** Select the broad growing region where the beans were produced. CaffiLab applies a regional multiplier to the caffeine fraction based on known terroir and varietal patterns:
+  - **India / Southeast Asia** applies a +7.5 % factor on the midpoint estimate (range: ×1.05–1.10). Coffees from India, Vietnam, and Indonesia tend toward higher-caffeine varieties and growing conditions.
+  - **Africa** and **Latin America** are the reference baseline (factor: 1.00). Ethiopian, Kenyan, Colombian, and Brazilian lots are well-represented in the calibration data.
+  - **Not sure (default)** leaves the factor at 1.00. Use this if you do not know the origin.
+  - Providing any known region also tightens the confidence interval slightly by reducing the base brewing uncertainty by 1 percentage point.
 
 These Expert inputs do not change the brewing recovery model — they refine the starting caffeine fraction in the bean before any extraction calculation.
 

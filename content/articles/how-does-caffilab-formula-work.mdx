@@ -519,6 +519,55 @@ Named arabica cultivars have measurably different caffeine concentrations. Caffi
 
 For blends, the cultivar shift is weighted by the arabica fraction: `shift_applied = cultivar_shift × (arabica_percent / 100)`.
 
+#### Origin / Region factor (v3.0 model)
+
+The effective caffeine fraction is also scaled by a regional multiplier based on the broad origin of the beans. The full expression becomes:
+
+```text
+F_effective = F_mid × (1 - chicory/100) × F_region
+```
+
+Where `F_region` is derived from published caffeine variability data across producing regions:
+
+<table>
+	<thead>
+		<tr>
+			<th>Region</th>
+			<th>F_region range</th>
+			<th>Midpoint applied</th>
+			<th>Notes</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>India / Southeast Asia</td>
+			<td>×1.05–1.10</td>
+			<td>×1.075</td>
+			<td>Indian robusta-arabica blends and SE Asian robusta varieties skew higher.</td>
+		</tr>
+		<tr>
+			<td>Africa</td>
+			<td>×0.95–1.05</td>
+			<td>×1.000</td>
+			<td>Ethiopia, Kenya — widely studied; broad range centred on the global average.</td>
+		</tr>
+		<tr>
+			<td>Latin America</td>
+			<td>×0.95–1.05</td>
+			<td>×1.000</td>
+			<td>Brazil, Colombia, Central America — the calibration reference baseline.</td>
+		</tr>
+		<tr>
+			<td>Unknown (default)</td>
+			<td>—</td>
+			<td>×1.000</td>
+			<td>Neutral factor; backward-compatible when origin is unspecified.</td>
+		</tr>
+	</tbody>
+</table>
+
+Selecting any known region also tightens the confidence interval by reducing the base brewing uncertainty by 1 percentage point (e.g., 36 % floor → 35 % floor before other reductions apply).
+
 ---
 
 ## Uncertainty model

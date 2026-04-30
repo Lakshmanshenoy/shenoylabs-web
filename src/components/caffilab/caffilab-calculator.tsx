@@ -20,6 +20,7 @@ import {
 import {
   BREW_METHODS,
   GRIND_SIZES,
+  ORIGIN_REGIONS,
   defaultBrewWaterMl,
   defaultBrewTimeValue,
   defaultTemperatureValue,
@@ -36,6 +37,7 @@ import {
   type FilterType,
   type Freshness,
   type GrindSize,
+  type OriginRegion,
   type PackageClue,
   type PriceCurrency,
   type PriceUnit,
@@ -74,7 +76,8 @@ type FocusTopic =
   | "arabica_grade"
   | "elevation"
   | "extraction_quality"
-  | "cultivar";
+  | "cultivar"
+  | "origin_region";
 
 const brewMethods = Object.entries(BREW_METHODS) as Array<
   [BrewMethod, (typeof BREW_METHODS)[BrewMethod]]
@@ -127,6 +130,7 @@ const TOPIC_LABELS: Partial<Record<FocusTopic, string>> = {
   elevation: "Elevation",
   extraction_quality: "Extr. quality",
   cultivar: "Cultivar",
+  origin_region: "Origin / Region",
 };
 
 const priceCurrencies: PriceCurrency[] = [
@@ -166,6 +170,7 @@ const arabicaGradeValues: ArabicaGrade[] = ["specialty", "commercial"];
 const elevationBandValues: ElevationBand[] = ["unknown", "low", "mid", "high"];
 const extractionQualityValues: ExtractionQuality[] = ["average", "poor", "well_prepared"];
 const cultivarValues: Cultivar[] = ["unknown", "geisha", "sl28", "caturra", "catimor"];
+const originRegionValues: OriginRegion[] = ["unknown", "india_sea", "africa", "latin_america"];
 
 type CaffiLabSessionInputs = {
   brewMethod: BrewMethod;
@@ -204,6 +209,7 @@ type CaffiLabSessionInputs = {
   elevationBand: ElevationBand;
   extractionQuality: ExtractionQuality;
   cultivar: Cultivar;
+  originRegion: OriginRegion;
 };
 
 type CaffiLabSessionPayload = {
@@ -442,6 +448,7 @@ function getTopicExplanation({
     elevation: "Growing elevation slightly correlates with caffeine content through UV exposure and pest pressure. High-altitude farms (>1500 m) shift the estimated range upward by ~15 % of the range width; low-altitude (<800 m) shifts it downward by the same amount.",
     extraction_quality: "Espresso extraction quality captures channeling and puck preparation. A poorly prepared puck (uneven tamping, channeling) reduces caffeine extraction significantly; a well-prepared shot can yield a small recovery gain. Average is the neutral default.",
     cultivar: "Named arabica cultivar shifts the bean caffeine fraction range based on HPLC measurements. Geisha (~0.9–1.1 % dry weight) is distinctly lower; SL28 (~1.3–1.7 %) is elevated, typical of Kenyan lots; Caturra (~1.0–1.3 %) is a Bourbon-derived mid-range variety; Catimor (~1.5–2.0 %) is a Robusta hybrid and sits notably higher. Unknown is the safe default when you are not sure.",
+    origin_region: "Growing origin applies a regional multiplier to the caffeine fraction. India and Southeast Asia tend toward higher-caffeine varieties (+7.5 % on the midpoint estimate). Africa and Latin America are the global reference baseline. Selecting any region also tightens the confidence interval slightly by reducing the baseline brewing uncertainty by 1 percentage point.",
   };
 
   return notes[focusTopic];
@@ -642,6 +649,7 @@ export function CaffiLabCalculator() {
   const [elevationBand, setElevationBand] = useState<ElevationBand>("unknown");
   const [extractionQuality, setExtractionQuality] = useState<ExtractionQuality>("average");
   const [cultivar, setCultivar] = useState<Cultivar>("unknown");
+  const [originRegion, setOriginRegion] = useState<OriginRegion>("unknown");
   const [focusTopic, setFocusTopic] = useState<FocusTopic>("result");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showExpert, setShowExpert] = useState(false);
@@ -699,6 +707,7 @@ export function CaffiLabCalculator() {
         elevationBand,
         extractionQuality,
         cultivar,
+        originRegion,
       }),
     [
       arabicaPercent,
@@ -714,6 +723,7 @@ export function CaffiLabCalculator() {
       elevationBand,
       extractionQuality,
       cultivar,
+      originRegion,
       coffeeAmount,
       coffeePrice,
       customCaffeinePercent,
@@ -795,6 +805,7 @@ export function CaffiLabCalculator() {
       elevationBand,
       extractionQuality,
       cultivar,
+      originRegion,
     },
     model: {
       estimateFormula: "Estimate = G × F_mid × E × 1000",
@@ -881,6 +892,7 @@ export function CaffiLabCalculator() {
       setExtractionQuality(candidate.extractionQuality);
     }
     if (isOneOf(candidate.cultivar, cultivarValues)) setCultivar(candidate.cultivar);
+    if (isOneOf(candidate.originRegion, originRegionValues)) setOriginRegion(candidate.originRegion);
   }
 
   async function handleLoadSession(event: React.ChangeEvent<HTMLInputElement>) {
@@ -971,6 +983,7 @@ export function CaffiLabCalculator() {
       ["Arabica grade", arabicaGrade || "Not set", "secondary"],
       ["Cultivar", cultivar, "secondary"],
       ["Elevation", elevationBand, "secondary"],
+      ["Origin / Region", ORIGIN_REGIONS[originRegion].label, "secondary"],
     ];
     const parameterRows: Array<[string, string, "primary" | "secondary"]> = [
       ["Coffee dose", `${coffeeAmount} ${coffeeUnit}`, "primary"],
@@ -1599,6 +1612,7 @@ C(${crashEndHours.toFixed(1)}h) = ${remainingAfterCrash} mg</div>
     setElevationBand("unknown");
     setExtractionQuality("average");
     setCultivar("unknown");
+    setOriginRegion("unknown");
     setFocusTopic("result");
     setShowAdvanced(false);
     setShowExpert(false);
@@ -2637,6 +2651,25 @@ C(${crashEndHours.toFixed(1)}h) = ${remainingAfterCrash} mg</div>
                       </select>
                     </Field>
                   ) : null}
+
+                  <Field
+                    label="Origin / Region"
+                    topic="origin_region"
+                    onFocus={setFocusTopic}
+                    hint="Select the broad growing region to apply a regional caffeine factor (v3.0 model)."
+                  >
+                    <select
+                      value={originRegion}
+                      onChange={(event) => setOriginRegion(event.target.value as OriginRegion)}
+                      className={inputClass}
+                    >
+                      {originRegionValues.map((r) => (
+                        <option key={r} value={r}>
+                          {ORIGIN_REGIONS[r].label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
                 </div>
               )}
             </div>

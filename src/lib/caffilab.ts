@@ -64,6 +64,35 @@ export type ExtractionQuality = "average" | "poor" | "well_prepared";
  * Unknown/unspecified cultivars return 0 (backward compatible default). */
 export type Cultivar = "unknown" | "geisha" | "sl28" | "caturra" | "catimor";
 
+/**
+ * Coffee origin / growing region. Applied as a multiplicative factor on the
+ * effective caffeine fraction (F) per the v3.0 model upgrade spec.
+ *
+ * Factors reflect the mid-point of published cultivar-/terroir-associated
+ * caffeine variation within each major producing region:
+ *   India / SE Asia  → 1.075 (midpoint of 1.05–1.10)
+ *   Africa           → 1.000 (midpoint of 0.95–1.05; centred on 1.0)
+ *   Latin America    → 1.000 (reference region)
+ *   Unknown          → 1.000 (neutral default; backward compatible)
+ *
+ * Selecting a known region also tightens the confidence slightly: variance drops
+ * from the ±10 % base to ±9 % by reducing the brewing uncertainty floor by 1 pp.
+ */
+export type OriginRegion = "unknown" | "india_sea" | "africa" | "latin_america";
+
+export const ORIGIN_REGIONS: Record<OriginRegion, { label: string; factor: number }> = {
+  unknown:       { label: "Not sure (default)",              factor: 1.000 },
+  india_sea:     { label: "India / Southeast Asia",           factor: 1.075 },
+  africa:        { label: "Africa (Kenya, Ethiopia)",         factor: 1.000 },
+  latin_america: { label: "Latin America (Brazil, Colombia)", factor: 1.000 },
+};
+
+/** Returns the region-based multiplier for the caffeine fraction F. */
+export function getRegionFactor(region: OriginRegion | undefined): number {
+  if (!region) return 1.0;
+  return ORIGIN_REGIONS[region].factor;
+}
+
 export type GrindSize =
   | "extra_fine"
   | "fine"
@@ -116,6 +145,9 @@ export type CaffiLabInput = {
    * Geisha: ~0.9–1.1 % (notably lower). SL28: ~1.3–1.7 % (higher, Kenyan).
    * Caturra: ~1.0–1.3 % (typical Bourbon-derived). Catimor: ~1.5–2.0 % (Robusta hybrid). */
   cultivar?: Cultivar;
+  /** Growing origin / region. Applies a multiplicative factor to the effective
+   * caffeine fraction per the v3.0 regional model. Defaults to 1.0 (unknown). */
+  originRegion?: OriginRegion;
 };
 
 export type CaffiLabEstimate = {
@@ -1338,6 +1370,12 @@ function getBrewingUncertaintyPercent(
     uncertainty -= UNCERTAINTY_WEIGHTS.cultivar;
   }
 
+  // Known origin region: providing any region other than unknown reduces variance
+  // by 1 pp (e.g., ±10 % base → ±9 %) per the v3.0 confidence-adjustment spec.
+  if (input.originRegion !== undefined && input.originRegion !== "unknown") {
+    uncertainty -= 1;
+  }
+
   // Method-class inherent technique variance adjustments.
   // AeroPress (hybrid): recipe-style variation (inverted vs standard, ratio, steep time)
   // is the largest single uncertainty source for this method. Add +5 % base penalty.
@@ -1511,9 +1549,11 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
     input.brewMethod === "indian_filter"
       ? normalizePercent(input.chicoryPercent, DEFAULT_INDIAN_CHICORY_PERCENT)
       : 0;
-  const effectiveCaffeineFraction = caffeineFraction * (1 - chicoryPercent / 100);
-  const effectiveCaffeineFractionMin = caffeineFractionMin * (1 - chicoryPercent / 100);
-  const effectiveCaffeineFractionMax = caffeineFractionMax * (1 - chicoryPercent / 100);
+  // Region factor: multiplicative adjustment on F per the v3.0 regional model.
+  const regionFactor = getRegionFactor(input.originRegion);
+  const effectiveCaffeineFraction = caffeineFraction * (1 - chicoryPercent / 100) * regionFactor;
+  const effectiveCaffeineFractionMin = caffeineFractionMin * (1 - chicoryPercent / 100) * regionFactor;
+  const effectiveCaffeineFractionMax = caffeineFractionMax * (1 - chicoryPercent / 100) * regionFactor;
   const caffeineRecovery = getCaffeineRecovery(
     method,
     input,
