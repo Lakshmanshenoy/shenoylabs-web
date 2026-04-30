@@ -22,7 +22,6 @@ const baseInput: Omit<
   roastLevel: "medium",
   temperatureUnit: "c",
   agitation: "none",
-  waterMinerals: "unknown",
   freshness: "unknown",
   filterType: "paper",
 };

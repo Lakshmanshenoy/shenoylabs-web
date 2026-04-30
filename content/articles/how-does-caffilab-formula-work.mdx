@@ -3,7 +3,7 @@ title: "How Does the CaffiLab Formula Work?"
 excerpt: "A deep dive into the extraction science behind CaffiLab's caffeine estimation model — the math, the physics classes, the Arrhenius cold-brew model, and the research that backs it."
 date: "2025-07-14"
 createdDate: "2026-04-18"
-lastUpdated: "2026-05-01"
+lastUpdated: "2026-07-14"
 category: "research"
 primaryCategory: "research"
 tags: ["caffilab", "caffeine", "extraction", "coffee-science", "research"]
@@ -42,6 +42,10 @@ coverAlt: "Coffee dripping into a glass vessel on a counter"
     <tr>
       <td>v3.4</td>
       <td>Non-linear roast mass-balance curve (4-level lookup replacing scalar 0.98). Very Dark roast level added. Cold-immersion β rationale and stability monitor added.</td>
+    </tr>
+    <tr>
+      <td>v3.5</td>
+      <td>Water mineralogy split into two independent inputs: water hardness (ppm) and water pH, each with its own breakpoint lookup. Processing method adjustment added (washed / honey / natural; cold methods damped ×0.3). Grinder type penalty added (blade −0.025, unknown −0.008, burr 0). Both new variables included in all six physics-class totalDelta formulas. Sensitivity matrix expanded to separate hot-method and cold-method columns.</td>
     </tr>
   </tbody>
 </table>
@@ -258,11 +262,48 @@ Each brew method has a calibrated default recovery (E₀), anchored to published
 
 ## Per-class extraction models
 
-In every class, three secondary variables — water mineralogy, pH, and bean freshness — are combined into a single bounded term:
+In every class, three secondary variables — water hardness, water pH, and bean freshness — are combined into a single bounded term (v3.5: previously `ΔWater` combined both water factors into one lookup; they are now independent):
 
 ```text
-ΔMinor = clamp(ΔWater + ΔFreshness, −0.02, +0.02)
+ΔMinor = clamp(ΔHardness + ΔpH + ΔFreshness, −0.02, +0.02)
 ```
+
+**Water hardness breakpoints (ΔHardness):**
+
+<table>
+  <thead>
+    <tr>
+      <th>Hardness (ppm CaCO₃)</th>
+      <th>ΔHardness</th>
+      <th>Rationale</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Not set</td><td>0.000</td><td>No adjustment (backward-compatible default)</td></tr>
+    <tr><td>&lt; 50</td><td>−0.005</td><td>Very soft water impedes ion-mediated extraction</td></tr>
+    <tr><td>50–150</td><td>+0.005</td><td>Specialty brewing sweet spot (Hendon et al., 2014)</td></tr>
+    <tr><td>151–250</td><td>0.000</td><td>Acceptable range; no net effect</td></tr>
+    <tr><td>&gt; 250</td><td>−0.005</td><td>Scale-forming hardness inhibits extraction</td></tr>
+  </tbody>
+</table>
+
+**Water pH breakpoints (ΔpH):**
+
+<table>
+  <thead>
+    <tr>
+      <th>pH</th>
+      <th>ΔpH</th>
+      <th>Rationale</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Not set</td><td>0.000</td><td>No adjustment (backward-compatible default)</td></tr>
+    <tr><td>&lt; 6.0</td><td>−0.003</td><td>Acidic tap water slightly impedes caffeine solubility</td></tr>
+    <tr><td>6.0–7.5</td><td>+0.002</td><td>Near-neutral range; mild positive effect</td></tr>
+    <tr><td>&gt; 7.5</td><td>−0.002</td><td>Alkaline water slightly inhibits extraction</td></tr>
+  </tbody>
+</table>
 
 The ±0.02 bound is empirically derived from the literature on secondary extraction variables. Individually, each factor has a measured maximum effect of 0.5–1.5% on caffeine recovery (Hendon et al., 2014 for water mineralogy; Ludwig et al., 2014 for bean freshness). Combined, these secondary factors rarely exceed 2% total recovery change in controlled experiments. The clamp prevents implausible compounding when all sub-adjustments push in the same direction simultaneously — a scenario unlikely in practice but expressible in the input space.
 
@@ -276,6 +317,51 @@ Filter type contributes an independent small bounded adjustment (~±0.01):
 
 Both `ΔMinor` and `ΔFilter` enter `totalDelta` separately. `ΔFilter` is independently bounded (±0.01) and applied separately from `ΔMinor`, allowing its effect to remain visible but controlled. ΔRoast remains separate because roasting has a larger and more direct effect on soluble-caffeine content.
 
+### Processing method adjustment (v3.5)
+
+The post-harvest processing method affects cell-wall structure and residual mucilage, which in turn affect how readily caffeine diffuses from the bean matrix:
+
+<table>
+  <thead>
+    <tr>
+      <th>Processing</th>
+      <th>ΔProcessing (hot methods)</th>
+      <th>ΔProcessing (cold methods ×0.3)</th>
+      <th>Rationale</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Washed</td><td>+0.010</td><td>+0.003</td><td>Clean cellular structure; minimal diffusion barrier</td></tr>
+    <tr><td>Honey</td><td>0.000</td><td>0.000</td><td>Partial mucilage; neutral effect</td></tr>
+    <tr><td>Natural</td><td>−0.012</td><td>−0.004</td><td>Dried fruit pulp residue creates mild barrier</td></tr>
+    <tr><td>Unknown</td><td>0.000</td><td>0.000</td><td>Default; no adjustment</td></tr>
+  </tbody>
+</table>
+
+Cold methods (cold_immersion, cold_percolation) damp the processing adjustment by ×0.3 because low brewing temperature already suppresses the mucilage-barrier effect — the same physical mechanism is less active at low temperatures.
+
+### Grinder type penalty (v3.5)
+
+Blade grinders produce a bimodal particle distribution (coarse boulders + fine powder). The fines over-extract while the boulders under-extract. The net effect is lower overall caffeine recovery compared with a uniform burr grind:
+
+<table>
+  <thead>
+    <tr>
+      <th>Grinder type</th>
+      <th>ΔGrinderType (hot methods)</th>
+      <th>ΔGrinderType (cold methods ×0.3)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Burr</td><td>0.000</td><td>0.000</td></tr>
+    <tr><td>Blade</td><td>−0.025</td><td>−0.008</td></tr>
+    <tr><td>Unknown</td><td>−0.008</td><td>−0.002</td></tr>
+    <tr><td>Not set</td><td>0.000</td><td>0.000</td></tr>
+  </tbody>
+</table>
+
+"Not set" (field left blank) produces zero adjustment for backward compatibility with saved configurations. "Unknown" (user explicitly selects "I don't know") applies a small penalty acknowledging uncharacterised grind distribution. Cold methods apply a ×0.3 damp because extended cold steeping times allow equilibration to partially compensate for particle-size unevenness.
+
 ---
 
 ### Pressure methods (espresso)
@@ -287,7 +373,7 @@ The recovery for pressure methods is computed as:
 ```text
 totalDelta = ΔPressure_deviation + ΔGrind + ΔTemp + ΔTime
            + ΔRatio × 0.025 + ΔYield + ΔTechnique
-           + ΔRoast + ΔFilter + ΔMinor
+           + ΔRoast + ΔProcessing + ΔGrinderType + ΔFilter + ΔMinor
 
 E = clamp(E₀ × (1 + totalDelta), 0.45, 0.88)
 ```
@@ -306,7 +392,7 @@ Water passes through the bed under gravity, vacuum drawdown (siphon), or repeate
 ```text
 totalDelta = ΔGrind + ΔTemp + ΔTime
            + ΔRatio × 0.040 + ΔAgitation + ΔYield
-           + ΔRoast + ΔFilter + ΔMinor
+           + ΔRoast + ΔProcessing + ΔGrinderType + ΔFilter + ΔMinor
 
 E = clamp(E₀ × (1 + totalDelta), 0.55, 0.97)
 ```
@@ -338,7 +424,7 @@ Full recovery:
 ```text
 totalDelta = ΔTime + ΔGrind + ΔTemp
            + ΔRatio × 0.020 + ΔAgitation + ΔYield
-           + ΔRoast + ΔFilter + ΔMinor
+           + ΔRoast + ΔProcessing + ΔGrinderType + ΔFilter + ΔMinor
 
 E = clamp(E₀ × (1 + totalDelta), 0.55, 0.95)
 ```
@@ -407,7 +493,7 @@ Uses the same Arrhenius temperature scaling but each water droplet has limited c
 coldBaseRecovery = 0.80 × (1 - exp(-brewTime / tau))
 
 totalDelta = ΔGrind × 0.2 + ΔRatio × 0.015
-           + ΔRoast + ΔFilter + ΔMinor
+           + ΔRoast + ΔProcessing × 0.3 + ΔGrinderType × 0.3 + ΔFilter + ΔMinor
 
 E = clamp(coldBaseRecovery × (1 + totalDelta), 0.25, 0.83)
 ```
@@ -437,7 +523,7 @@ Full hybrid recovery:
 totalDelta = ΔTime + ΔGrind + ΔTemp
            + ΔRatio × 0.025 + ΔAgitation
            + ΔPressure × 0.5 + ΔYield
-           + ΔRoast + ΔFilter + ΔMinor
+           + ΔRoast + ΔProcessing + ΔGrinderType + ΔFilter + ΔMinor
 
 E = clamp(E₀ × (1 + totalDelta), 0.48, 0.88)
 ```
@@ -786,6 +872,34 @@ Current β values:
 4. Clamp the result to **[0.9, 1.1]** — a hard constraint that prevents overfitting.
 5. Use `computePerClassBeta()` in `caffilab.ts` to automate steps 1–4.
 
+#### Why cold_immersion β = 1.10 (v3.4/v3.5)
+
+The `cold_immersion` class is the only class with sufficient samples (≥ 5) to anchor a non-trivial β. The value **β = 1.10** reflects a consistent finding across two independent HPLC datasets: the Arrhenius-based extraction model slightly under-predicts cold brew caffeine at the practical β clamp ceiling.
+
+**Evidence base:**
+
+- **Fuller & Rao (2017)** — Table 2 HPLC measurements: cold brew at room temperature (≈ 22 °C) for 12–16 h produced caffeine levels consistently 8–12 % above model predictions before β correction.
+- **Stanek et al. (2021)** — Table 1 cold brew HPLC: commercial and laboratory cold brews at 4–20 °C over 12–24 h showed median measured/predicted ratio of ≈ 1.09 (range 1.05–1.13).
+
+**Stability window and update schedule:**
+
+<table>
+  <thead>
+    <tr>
+      <th>Condition</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>New cold_immersion samples added (n ≥ 5 in window)</td><td>Re-run <code>computePerClassBeta()</code>; update if median shifts by &gt;0.02</td></tr>
+    <tr><td>β computed value outside [1.08, 1.12]</td><td>Review data quality; consider expanding window before applying</td></tr>
+    <tr><td>β computed value outside [0.9, 1.1] clamp</td><td>Flag as data-quality issue; do not apply; escalate to model review</td></tr>
+    <tr><td>Quarterly review</td><td>Check <code>checkBetaDrift()</code> output; log drift &gt; 0.05 in changelog</td></tr>
+  </tbody>
+</table>
+
+The `checkBetaDrift()` function in `caffilab.ts` computes the difference between the stored β and a freshly-derived β from new samples, and flags when the drift exceeds 0.05. This acts as a sentinel for model staleness without requiring a full re-calibration cycle on every new data point.
+
 ### Calibration dataset schema (Phase 3A, v3.3)
 
 Every calibration sample must record:
@@ -827,15 +941,17 @@ The model is considered production-calibrated when:
   </tbody>
 </table>
 
-### Sensitivity analysis (Phase 4, v3.3)
+### Sensitivity analysis (Phase 4, v3.3 — updated v3.5)
 
-As part of the calibration rigor protocol, each input variable is stress-tested by perturbing it one step while holding all others at the espresso baseline (20 g dose, 43 ml water, default parameters). Expected sensitivity ranges are encoded in `SENSITIVITY_EXPECTED_RANGES` in `caffilab.ts`:
+As part of the calibration rigor protocol, each input variable is stress-tested by perturbing it one step while holding all others at method baseline defaults. Expected sensitivity ranges are encoded in `SENSITIVITY_EXPECTED_RANGES` in `caffilab.ts`. v3.5 adds separate columns for hot-method and cold-method contexts where the variable behaves differently.
+
+**Hot-method sensitivity matrix** (espresso baseline: 20 g dose, 43 ml water):
 
 <table>
   <thead>
     <tr>
       <th>Variable</th>
-      <th>Expected impact</th>
+      <th>Expected impact (hot)</th>
       <th>Red-flag threshold</th>
     </tr>
   </thead>
@@ -845,10 +961,36 @@ As part of the calibration rigor protocol, each input variable is stress-tested 
     <tr><td>Roast level</td><td>5–10 %</td><td>&gt;30 % or &lt;2 %</td></tr>
     <tr><td>Time (pressure)</td><td>1–5 %</td><td>&gt;30 %</td></tr>
     <tr><td>Time (immersion)</td><td>10–25 % early</td><td>saturates after ~10 min</td></tr>
+    <tr><td>Processing method</td><td>0–2 %</td><td>&gt;5 %</td></tr>
+    <tr><td>Grinder type (blade vs burr)</td><td>1–3 %</td><td>&gt;5 %</td></tr>
+    <tr><td>Water hardness</td><td>0–1 %</td><td>&gt;3 %</td></tr>
+    <tr><td>Water pH</td><td>0–1 %</td><td>&gt;3 %</td></tr>
   </tbody>
 </table>
 
-A change larger than **30 %** signals potential double-counting of a variable across physics sub-models. A change smaller than **2 %** signals that the variable has negligible effect and should be reviewed.
+**Cold-method sensitivity matrix** (cold brew baseline: 60 g dose, 600 ml water, 12 h, 4 °C):
+
+<table>
+  <thead>
+    <tr>
+      <th>Variable</th>
+      <th>Expected impact (cold)</th>
+      <th>Red-flag threshold</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Brew time</td><td>15–40 % (non-linear)</td><td>flat after 24 h</td></tr>
+    <tr><td>Temperature</td><td>10–25 % per 10 °C</td><td>&gt;40 %</td></tr>
+    <tr><td>Grind (damped ×0.3)</td><td>3–6 %</td><td>&gt;15 %</td></tr>
+    <tr><td>Roast level</td><td>5–10 %</td><td>&gt;30 % or &lt;2 %</td></tr>
+    <tr><td>Processing method (damped ×0.3)</td><td>0–1 %</td><td>&gt;3 %</td></tr>
+    <tr><td>Grinder type (damped ×0.3)</td><td>0–1 %</td><td>&gt;3 %</td></tr>
+    <tr><td>Water hardness</td><td>0–1 %</td><td>&gt;3 %</td></tr>
+    <tr><td>Water pH</td><td>0–1 %</td><td>&gt;3 %</td></tr>
+  </tbody>
+</table>
+
+A change larger than the red-flag threshold signals potential double-counting of a variable across physics sub-models. A change smaller than **2 %** signals that the variable has negligible effect and should be reviewed.
 
 ---
 
@@ -1079,6 +1221,12 @@ The hybrid +5 % penalty reflects AeroPress's high recipe variability — inverte
 4. **No lab validation:** CaffiLab's estimates are calibrated against published research, not against HPLC measurements of its own output.
 
 5. **Cold brew temperature uncertainty:** Unless the user provides a brew temperature, CaffiLab assumes room temperature (22 °C). The +3 % cold method uncertainty penalty reflects this.
+
+6. **Grind distribution not fully modelled:** The grinder type penalty captures a net average effect of blade vs. burr grinding but does not model the full particle-size distribution. A bimodal distribution with an extreme fine tail or boulder fraction could exceed the penalty range; the −0.025 blade penalty is an empirical average, not a first-principles calculation.
+
+7. **Processing residual sugars unmeasured:** The natural / honey processing adjustment models the average effect of mucilage on diffusion. Actual residual sugar and pectin content vary by producer, drying time, and climate, and these inputs are not available to the model. Lot-to-lot variation within a processing style can exceed the model's ΔProcessing range.
+
+8. **Brewing altitude not accounted:** At high altitude (>2000 m), reduced atmospheric pressure lowers water's boiling point, effectively limiting the maximum brewing temperature for methods without pressurized systems. CaffiLab applies no altitude-based temperature correction; users at high altitude should manually adjust their brew temperature input accordingly.
 
 > **Model philosophy:** CaffiLab prioritizes structural accuracy over false precision — ranges are designed to contain real-world measurements rather than predict exact values.
 

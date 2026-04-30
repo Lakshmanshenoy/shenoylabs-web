@@ -40,6 +40,8 @@ export type PackageClue =
 export type RoastLevel = "light" | "medium" | "dark" | "very_dark";
 export type AgitationLevel = "none" | "gentle" | "moderate" | "high";
 export type WaterMinerals = "unknown" | "soft" | "balanced" | "hard";
+export type ProcessingMethod = "washed" | "honey" | "natural" | "unknown";
+export type GrinderType = "burr" | "blade" | "unknown";
 export type Freshness = "unknown" | "fresh" | "rested" | "stale";
 export type FilterType = "paper" | "metal" | "cloth" | "none";
 
@@ -223,13 +225,23 @@ export type CalibrationSample = {
  *   < redFlagLow  ( 2 %) → variable is too weak; consider removing or merging
  */
 export const SENSITIVITY_EXPECTED_RANGES = {
-  grind:          { minPercent: 10, maxPercent: 20 },
-  ratio:          { minPercent:  5, maxPercent: 15 },
-  roast:          { minPercent:  5, maxPercent: 10 },
-  time_pressure:  { minPercent:  1, maxPercent:  5,  note: "Low; espresso time is seconds-scale" },
-  time_immersion: { minPercent: 10, maxPercent: 25,  note: "High early; saturates after ~10 min" },
-  redFlagHigh:    30,
-  redFlagLow:      2,
+  grind:            { minPercent: 10, maxPercent: 20 },
+  ratio:            { minPercent:  5, maxPercent: 15 },
+  roast:            { minPercent:  5, maxPercent: 10 },
+  time_pressure:    { minPercent:  1, maxPercent:  5,  note: "Low; espresso time is seconds-scale" },
+  time_immersion:   { minPercent: 10, maxPercent: 25,  note: "High early; saturates after ~10 min" },
+  processingMethod: {
+    hotMethods:  { min: 4, max: 7, redFlagAbove: 10 },
+    coldMethods: { min: 1, max: 2, redFlagAbove:  4 },
+  },
+  grinderType: {
+    hotMethods:  { min: 2, max: 5,   redFlagAbove: 8 },
+    coldMethods: { min: 0.5, max: 1.5, redFlagAbove: 3 },
+  },
+  waterHardness: { allMethods: { min: 0.3, max: 1.0, redFlagAbove: 3 } },
+  waterPH:       { allMethods: { min: 0.2, max: 0.6, redFlagAbove: 2 } },
+  redFlagHigh:   30,
+  redFlagLow:     2,
 } as const;
 
 /**
@@ -317,11 +329,13 @@ export type CaffiLabInput = {
   extractionYieldPercent?: number;
   pressureBars?: number;
   agitation: AgitationLevel;
-  waterMinerals: WaterMinerals;
+  waterHardnessPpm?: number;
   waterPh?: number;
   freshness: Freshness;
   filterType: FilterType;
   chicoryPercent?: number;
+  processingMethod?: ProcessingMethod;
+  grinderType?: GrinderType;
   // Expert inputs (see ArabicaGrade, ElevationBand, ExtractionQuality, Cultivar)
   arabicaGrade?: ArabicaGrade;
   elevationBand?: ElevationBand;
@@ -726,7 +740,10 @@ const UNCERTAINTY_WEIGHTS = {
   extractionYield: 6,
   pressure: 2,
   agitation: 2,
-  water: 3,
+  waterHardness: 1,
+  waterPh: 1,
+  processingMethod: 2,
+  grinderType: 1,
   freshness: 3,
   filter: 2,
   chicory: 3,
@@ -1161,32 +1178,54 @@ function getAgitationAdjustment(method: BrewMethodConfig, agitation: AgitationLe
   return 0;
 }
 
-function getWaterAdjustment(waterMinerals: WaterMinerals, waterPh: number | undefined) {
-  // Caffeine extraction is relatively mineral-independent compared to aromatic compounds
-  // (Hendon et al., 2014 focused primarily on flavor-active acids, not caffeine).
-  // Penalties are reduced accordingly; balanced water is kept as a mild positive signal.
-  let adjustment = 0;
+function getWaterHardnessAdjustment(hardnessPpm: number | null): number {
+  // Mineral hardness affects caffeine extraction via ion competition at the cell wall.
+  // Balanced water (50–150 ppm) is closest to specialty brewing standards.
+  // Very soft water (<50 ppm) slightly under-extracts; very hard (>250 ppm) inhibits.
+  if (hardnessPpm === null) return 0;
+  if (hardnessPpm < 50)   return -0.005;
+  if (hardnessPpm <= 150) return +0.005;
+  if (hardnessPpm <= 250) return  0.000;
+  return -0.005;
+}
 
-  if (waterMinerals === "soft") {
-    adjustment -= 0.005;
-  } else if (waterMinerals === "balanced") {
-    adjustment += 0.005;
-  } else if (waterMinerals === "hard") {
-    adjustment -= 0.007;
+function getWaterPhAdjustment(pH: number | null): number {
+  // Caffeine pKa ~10.4: neutral across the entire brewing pH range (6–8).
+  // Slightly acidic water has a minor positive effect on caffeine solubility;
+  // alkaline water (>7.5) slightly inhibits extraction.
+  if (pH === null) return 0;
+  if (pH < 6.0)   return -0.003;
+  if (pH <= 7.5)  return +0.002;
+  return -0.002;
+}
+
+const PROCESSING_EXTRACTION_DELTA: Record<ProcessingMethod, number> = {
+  // Washed: clean cellular structure → slightly higher extraction efficiency.
+  // Honey / Natural: residual mucilage and pectin create mild diffusion barrier.
+  washed:   +0.010,
+  honey:     0.000,
+  natural:  -0.012,
+  unknown:   0.000,
+};
+
+function getProcessingAdjustment(processingMethod: ProcessingMethod, physicsClass: BrewPhysics): number {
+  const base = PROCESSING_EXTRACTION_DELTA[processingMethod];
+  // Cold methods: low temperature suppresses the mucilage-barrier effect; damp to 30 %.
+  if (physicsClass === "cold_immersion" || physicsClass === "cold_percolation") {
+    return base * 0.3;
   }
+  return base;
+}
 
-  if (waterPh !== undefined) {
-    // Caffeine pKa ~10.4: neutral across the entire brewing pH range (6–8).
-    // Slightly acidic water has a minor positive effect on caffeine solubility;
-    // alkaline water (>7.8) slightly inhibits extraction.
-    if (waterPh < 6.5) {
-      adjustment += 0.003;
-    } else if (waterPh > 7.8) {
-      adjustment -= 0.006;
-    }
+function getGrinderTypePenalty(grinderType: GrinderType): number {
+  // Blade grinders produce a wide, uneven distribution — bimodal fines + boulders.
+  // This leads to over-extraction from fines and under-extraction from boulders.
+  // Net effect: lower overall caffeine recovery than a uniform burr grind.
+  switch (grinderType) {
+    case "burr":    return  0.000;
+    case "blade":   return -0.025;
+    case "unknown": return -0.008;
   }
-
-  return adjustment;
 }
 
 function getFreshnessAdjustment(freshness: Freshness) {
@@ -1218,14 +1257,15 @@ function getFilterAdjustment(filterType: FilterType) {
 }
 
 function getMinorAdjustment(
-  waterMinerals: WaterMinerals,
+  waterHardnessPpm: number | undefined,
   waterPh: number | undefined,
   freshness: Freshness,
 ): number {
   // Group water-chemistry and freshness signals into a single bounded factor.
   // Filter type is applied separately as an independent bounded adjustment (~±0.01).
   return clamp(
-    getWaterAdjustment(waterMinerals, waterPh) +
+    getWaterHardnessAdjustment(waterHardnessPpm ?? null) +
+      getWaterPhAdjustment(waterPh ?? null) +
       getFreshnessAdjustment(freshness),
     -0.02,
     0.02,
@@ -1318,7 +1358,7 @@ function getCaffeineRecovery(
   extractionYieldPercent: number,
 ) {
   // Shared adjustments applied by all sub-models unless overridden.
-  const minorAdj = getMinorAdjustment(input.waterMinerals, input.waterPh, input.freshness);
+  const minorAdj = getMinorAdjustment(input.waterHardnessPpm, input.waterPh, input.freshness);
   const filterAdj = getFilterAdjustment(input.filterType);
   const roastAdj = getRoastAdjustment(input.roastLevel);
   const yieldAdj = getExtractionYieldAdjustment(method, extractionYieldPercent);
@@ -1341,10 +1381,12 @@ function getCaffeineRecovery(
       const ratioMidpoint = (method.ratioRange[0] + method.ratioRange[1]) / 2;
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.025, -0.025, 0.025);
       const techniqueAdj = getExtractionQualityAdjustment(method, input.extractionQuality);
+      const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "pressure");
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) : 0;
       const totalDelta =
         pressureAdj + grindAdj + tempAdj + timeAdj +
         ratioAdj + yieldAdj + techniqueAdj +
-        roastAdj + filterAdj + minorAdj;
+        roastAdj + processingAdj + grinderTypeAdj + filterAdj + minorAdj;
       return clamp(method.defaultRecovery * (1 + totalDelta), 0.45, 0.88);
     }
 
@@ -1366,10 +1408,12 @@ function getCaffeineRecovery(
       // Higher ratio = more solvent → higher % extraction (up to ceiling).
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.040, -0.035, 0.035);
       const agitAdj = getAgitationAdjustment(method, input.agitation);
+      const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "percolation");
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) : 0;
       const totalDelta =
         grindAdj + tempAdj + timeAdj +
         ratioAdj + agitAdj + yieldAdj +
-        roastAdj + filterAdj + minorAdj;
+        roastAdj + processingAdj + grinderTypeAdj + filterAdj + minorAdj;
       return clamp(method.defaultRecovery * (1 + totalDelta), 0.55, 0.97);
     }
 
@@ -1394,10 +1438,12 @@ function getCaffeineRecovery(
       const ratioMidpoint = (method.ratioRange[0] + method.ratioRange[1]) / 2;
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.020, -0.020, 0.020);
       const agitAdj = getAgitationAdjustment(method, input.agitation);
+      const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "immersion");
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) : 0;
       const totalDelta =
         timeAdj + grindAdj + tempAdj +
         ratioAdj + agitAdj + yieldAdj +
-        roastAdj + filterAdj + minorAdj;
+        roastAdj + processingAdj + grinderTypeAdj + filterAdj + minorAdj;
       return clamp(method.defaultRecovery * (1 + totalDelta), 0.55, 0.95);
     }
 
@@ -1426,10 +1472,12 @@ function getCaffeineRecovery(
       const agitAdj = getAgitationAdjustment(method, input.agitation) * 0.5;
       const ratioMidpoint = (method.ratioRange[0] + method.ratioRange[1]) / 2;
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.015, -0.015, 0.015);
+      const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "cold_immersion");
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) * 0.3 : 0;
 
       const totalDelta =
         grindAdj + agitAdj + ratioAdj +
-        roastAdj + filterAdj + minorAdj;
+        roastAdj + processingAdj + grinderTypeAdj + filterAdj + minorAdj;
       return clamp(coldBaseRecovery * (1 + totalDelta), 0.30, 0.90);
     }
 
@@ -1451,10 +1499,12 @@ function getCaffeineRecovery(
       const grindAdj = clamp(getGrindAdjustment(method, grindSize) * 0.2, -0.010, 0.010);
       const ratioMidpoint = (method.ratioRange[0] + method.ratioRange[1]) / 2;
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.015, -0.015, 0.015);
+      const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "cold_percolation");
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) * 0.3 : 0;
 
       const totalDelta =
         grindAdj + ratioAdj +
-        roastAdj + filterAdj + minorAdj;
+        roastAdj + processingAdj + grinderTypeAdj + filterAdj + minorAdj;
       return clamp(coldBaseRecovery * (1 + totalDelta), 0.25, 0.83);
     }
 
@@ -1490,10 +1540,12 @@ function getCaffeineRecovery(
       } else {
         timeAdj = getTimeAdjustment(method, brewTimeMinutes);
       }
+      const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "hybrid");
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) : 0;
       const totalDelta =
         timeAdj + grindAdj + tempAdj +
         ratioAdj + agitAdj + pressureAdj + yieldAdj +
-        roastAdj + filterAdj + minorAdj;
+        roastAdj + processingAdj + grinderTypeAdj + filterAdj + minorAdj;
       return clamp(method.defaultRecovery * (1 + totalDelta), 0.48, 0.88);
     }
   }
@@ -1543,8 +1595,20 @@ function getBrewingUncertaintyPercent(
     uncertainty -= UNCERTAINTY_WEIGHTS.agitation;
   }
 
-  if (input.waterMinerals !== "unknown" || input.waterPh !== undefined) {
-    uncertainty -= UNCERTAINTY_WEIGHTS.water;
+  if (input.waterHardnessPpm !== undefined) {
+    uncertainty -= UNCERTAINTY_WEIGHTS.waterHardness;
+  }
+
+  if (input.waterPh !== undefined) {
+    uncertainty -= UNCERTAINTY_WEIGHTS.waterPh;
+  }
+
+  if (input.processingMethod !== undefined && input.processingMethod !== "unknown") {
+    uncertainty -= UNCERTAINTY_WEIGHTS.processingMethod;
+  }
+
+  if (input.grinderType !== undefined && input.grinderType !== "unknown") {
+    uncertainty -= UNCERTAINTY_WEIGHTS.grinderType;
   }
 
   if (input.freshness !== "unknown") {
@@ -1649,7 +1713,7 @@ function getInputCountBuckets(input: CaffiLabInput) {
     },
     {
       applicable: true,
-      known: input.waterMinerals !== "unknown" || input.waterPh !== undefined,
+      known: input.waterHardnessPpm !== undefined || input.waterPh !== undefined,
     },
     { applicable: true, known: input.freshness !== "unknown" },
     { applicable: true, known: Boolean(input.filterType) },

@@ -39,15 +39,16 @@ import {
   type FilterType,
   type Freshness,
   type GrindSize,
+  type GrinderType,
   type OriginRegion,
   type PackageClue,
   type PriceCurrency,
   type PriceUnit,
+  type ProcessingMethod,
   type RoastLevel,
   type TemperatureUnit,
   type TimeUnit,
   type VolumeUnit,
-  type WaterMinerals,
   type WeightUnit,
 } from "@/lib/caffilab";
 import { cn } from "@/lib/utils";
@@ -165,7 +166,8 @@ const packageClueValues: PackageClue[] = [
 ];
 const roastLevelValues: RoastLevel[] = ["light", "medium", "dark", "very_dark"];
 const agitationValues: AgitationLevel[] = ["none", "gentle", "moderate", "high"];
-const waterMineralsValues: WaterMinerals[] = ["unknown", "soft", "balanced", "hard"];
+const processingMethodValues: ProcessingMethod[] = ["unknown", "washed", "honey", "natural"];
+const grinderTypeValues: GrinderType[] = ["unknown", "burr", "blade"];
 const freshnessValues: Freshness[] = ["unknown", "fresh", "rested", "stale"];
 const filterTypeValues: FilterType[] = ["paper", "metal", "cloth", "none"];
 const arabicaGradeValues: ArabicaGrade[] = ["specialty", "commercial"];
@@ -202,11 +204,13 @@ type CaffiLabSessionInputs = {
   extractionYieldPercent: string;
   pressureBars: string;
   agitation: AgitationLevel;
-  waterMinerals: WaterMinerals;
+  waterHardnessPpm: string;
   waterPh: string;
   freshness: Freshness;
   filterType: FilterType;
   chicoryPercent: string;
+  processingMethod: ProcessingMethod;
+  grinderType: GrinderType;
   arabicaGrade: ArabicaGrade | "";
   elevationBand: ElevationBand;
   extractionQuality: ExtractionQuality;
@@ -442,7 +446,7 @@ function getTopicExplanation({
     yield: `Extraction yield defaults to ${method.defaultYieldPercent}% for ${method.label}. If you measured TDS/yield, entering it is one of the strongest ways to calibrate the estimate.`,
     pressure: "Pressure is only shown for espresso. Around 9 bar is treated as the target; pressure changes are kept modest because grind/flow usually explain more caffeine variation than pressure alone.",
     agitation: "Agitation or stirring increases contact between water and grounds, so it nudges recovery upward for immersion and manual brew methods.",
-    water_chemistry: "Water minerals and pH are a small caffeine correction but a meaningful extraction clue. Balanced mineral water is treated as closest to specialty brewing standards.",
+    water_chemistry: "Water hardness (ppm) and pH each shift caffeine extraction slightly. Balanced water (50–150 ppm) and near-neutral pH (6.5–7.5) are closest to specialty brewing standards. Both fields are optional and default to zero adjustment.",
     freshness: "Bean freshness changes gas, flow, and extraction behavior. Very fresh coffee can resist even extraction; stale coffee often loses volatile structure and extracts less predictably.",
     filter: "Filter type mainly changes oils and insoluble material, but it can slightly shift measured strength. Paper is a touch cleaner/lower; metal and no-filter methods retain more material.",
     chicory: `Indian filter coffee often includes chicory. CaffiLab defaults to ${chicoryPercent || "20"}% chicory for this method; chicory contributes body and bitterness but essentially no caffeine.`,
@@ -642,8 +646,10 @@ export function CaffiLabCalculator() {
   const [extractionYieldPercent, setExtractionYieldPercent] = useState("");
   const [pressureBars, setPressureBars] = useState("9");
   const [agitation, setAgitation] = useState<AgitationLevel>("none");
-  const [waterMinerals, setWaterMinerals] = useState<WaterMinerals>("unknown");
+  const [waterHardnessPpm, setWaterHardnessPpm] = useState("");
   const [waterPh, setWaterPh] = useState("");
+  const [processingMethod, setProcessingMethod] = useState<ProcessingMethod>("unknown");
+  const [grinderType, setGrinderType] = useState<GrinderType>("unknown");
   const [freshness, setFreshness] = useState<Freshness>("unknown");
   const [filterType, setFilterType] = useState<FilterType>("paper");
   const [chicoryPercent, setChicoryPercent] = useState("20");
@@ -700,8 +706,10 @@ export function CaffiLabCalculator() {
         extractionYieldPercent: parseOptionalNumber(extractionYieldPercent),
         pressureBars: parseOptionalNumber(pressureBars),
         agitation,
-        waterMinerals,
+        waterHardnessPpm: parseOptionalNumber(waterHardnessPpm),
         waterPh: parseOptionalNumber(waterPh),
+        processingMethod,
+        grinderType,
         freshness,
         filterType,
         chicoryPercent: parseOptionalNumber(chicoryPercent),
@@ -746,8 +754,10 @@ export function CaffiLabCalculator() {
       servingUnit,
       temperatureAmount,
       temperatureUnit,
-      waterMinerals,
+      waterHardnessPpm,
       waterPh,
+      processingMethod,
+      grinderType,
       robustaPercent,
     ],
   );
@@ -798,11 +808,13 @@ export function CaffiLabCalculator() {
       extractionYieldPercent,
       pressureBars,
       agitation,
-      waterMinerals,
+      waterHardnessPpm,
       waterPh,
       freshness,
       filterType,
       chicoryPercent,
+      processingMethod,
+      grinderType,
       arabicaGrade,
       elevationBand,
       extractionQuality,
@@ -881,8 +893,10 @@ export function CaffiLabCalculator() {
     if (typeof candidate.extractionYieldPercent === "string") setExtractionYieldPercent(candidate.extractionYieldPercent);
     if (typeof candidate.pressureBars === "string") setPressureBars(candidate.pressureBars);
     if (isOneOf(candidate.agitation, agitationValues)) setAgitation(candidate.agitation);
-    if (isOneOf(candidate.waterMinerals, waterMineralsValues)) setWaterMinerals(candidate.waterMinerals);
+    if (typeof candidate.waterHardnessPpm === "string") setWaterHardnessPpm(candidate.waterHardnessPpm);
     if (typeof candidate.waterPh === "string") setWaterPh(candidate.waterPh);
+    if (isOneOf(candidate.processingMethod, processingMethodValues)) setProcessingMethod(candidate.processingMethod);
+    if (isOneOf(candidate.grinderType, grinderTypeValues)) setGrinderType(candidate.grinderType);
     if (isOneOf(candidate.freshness, freshnessValues)) setFreshness(candidate.freshness);
     if (isOneOf(candidate.filterType, filterTypeValues)) setFilterType(candidate.filterType);
     if (typeof candidate.chicoryPercent === "string") setChicoryPercent(candidate.chicoryPercent);
@@ -994,7 +1008,7 @@ export function CaffiLabCalculator() {
       ["Extraction yield %", extractionYieldPercent || "Auto", "primary"],
       ["Pressure (bar)", pressureBars || "Not set", "secondary"],
       ["Agitation", agitation, "secondary"],
-      ["Water minerals", waterMinerals, "primary"],
+      ["Water hardness (ppm)", waterHardnessPpm || "Not set", "primary"],
       ["Water pH", waterPh || "Not set", "secondary"],
       ["Freshness", freshness, "secondary"],
       ["Filter", filterType, "secondary"],
@@ -1628,7 +1642,7 @@ C(${crashEndHours.toFixed(1)}h) = ${remainingAfterCrash} mg</div>
     setExtractionYieldPercent("");
     setPressureBars("9");
     setAgitation("none");
-    setWaterMinerals("unknown");
+    setWaterHardnessPpm("");
     setWaterPh("");
     setFreshness("unknown");
     setFilterType("paper");
@@ -2069,6 +2083,24 @@ C(${crashEndHours.toFixed(1)}h) = ${remainingAfterCrash} mg</div>
                 </Field>
 
                 <Field
+                  label="Processing method"
+                  topic="bean_detail"
+                  onFocus={setFocusTopic}
+                  hint="Washed beans extract slightly more; natural less."
+                >
+                  <select
+                    value={processingMethod}
+                    onChange={(event) => setProcessingMethod(event.target.value as ProcessingMethod)}
+                    className={inputClass}
+                  >
+                    <option value="unknown">Not sure</option>
+                    <option value="washed">Washed / wet-processed</option>
+                    <option value="honey">Honey / semi-washed</option>
+                    <option value="natural">Natural / dry-processed</option>
+                  </select>
+                </Field>
+
+                <Field
                   label="Coffee"
                   topic="coffee"
                   onFocus={setFocusTopic}
@@ -2364,6 +2396,23 @@ C(${crashEndHours.toFixed(1)}h) = ${remainingAfterCrash} mg</div>
                 </Field>
 
                 <Field
+                  label="Grinder type"
+                  topic="grind"
+                  onFocus={setFocusTopic}
+                  hint="Blade grinders produce uneven particles, reducing recovery."
+                >
+                  <select
+                    value={grinderType}
+                    onChange={(event) => setGrinderType(event.target.value as GrinderType)}
+                    className={inputClass}
+                  >
+                    <option value="unknown">Not sure</option>
+                    <option value="burr">Burr grinder</option>
+                    <option value="blade">Blade grinder</option>
+                  </select>
+                </Field>
+
+                <Field
                   label="Roast level"
                   topic="roast"
                   onFocus={setFocusTopic}
@@ -2467,23 +2516,21 @@ C(${crashEndHours.toFixed(1)}h) = ${remainingAfterCrash} mg</div>
                 ) : null}
 
                 <Field
-                  label="Water minerals"
+                  label="Water hardness"
                   topic="water_chemistry"
                   onFocus={setFocusTopic}
-                  hint="Balanced approximates specialty brewing water."
+                  hint="Optional. Balanced is 50–150 ppm. Hard water >250 ppm."
                 >
-                  <select
-                    value={waterMinerals}
-                    onChange={(event) =>
-                      setWaterMinerals(event.target.value as WaterMinerals)
-                    }
+                  <input
+                    value={waterHardnessPpm}
+                    onChange={(event) => setWaterHardnessPpm(event.target.value)}
+                    inputMode="decimal"
+                    max="1000"
+                    min="0"
+                    placeholder="ppm (e.g. 120)"
+                    type="number"
                     className={inputClass}
-                  >
-                    <option value="unknown">Not sure</option>
-                    <option value="soft">Soft / low mineral</option>
-                    <option value="balanced">Balanced</option>
-                    <option value="hard">Hard / high alkalinity</option>
-                  </select>
+                  />
                 </Field>
 
                 <Field
