@@ -347,6 +347,9 @@ export type CaffiLabInput = {
   /** Growing origin / region. Applies a multiplicative factor to the effective
    * caffeine fraction per the v3.0 regional model. Defaults to 1.0 (unknown). */
   originRegion?: OriginRegion;
+  /** AeroPress only. Inverted setup eliminates drip-through during the steep phase,
+   * raising effective extraction yield relative to the standard (upright) setup. */
+  aeropressInverted?: boolean;
 };
 
 export type CaffiLabEstimate = {
@@ -1217,14 +1220,19 @@ function getProcessingAdjustment(processingMethod: ProcessingMethod, physicsClas
   return base;
 }
 
-function getGrinderTypePenalty(grinderType: GrinderType): number {
+function getGrinderTypePenalty(grinderType: GrinderType, physicsClass: BrewPhysics): number {
   // Blade grinders produce a wide, uneven distribution — bimodal fines + boulders.
-  // This leads to over-extraction from fines and under-extraction from boulders.
-  // Net effect: lower overall caffeine recovery than a uniform burr grind.
+  // Percolation / pressure: boulders create channels → strong under-extraction penalty.
+  // Immersion: fines over-extract, partially compensating for boulders → milder penalty.
+  // Hybrid: intermediate between immersion and percolation archetypes.
+  // Cold methods: callers additionally scale by 0.3; base kept at percolation level.
   switch (grinderType) {
     case "burr":    return  0.000;
-    case "blade":   return -0.025;
     case "unknown": return -0.008;
+    case "blade":
+      if (physicsClass === "immersion") return -0.010;
+      if (physicsClass === "hybrid")    return -0.018;
+      return -0.025; // pressure, percolation, cold_immersion (×0.3), cold_percolation (×0.3)
   }
 }
 
@@ -1256,6 +1264,17 @@ function getFilterAdjustment(filterType: FilterType) {
   return 0;
 }
 
+function getHighBufferInteraction(hardnessPpm: number | undefined, pH: number | undefined): number {
+  // High pH (>7.5) combined with high hardness (>250 ppm): the carbonate / bicarbonate
+  // buffer system amplifies resistance to caffeine extraction beyond independent linear
+  // effects. Each factor alone is captured by getWaterHardnessAdjustment / getWaterPhAdjustment;
+  // this term captures the synergistic penalty.
+  if (hardnessPpm !== undefined && pH !== undefined && hardnessPpm > 250 && pH > 7.5) {
+    return -0.007;
+  }
+  return 0;
+}
+
 function getMinorAdjustment(
   waterHardnessPpm: number | undefined,
   waterPh: number | undefined,
@@ -1266,6 +1285,7 @@ function getMinorAdjustment(
   return clamp(
     getWaterHardnessAdjustment(waterHardnessPpm ?? null) +
       getWaterPhAdjustment(waterPh ?? null) +
+      getHighBufferInteraction(waterHardnessPpm, waterPh) +
       getFreshnessAdjustment(freshness),
     -0.02,
     0.02,
@@ -1382,7 +1402,7 @@ function getCaffeineRecovery(
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.025, -0.025, 0.025);
       const techniqueAdj = getExtractionQualityAdjustment(method, input.extractionQuality);
       const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "pressure");
-      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) : 0;
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType, "pressure") : 0;
       const totalDelta =
         pressureAdj + grindAdj + tempAdj + timeAdj +
         ratioAdj + yieldAdj + techniqueAdj +
@@ -1409,7 +1429,7 @@ function getCaffeineRecovery(
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.040, -0.035, 0.035);
       const agitAdj = getAgitationAdjustment(method, input.agitation);
       const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "percolation");
-      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) : 0;
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType, "percolation") : 0;
       const totalDelta =
         grindAdj + tempAdj + timeAdj +
         ratioAdj + agitAdj + yieldAdj +
@@ -1439,7 +1459,7 @@ function getCaffeineRecovery(
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.020, -0.020, 0.020);
       const agitAdj = getAgitationAdjustment(method, input.agitation);
       const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "immersion");
-      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) : 0;
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType, "immersion") : 0;
       const totalDelta =
         timeAdj + grindAdj + tempAdj +
         ratioAdj + agitAdj + yieldAdj +
@@ -1473,7 +1493,7 @@ function getCaffeineRecovery(
       const ratioMidpoint = (method.ratioRange[0] + method.ratioRange[1]) / 2;
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.015, -0.015, 0.015);
       const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "cold_immersion");
-      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) * 0.3 : 0;
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType, "cold_immersion") * 0.3 : 0;
 
       const totalDelta =
         grindAdj + agitAdj + ratioAdj +
@@ -1500,7 +1520,7 @@ function getCaffeineRecovery(
       const ratioMidpoint = (method.ratioRange[0] + method.ratioRange[1]) / 2;
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.015, -0.015, 0.015);
       const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "cold_percolation");
-      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) * 0.3 : 0;
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType, "cold_percolation") * 0.3 : 0;
 
       const totalDelta =
         grindAdj + ratioAdj +
@@ -1541,11 +1561,13 @@ function getCaffeineRecovery(
         timeAdj = getTimeAdjustment(method, brewTimeMinutes);
       }
       const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "hybrid");
-      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) : 0;
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType, "hybrid") : 0;
+      // Inverted AeroPress eliminates drip-through during the steep phase → higher yield.
+      const inversionAdj = isShortImmersion && input.aeropressInverted ? 0.04 : 0;
       const totalDelta =
         timeAdj + grindAdj + tempAdj +
         ratioAdj + agitAdj + pressureAdj + yieldAdj +
-        roastAdj + processingAdj + grinderTypeAdj + filterAdj + minorAdj;
+        roastAdj + processingAdj + grinderTypeAdj + inversionAdj + filterAdj + minorAdj;
       return clamp(method.defaultRecovery * (1 + totalDelta), 0.48, 0.88);
     }
   }
@@ -1860,7 +1882,9 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
   // Phase 6 (v3.2 optional): Elevation micro-refinement on extraction recovery.
   // High-altitude beans are physically denser (thicker cell walls from slow growth),
   // which slightly impedes solvent penetration during extraction. Effect kept < 2%.
-  if (input.elevationBand === "high") {
+  // At boiling temperature (≥ 95 °C), thermal energy overcomes the density resistance
+  // of high-altitude beans, so the micro-refinement only applies for sub-boiling brews.
+  if (input.elevationBand === "high" && temperatureC < 95) {
     caffeineRecovery = clamp(caffeineRecovery * 0.98, 0.25, 0.97);
   }
   // Phase 3 advanced (v3.2): Per-physics-class beta correction.

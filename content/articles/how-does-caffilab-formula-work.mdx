@@ -47,6 +47,10 @@ coverAlt: "Coffee dripping into a glass vessel on a counter"
       <td>v3.5</td>
       <td>Water mineralogy split into two independent inputs: water hardness (ppm) and water pH, each with its own breakpoint lookup. Processing method adjustment added (washed / honey / natural; cold methods damped ×0.3). Grinder type penalty added (blade −0.025, unknown −0.008, burr 0). Both new variables included in all six physics-class totalDelta formulas. Sensitivity matrix expanded to separate hot-method and cold-method columns.</td>
     </tr>
+    <tr>
+      <td>v3.5.2</td>
+      <td>Blade-grinder penalty scaled by physics class: −0.010 (immersion), −0.018 (hybrid), −0.025 (percolation/pressure). High-buffer water interaction added: additional −0.007 when pH > 7.5 and hardness > 250 ppm simultaneously. AeroPress inversion toggle added: +0.04 recovery for inverted setup. Elevation extraction micro-refinement conditioned on T &lt; 95 °C (at boiling point, thermal energy overcomes high-altitude cell-wall density).</td>
+    </tr>
   </tbody>
 </table>
 
@@ -262,10 +266,10 @@ Each brew method has a calibrated default recovery (E₀), anchored to published
 
 ## Per-class extraction models
 
-In every class, three secondary variables — water hardness, water pH, and bean freshness — are combined into a single bounded term (v3.5: previously `ΔWater` combined both water factors into one lookup; they are now independent):
+In every class, three secondary variables — water hardness, water pH, and bean freshness — are combined into a single bounded term (v3.5: previously `ΔWater` combined both water factors into one lookup; they are now independent; v3.5.2: high-buffer interaction term added):
 
 ```text
-ΔMinor = clamp(ΔHardness + ΔpH + ΔFreshness, −0.02, +0.02)
+ΔMinor = clamp(ΔHardness + ΔpH + ΔHighBuffer + ΔFreshness, −0.02, +0.02)
 ```
 
 **Water hardness breakpoints (ΔHardness):**
@@ -305,6 +309,24 @@ In every class, three secondary variables — water hardness, water pH, and bean
   </tbody>
 </table>
 
+**High-buffer interaction (ΔHighBuffer, v3.5.2):**
+
+When water pH > 7.5 **and** hardness > 250 ppm simultaneously, the carbonate / bicarbonate buffer system amplifies resistance to caffeine extraction beyond what the independent ΔHardness and ΔpH terms capture. Each factor alone is a first-order inhibitor; combined, they create a reinforcing buffer matrix that more aggressively resists solvation:
+
+<table>
+  <thead>
+    <tr>
+      <th>Condition</th>
+      <th>ΔHighBuffer</th>
+      <th>Rationale</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Hardness &gt; 250 ppm <strong>and</strong> pH &gt; 7.5</td><td>−0.007</td><td>Synergistic carbonate-buffer resistance to extraction</td></tr>
+    <tr><td>Otherwise</td><td>0.000</td><td>No additional interaction penalty</td></tr>
+  </tbody>
+</table>
+
 The ±0.02 bound is empirically derived from the literature on secondary extraction variables. Individually, each factor has a measured maximum effect of 0.5–1.5% on caffeine recovery (Hendon et al., 2014 for water mineralogy; Ludwig et al., 2014 for bean freshness). Combined, these secondary factors rarely exceed 2% total recovery change in controlled experiments. The clamp prevents implausible compounding when all sub-adjustments push in the same direction simultaneously — a scenario unlikely in practice but expressible in the input space.
 
 This bound is deliberately conservative. If future calibration data shows secondary factors consistently reaching the 2% ceiling, the bound should be reviewed and the variables should be elevated to independent terms.
@@ -340,23 +362,30 @@ The post-harvest processing method affects cell-wall structure and residual muci
 
 Cold methods (cold_immersion, cold_percolation) damp the processing adjustment by ×0.3 because low brewing temperature already suppresses the mucilage-barrier effect — the same physical mechanism is less active at low temperatures.
 
-### Grinder type penalty (v3.5)
+### Grinder type penalty (v3.5, scaled by physics class in v3.5.2)
 
-Blade grinders produce a bimodal particle distribution (coarse boulders + fine powder). The fines over-extract while the boulders under-extract. The net effect is lower overall caffeine recovery compared with a uniform burr grind:
+Blade grinders produce a bimodal particle distribution (coarse boulders + fine powder). The penalty depends on the brewing physics class because the bimodal distribution interacts with extraction mechanics differently:
+
+- **Percolation / pressure**: boulders create preferential flow channels, amplifying under-extraction. Full penalty applies.
+- **Immersion**: fines over-extract and partially compensate for the boulders' under-extraction. Reduced penalty.
+- **Hybrid**: intermediate between immersion and percolation archetypes.
+- **Cold methods**: callers additionally scale all grinder adjustments by ×0.3.
 
 <table>
   <thead>
     <tr>
       <th>Grinder type</th>
-      <th>ΔGrinderType (hot methods)</th>
-      <th>ΔGrinderType (cold methods ×0.3)</th>
+      <th>ΔGrinderType (pressure/percolation)</th>
+      <th>ΔGrinderType (immersion)</th>
+      <th>ΔGrinderType (hybrid)</th>
+      <th>ΔGrinderType (cold ×0.3)</th>
     </tr>
   </thead>
   <tbody>
-    <tr><td>Burr</td><td>0.000</td><td>0.000</td></tr>
-    <tr><td>Blade</td><td>−0.025</td><td>−0.008</td></tr>
-    <tr><td>Unknown</td><td>−0.008</td><td>−0.002</td></tr>
-    <tr><td>Not set</td><td>0.000</td><td>0.000</td></tr>
+    <tr><td>Burr</td><td>0.000</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
+    <tr><td>Blade</td><td>−0.025</td><td>−0.010</td><td>−0.018</td><td>−0.008 (effective)</td></tr>
+    <tr><td>Unknown</td><td>−0.008</td><td>−0.008</td><td>−0.008</td><td>−0.002 (effective)</td></tr>
+    <tr><td>Not set</td><td>0.000</td><td>0.000</td><td>0.000</td><td>0.000</td></tr>
   </tbody>
 </table>
 
@@ -523,10 +552,21 @@ Full hybrid recovery:
 totalDelta = ΔTime + ΔGrind + ΔTemp
            + ΔRatio × 0.025 + ΔAgitation
            + ΔPressure × 0.5 + ΔYield
-           + ΔRoast + ΔProcessing + ΔGrinderType + ΔFilter + ΔMinor
+           + ΔRoast + ΔProcessing + ΔGrinderType + ΔInversion + ΔFilter + ΔMinor
 
 E = clamp(E₀ × (1 + totalDelta), 0.48, 0.88)
 ```
+
+**AeroPress inversion toggle (v3.5.2):**
+
+The inverted AeroPress setup places the plunger at the bottom during the steep phase, eliminating drip-through ("leakage") before the press. This increases the effective yield constant relative to the standard upright setup:
+
+```text
+ΔInversion = +0.04  (if AeroPress and aeropressInverted = true)
+ΔInversion =  0.00  (otherwise — standard or Moka/Indian filter)
+```
+
+The +0.04 value reflects the drip-through loss observed in standard AeroPress setups, which is well-documented in specialty coffee recipe literature. The inversion toggle is only active when the method is detected as a short-immersion hybrid (AeroPress).
 
 Key characteristics:
 - **ΔPressure × 0.5** scaling: hand pressure (AeroPress) or steam pressure (Moka, Indian filter) is modest and variable compared with a pump-driven espresso machine.
@@ -754,11 +794,13 @@ Prior to v3.2, `F_mid'` was computed as `F_mid × F_region × (1 − chicory/100
 High-altitude beans develop denser cell walls due to slower growth. This physical density slightly impedes solvent penetration during brewing, resulting in a small reduction in extraction recovery:
 
 ```text
-If elevationBand = "high":
+If elevationBand = "high" and temperatureC < 95:
   E_applied = E × 0.98
 ```
 
 This applies after all other extraction adjustments (grind, temperature, ratio, etc.). The effect is kept at 2% to remain within the &lt;3% constraint; it complements the existing elevation F-range upward shift (high altitude → slightly higher caffeine fraction) so both the bean-side and extraction-side effects of elevation are represented.
+
+The T &lt; 95 °C condition (added in v3.5.2) reflects the physical reasoning: at or above boiling temperature, thermal energy is sufficient to overcome high-altitude cell-wall density, making the micro-refinement inapplicable. Sub-boiling methods (AeroPress, pour-over at lower temps) retain the adjustment.
 
 ---
 
@@ -1224,7 +1266,7 @@ The hybrid +5 % penalty reflects AeroPress's high recipe variability — inverte
 
 5. **Cold brew temperature uncertainty:** Unless the user provides a brew temperature, CaffiLab assumes room temperature (22 °C). The +3 % cold method uncertainty penalty reflects this.
 
-6. **Grind distribution not fully modelled:** The grinder type penalty captures a net average effect of blade vs. burr grinding but does not model the full particle-size distribution. A bimodal distribution with an extreme fine tail or boulder fraction could exceed the penalty range; the −0.025 blade penalty is an empirical average, not a first-principles calculation.
+6. **Grind distribution not fully modelled:** The grinder type penalty captures a net average effect of blade vs. burr grinding but does not model the full particle-size distribution. Penalties are now scaled by physics class (immersion −0.010, hybrid −0.018, percolation/pressure −0.025) but remain empirical averages. A bimodal distribution with an extreme fine tail or boulder fraction could exceed the penalty range.
 
 7. **Processing residual sugars unmeasured:** The natural / honey processing adjustment models the average effect of mucilage on diffusion. Actual residual sugar and pectin content vary by producer, drying time, and climate, and these inputs are not available to the model. Lot-to-lot variation within a processing style can exceed the model's ΔProcessing range.
 
