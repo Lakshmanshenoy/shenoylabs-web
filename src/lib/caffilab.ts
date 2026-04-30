@@ -1573,14 +1573,10 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
   if (input.elevationBand !== undefined && input.elevationBand !== "unknown") {
     regionFactor *= 0.95;
   }
-  // Phase 9 (v3.1): Clamp the effective caffeine fraction to the physiologically
-  // plausible range [0.008, 0.030] (i.e. 0.8–3.0 % dry-weight caffeine) before
-  // computing any downstream estimates. This prevents extrapolation artefacts.
-  const effectiveCaffeineFraction = clamp(
-    caffeineFraction * (1 - chicoryPercent / 100) * regionFactor,
-    0.008,
-    0.030,
-  );
+  // Phase 9 (v3.1) + Phase 1 (v3.2): Apply region factor and chicory to the full
+  // [F_min, F_max] range, then clamp to [0.008, 0.030]. F_mid' is derived as the
+  // midpoint of the scaled+clamped range — this keeps the central estimate and the
+  // uncertainty bounds internally consistent (Phase 1 consistency fix).
   const effectiveCaffeineFractionMin = clamp(
     caffeineFractionMin * (1 - chicoryPercent / 100) * regionFactor,
     0.008,
@@ -1591,7 +1587,10 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
     0.008,
     0.030,
   );
-  const caffeineRecovery = getCaffeineRecovery(
+  // F_mid' = midpoint(F_min', F_max') — ensures central estimate aligns with the
+  // clamped effective range rather than being computed independently.
+  const effectiveCaffeineFraction = midpoint(effectiveCaffeineFractionMin, effectiveCaffeineFractionMax);
+  let caffeineRecovery = getCaffeineRecovery(
     method,
     input,
     brewRatio,
@@ -1600,6 +1599,12 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
     temperatureC,
     extractionYieldPercent,
   );
+  // Phase 6 (v3.2 optional): Elevation micro-refinement on extraction recovery.
+  // High-altitude beans are physically denser (thicker cell walls from slow growth),
+  // which slightly impedes solvent penetration during extraction. Effect kept < 2%.
+  if (input.elevationBand === "high") {
+    caffeineRecovery = clamp(caffeineRecovery * 0.98, 0.25, 0.97);
+  }
   if (process.env.NODE_ENV !== "production") {
     if (caffeineRecovery <= 0 || caffeineRecovery >= 1) {
       console.error(
@@ -1618,7 +1623,9 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
       );
     }
   }
-  const beanUncertainty = getBeanUncertaintyPercent(caffeineFractionMin, caffeineFractionMax);
+  // Phase 1 (v3.2): Use the effective (scaled + clamped) range for bean uncertainty
+  // so the confidence interval is consistent with the F range actually applied.
+  const beanUncertainty = getBeanUncertaintyPercent(effectiveCaffeineFractionMin, effectiveCaffeineFractionMax);
   const brewingUncertainty = getBrewingUncertaintyPercent(input, beanProfile.strength, method);
   // Quadrature combination: independent sources add in orthogonal uncertainty space.
   const uncertainty = Math.sqrt(beanUncertainty ** 2 + brewingUncertainty ** 2);

@@ -584,10 +584,33 @@ This interaction term only affects the **applied** factor shown in the PDF model
 After all adjustments (chicory dilution + region factor), the effective caffeine fraction is clamped to the physiologically plausible dry-weight range:
 
 ```text
-F_final = clamp(F_effective, 0.008, 0.030)
+F_min' = clamp(F_min × F_region × (1 − chicory/100), 0.008, 0.030)
+F_max' = clamp(F_max × F_region × (1 − chicory/100), 0.008, 0.030)
+F_mid' = (F_min' + F_max') / 2
 ```
 
-i.e. 0.8 % minimum — 3.0 % maximum. This prevents extrapolation artefacts from unusual input combinations reaching implausible caffeine concentrations.
+i.e. 0.8 % minimum — 3.0 % maximum for both range endpoints. This prevents extrapolation artefacts from unusual input combinations reaching implausible caffeine concentrations.
+
+#### F range consistency (v3.2 Phase 1)
+
+In v3.2, the region factor and chicory dilution are applied to the **full range** `[F_min, F_max]` before the central estimate is derived, not to `F_mid` independently. This ensures the central estimate, the bean-driven bounds, and the uncertainty percentage all describe the same effective fraction:
+
+```text
+F_mid' = midpoint(F_min', F_max')   ← derived from the clamped range
+```
+
+Prior to v3.2, `F_mid'` was computed as `F_mid × F_region × (1 − chicory/100)` independently, which could diverge slightly from `midpoint(F_min', F_max')` when the clamp was active.
+
+#### Elevation extraction micro-refinement (v3.2 Phase 6)
+
+High-altitude beans develop denser cell walls due to slower growth. This physical density slightly impedes solvent penetration during brewing, resulting in a small reduction in extraction recovery:
+
+```text
+If elevationBand = "high":
+  E_applied = E × 0.98
+```
+
+This applies after all other extraction adjustments (grind, temperature, ratio, etc.). The effect is kept at 2% to remain within the <3% constraint; it complements the existing elevation F-range upward shift (high altitude → slightly higher caffeine fraction) so both the bean-side and extraction-side effects of elevation are represented.
 
 ---
 
@@ -600,11 +623,13 @@ CaffiLab splits uncertainty into two independent sources:
 
 ### Bean variability uncertainty
 
+From v3.2, bean variability uncertainty is computed from the **effective** (scaled + clamped) range rather than the raw species range, keeping it consistent with the F values actually used in the estimate:
+
 ```text
-bean_uncertainty = ((F_max - F_min) / (2 × F_mid)) × 100
+bean_uncertainty = ((F_max' − F_min') / (2 × F_mid')) × 100
 ```
 
-This means confidence cannot become artificially high if the bean itself still has a meaningful caffeine spread.
+This means confidence cannot become artificially high if the bean itself still has a meaningful caffeine spread. The effective range is narrower when region factor and chicory dilution reduce the spread.
 
 ### Brewing uncertainty
 

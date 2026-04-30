@@ -1002,8 +1002,8 @@ export function CaffiLabCalculator() {
       ["Price", coffeePrice ? `${coffeePrice} ${priceCurrency}/${priceUnit}` : "Not set", "secondary"],
     ];
 
-    // Phase 8 (v3.1): Model factors section — shows the actual adjustments applied
-    // to the caffeine fraction, for transparency and auditability.
+    // Phase 8 (v3.1) + Phase 6 (v3.2): Model factors section — shows the actual
+    // adjustments applied to F and E, for transparency and auditability.
     const elevationInteractionApplied =
       elevationBand !== "unknown" && estimate.regionFactor !== ORIGIN_REGIONS[originRegion].factor;
     const modelFactorRows: Array<[string, string, "primary" | "secondary"]> = [
@@ -1011,6 +1011,7 @@ export function CaffiLabCalculator() {
       ["Region", ORIGIN_REGIONS[originRegion].label, "primary"],
       ["Region factor applied", `×${estimate.regionFactor.toFixed(4)}`, "primary"],
       ["Elevation × region interaction", elevationInteractionApplied ? "×0.95 applied" : "Not applied", "secondary"],
+      ["Elevation E correction (v3.2)", elevationBand === "high" ? "×0.98 applied (dense bean)" : "Not applied", "secondary"],
       ["Elevation", elevationBand === "unknown" ? "Not set" : elevationBand, "secondary"],
       ["F constraint", "[0.008, 0.030]", "secondary"],
       ["Calibration α", estimate.calibrationAlpha.toFixed(3), "secondary"],
