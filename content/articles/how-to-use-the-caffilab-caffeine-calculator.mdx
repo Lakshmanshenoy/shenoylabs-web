@@ -129,8 +129,16 @@ Click **Expert inputs** for three additional bean-quality parameters that furthe
   - **Africa** and **Latin America** are the reference baseline (factor: 1.00). Ethiopian, Kenyan, Colombian, and Brazilian lots are well-represented in the calibration data.
   - **Not sure (default)** leaves the factor at 1.00. Use this if you do not know the origin.
   - Providing any known region also tightens the confidence interval slightly by reducing the base brewing uncertainty by 1 percentage point.
+  - **Elevation × region interaction (v3.1):** If you also set **Growing Elevation**, the region factor is multiplied by ×0.95 automatically. This prevents double-counting: elevation already partially captures the terroir signal that the region factor represents. The applied factor is shown in the *Model factors* section of the printed report.
+- **Growing Elevation:** High-altitude beans develop more slowly and may accumulate slightly different caffeine concentrations. When this is set alongside Origin / Region, the ×0.95 interaction correction described above is applied.
 
 These Expert inputs do not change the brewing recovery model — they refine the starting caffeine fraction in the bean before any extraction calculation.
+
+## Confidence bounds and what they mean
+
+CaffiLab reports a **range** (e.g., 151–214 mg) alongside the central estimate. These bounds are computed from two independent uncertainty sources combined in quadrature — see [how the formula works](/articles/how-does-caffilab-formula-work) for the full derivation.
+
+From v3.1, the bounds are **asymmetric**: the upper bound is 2 percentage points wider than the lower. Under-extraction is more constrained in practice than over-extraction (especially for espresso and pressure methods), so the upside risk is deliberately wider.
 
 ## Tips for accurate estimates
 

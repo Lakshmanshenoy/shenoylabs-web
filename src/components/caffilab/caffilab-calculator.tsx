@@ -19,6 +19,7 @@ import {
 
 import {
   BREW_METHODS,
+  CALIBRATION_ALPHA,
   GRIND_SIZES,
   ORIGIN_REGIONS,
   defaultBrewWaterMl,
@@ -1001,6 +1002,20 @@ export function CaffiLabCalculator() {
       ["Price", coffeePrice ? `${coffeePrice} ${priceCurrency}/${priceUnit}` : "Not set", "secondary"],
     ];
 
+    // Phase 8 (v3.1): Model factors section — shows the actual adjustments applied
+    // to the caffeine fraction, for transparency and auditability.
+    const elevationInteractionApplied =
+      elevationBand !== "unknown" && estimate.regionFactor !== ORIGIN_REGIONS[originRegion].factor;
+    const modelFactorRows: Array<[string, string, "primary" | "secondary"]> = [
+      ["Cultivar", cultivar === "unknown" ? "None (default)" : cultivar, "primary"],
+      ["Region", ORIGIN_REGIONS[originRegion].label, "primary"],
+      ["Region factor applied", `×${estimate.regionFactor.toFixed(4)}`, "primary"],
+      ["Elevation × region interaction", elevationInteractionApplied ? "×0.95 applied" : "Not applied", "secondary"],
+      ["Elevation", elevationBand === "unknown" ? "Not set" : elevationBand, "secondary"],
+      ["F constraint", "[0.008, 0.030]", "secondary"],
+      ["Calibration α", estimate.calibrationAlpha.toFixed(3), "secondary"],
+    ];
+
     const rowsToHtml = (rows: Array<[string, string, "primary" | "secondary"]>) =>
       rows
         .map(([k, v, tone]) => `<div class="row ${tone === "secondary" ? "row-secondary" : ""}"><span>${escapeHtml(k)}</span><strong>${escapeHtml(v)}</strong></div>`)
@@ -1375,6 +1390,13 @@ export function CaffiLabCalculator() {
           <h3>Parameters</h3>
           ${rowsToHtml(parameterRows)}
         </article>
+      </div>
+
+      <div class="group soft" style="margin-top: 14px;">
+        <h3>Model factors (v3.1)</h3>
+        <div class="three-col" style="column-gap: 12px;">
+          ${rowsToHtml(modelFactorRows)}
+        </div>
       </div>
 
       <div class="footer-brand">

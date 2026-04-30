@@ -93,6 +93,16 @@ export function getRegionFactor(region: OriginRegion | undefined): number {
   return ORIGIN_REGIONS[region].factor;
 }
 
+/**
+ * Global calibration scaling factor (v3.1 spec, Phase 3).
+ *
+ * Once 30–50 paired (brew-input, measured-caffeine) samples are collected, set:
+ *   CALIBRATION_ALPHA = mean(measured_mg / predicted_mg)
+ *
+ * Until then it remains 1.0 (neutral; no effect on output).
+ */
+export const CALIBRATION_ALPHA = 1.0;
+
 export type GrindSize =
   | "extra_fine"
   | "fine"
@@ -161,6 +171,12 @@ export type CaffiLabEstimate = {
   concentrationMgPer100Ml: number;
   confidenceLabel: ConfidenceLabel;
   confidencePercent: number;
+  /** Upper-bound uncertainty percent (+2 pp vs lower, per v3.1 asymmetric model). */
+  upperUncertaintyPercent: number;
+  /** Applied calibration scaling factor (v3.1 Phase 3). 1.0 until calibration data is collected. */
+  calibrationAlpha: number;
+  /** Region factor actually applied (post elevation interaction if applicable). */
+  regionFactor: number;
   beanUncertaintyPercent: number;
   brewingUncertaintyPercent: number;
   caffeineRecovery: number;
@@ -1550,10 +1566,31 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
       ? normalizePercent(input.chicoryPercent, DEFAULT_INDIAN_CHICORY_PERCENT)
       : 0;
   // Region factor: multiplicative adjustment on F per the v3.0 regional model.
-  const regionFactor = getRegionFactor(input.originRegion);
-  const effectiveCaffeineFraction = caffeineFraction * (1 - chicoryPercent / 100) * regionFactor;
-  const effectiveCaffeineFractionMin = caffeineFractionMin * (1 - chicoryPercent / 100) * regionFactor;
-  const effectiveCaffeineFractionMax = caffeineFractionMax * (1 - chicoryPercent / 100) * regionFactor;
+  // Phase 5 (v3.1): If growing elevation is also specified, apply an interaction
+  // correction of ×0.95 — elevation already partially captures terroir-based caffeine
+  // variation, so the region factor is discounted to avoid double-counting.
+  let regionFactor = getRegionFactor(input.originRegion);
+  if (input.elevationBand !== undefined && input.elevationBand !== "unknown") {
+    regionFactor *= 0.95;
+  }
+  // Phase 9 (v3.1): Clamp the effective caffeine fraction to the physiologically
+  // plausible range [0.008, 0.030] (i.e. 0.8–3.0 % dry-weight caffeine) before
+  // computing any downstream estimates. This prevents extrapolation artefacts.
+  const effectiveCaffeineFraction = clamp(
+    caffeineFraction * (1 - chicoryPercent / 100) * regionFactor,
+    0.008,
+    0.030,
+  );
+  const effectiveCaffeineFractionMin = clamp(
+    caffeineFractionMin * (1 - chicoryPercent / 100) * regionFactor,
+    0.008,
+    0.030,
+  );
+  const effectiveCaffeineFractionMax = clamp(
+    caffeineFractionMax * (1 - chicoryPercent / 100) * regionFactor,
+    0.008,
+    0.030,
+  );
   const caffeineRecovery = getCaffeineRecovery(
     method,
     input,
@@ -1586,20 +1623,31 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
   // Quadrature combination: independent sources add in orthogonal uncertainty space.
   const uncertainty = Math.sqrt(beanUncertainty ** 2 + brewingUncertainty ** 2);
   const roundedUncertainty = Number(uncertainty.toFixed(1));
+  // Phase 7 (v3.1): Asymmetric confidence bounds. The lower bound uses the symmetric
+  // uncertainty while the upper bound is expanded by 2 pp to account for systematic
+  // positive bias (under-extraction edge cases and bean lot variability are more likely
+  // to produce unexpectedly high values than unexpectedly low ones).
   const practicalLowerMg = estimatedMg * (1 - uncertainty / 100);
-  const practicalUpperMg = estimatedMg * (1 + uncertainty / 100);
+  const practicalUpperMg = estimatedMg * (1 + (uncertainty + 2) / 100);
+
+  // Phase 3 (v3.1): Apply global calibration factor. Currently 1.0 (no effect);
+  // update CALIBRATION_ALPHA once paired measurement data is available.
+  const calibratedMg = round(estimatedMg * CALIBRATION_ALPHA);
 
   return {
-    estimatedMg: round(estimatedMg),
+    estimatedMg: calibratedMg,
     lowerMg: round(beanLowerMg),
     upperMg: round(beanUpperMg),
     practicalLowerMg: round(practicalLowerMg),
     practicalUpperMg: round(practicalUpperMg),
     beanLowerMg: round(beanLowerMg),
     beanUpperMg: round(beanUpperMg),
-    concentrationMgPer100Ml: Math.round((estimatedMg / beverageMl) * 100),
+    concentrationMgPer100Ml: Math.round((calibratedMg / beverageMl) * 100),
     confidenceLabel: getConfidenceLabel(roundedUncertainty),
     confidencePercent: roundedUncertainty,
+    upperUncertaintyPercent: Number((roundedUncertainty + 2).toFixed(1)),
+    calibrationAlpha: CALIBRATION_ALPHA,
+    regionFactor: Number(regionFactor.toFixed(4)),
     beanUncertaintyPercent: Number(beanUncertainty.toFixed(1)),
     brewingUncertaintyPercent: Number(brewingUncertainty.toFixed(1)),
     caffeineRecovery: Number(caffeineRecovery.toFixed(3)),
@@ -1623,7 +1671,7 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
     extractionYieldPercent: Number(extractionYieldPercent.toFixed(1)),
     explanation: buildExplanation(
       input,
-      estimatedMg,
+      calibratedMg,
       roundedUncertainty,
       beanUncertainty,
       brewingUncertainty,

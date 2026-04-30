@@ -568,6 +568,27 @@ Where `F_region` is derived from published caffeine variability data across prod
 
 Selecting any known region also tightens the confidence interval by reducing the base brewing uncertainty by 1 percentage point (e.g., 36 % floor → 35 % floor before other reductions apply).
 
+#### Elevation × Region interaction (v3.1 Phase 5)
+
+When a growing elevation band is also specified, the region factor is discounted by ×0.95 to prevent double-counting. Elevation already partially captures the terroir-based caffeine variation that the region factor is trying to represent:
+
+```text
+If elevationBand ≠ "unknown":
+  F_region_applied = F_region × 0.95
+```
+
+This interaction term only affects the **applied** factor shown in the PDF model factors section; the base `F_region` value for each region stays unchanged.
+
+#### F constraint (v3.1 Phase 9)
+
+After all adjustments (chicory dilution + region factor), the effective caffeine fraction is clamped to the physiologically plausible dry-weight range:
+
+```text
+F_final = clamp(F_effective, 0.008, 0.030)
+```
+
+i.e. 0.8 % minimum — 3.0 % maximum. This prevents extrapolation artefacts from unusual input combinations reaching implausible caffeine concentrations.
+
 ---
 
 ## Uncertainty model
@@ -605,6 +626,27 @@ total_uncertainty = sqrt(bean_uncertainty² + brewing_uncertainty²)
 ```
 
 This means a method with 15 % bean uncertainty and 10 % brewing uncertainty yields `sqrt(225 + 100) ≈ 18 %` combined, not `max(15, 10) = 15 %`. Both sources genuinely contribute and neither dominates the other artificially.
+
+### Asymmetric confidence bounds (v3.1 Phase 7)
+
+CaffiLab's confidence interval is **not symmetric**. The upper bound is 2 percentage points wider than the lower, reflecting the fact that real-world under-extraction is more constrained than over-extraction — especially for espresso and pressure-based methods:
+
+```text
+practicalLowerMg = estimatedMg × (1 − uncertainty / 100)
+practicalUpperMg = estimatedMg × (1 + (uncertainty + 2) / 100)
+```
+
+So at 15 % combined uncertainty, the lower bound uses 15 % and the upper bound uses 17 %.
+
+### Calibration factor α (v3.1 Phase 3)
+
+After all computation, a global calibration scalar is applied to the predicted value:
+
+```text
+finalMg = predictedMg × α
+```
+
+The current value is **α = 1.0** (identity — no adjustment). This constant will be updated once 30–50 measured samples are collected to anchor the model to empirical data. Until then it functions as a documented pass-through, ensuring the architecture is in place for future calibration without any model drift.
 
 ---
 
