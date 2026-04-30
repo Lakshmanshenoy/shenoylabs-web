@@ -125,7 +125,7 @@ export const PER_METHOD_BETA: Record<BrewPhysics, number> = {
   pressure:         1.0,
   percolation:      1.0,
   immersion:        1.0,
-  cold_immersion:   1.0,
+  cold_immersion:   1.1,
   cold_percolation: 1.0,
   hybrid:           1.0,
 };
