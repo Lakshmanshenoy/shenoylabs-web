@@ -86,47 +86,14 @@ This presentation is intentional: users see the practical headline result first,
 
 CaffiLab assigns every brew method to one of six physics classes. Each class has its own extraction model reflecting the physical mechanism driving caffeine transfer from bean to cup. The model uses a multiplicative formula so adjustments scale proportionally from each method's calibrated baseline — no single variable can dominate extraction independently.
 
-<table>
-	<thead>
-		<tr>
-			<th>Physics class</th>
-			<th>Methods</th>
-			<th>Key driver</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td><code>pressure</code></td>
-			<td>Espresso</td>
-			<td>High pressure differential forcing water through a compacted bed in seconds</td>
-		</tr>
-		<tr>
-			<td><code>percolation</code></td>
-			<td>Pour over, Chemex, Drip machine, Siphon, Percolator</td>
-			<td>Gravity-driven, vacuum-assisted, or recirculating flow through the coffee bed</td>
-		</tr>
-		<tr>
-			<td><code>immersion</code></td>
-			<td>French press, Turkish, Immersion dripper</td>
-			<td>Coffee steeps until diffusion reaches equilibrium, then is separated</td>
-		</tr>
-		<tr>
-			<td><code>cold_immersion</code></td>
-			<td>Cold brew</td>
-			<td>Immersion at low temperature; rate governed by Arrhenius diffusion scaling</td>
-		</tr>
-		<tr>
-			<td><code>cold_percolation</code></td>
-			<td>Cold drip</td>
-			<td>Cold percolation; shorter per-particle contact time than cold immersion</td>
-		</tr>
-		<tr>
-			<td><code>hybrid</code></td>
-			<td>AeroPress, Moka pot, Indian filter</td>
-			<td>Combines two mechanisms: immersion + pressure (AeroPress), pressure-percolation (Moka), or immersion-percolation (Indian filter)</td>
-		</tr>
-	</tbody>
-</table>
+| Physics class | Methods | Key driver |
+|---|---|---|
+| `pressure` | Espresso | High pressure differential forcing water through a compacted bed in seconds |
+| `percolation` | Pour over, Chemex, Drip machine, Siphon, Percolator | Gravity-driven, vacuum-assisted, or recirculating flow through the coffee bed |
+| `immersion` | French press, Turkish, Immersion dripper | Coffee steeps until diffusion reaches equilibrium, then is separated |
+| `cold_immersion` | Cold brew | Immersion at low temperature; rate governed by Arrhenius diffusion scaling |
+| `cold_percolation` | Cold drip | Cold percolation; shorter per-particle contact time than cold immersion |
+| `hybrid` | AeroPress, Moka pot, Indian filter | Combines two mechanisms: immersion + pressure (AeroPress), pressure-percolation (Moka), or immersion-percolation (Indian filter) |
 
 ---
 
@@ -134,102 +101,22 @@ CaffiLab assigns every brew method to one of six physics classes. Each class has
 
 Each brew method has a calibrated default recovery (E₀), anchored to published extraction measurements. Adjustments for grind, temperature, time, and other inputs are applied on top of this baseline.
 
-<table>
-	<thead>
-		<tr>
-			<th>Method</th>
-			<th>Physics class</th>
-			<th>Default E₀</th>
-			<th>Literature basis</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>Espresso</td>
-			<td><code>pressure</code></td>
-			<td>0.67</td>
-			<td>Andueza et al. (2003): 60–80 % caffeine recovery at 9 bar</td>
-		</tr>
-		<tr>
-			<td>Pour over</td>
-			<td><code>percolation</code></td>
-			<td>0.82</td>
-			<td>Gloess et al. (2013): 75–90 % for filter methods</td>
-		</tr>
-		<tr>
-			<td>Chemex</td>
-			<td><code>percolation</code></td>
-			<td>0.79</td>
-			<td>Gloess et al. (2013): 78–82 % (slower flow, thicker filter)</td>
-		</tr>
-		<tr>
-			<td>French press</td>
-			<td><code>immersion</code></td>
-			<td>0.80</td>
-			<td>Gloess et al. (2013): 78–84 % for full-immersion methods</td>
-		</tr>
-		<tr>
-			<td>Cold brew</td>
-			<td><code>cold_immersion</code></td>
-			<td>Dynamic (no fixed baseline)</td>
-			<td>Arrhenius model approaches 0.88 ceiling; Fuller & Rao (2017): 85–90 % at 12–16 h room temperature</td>
-		</tr>
-		<tr>
-			<td>AeroPress</td>
-			<td><code>hybrid</code></td>
-			<td>0.76</td>
-			<td>Gloess et al. (2013): 72–79 % for standard recipes</td>
-		</tr>
-		<tr>
-			<td>Moka pot</td>
-			<td><code>hybrid</code></td>
-			<td>0.70</td>
-			<td>Espinosa-Álvarez et al. (2021): 68–72 % at 1–2 bar</td>
-		</tr>
-		<tr>
-			<td>Drip machine</td>
-			<td><code>percolation</code></td>
-			<td>0.85</td>
-			<td>Ludwig et al. (2014): 85–90 % for optimized drip machines</td>
-		</tr>
-		<tr>
-			<td>Siphon</td>
-			<td><code>percolation</code></td>
-			<td>0.83</td>
-			<td>Immersion analogy; measured range 80–85 %</td>
-		</tr>
-		<tr>
-			<td>Turkish</td>
-			<td><code>immersion</code></td>
-			<td>0.89</td>
-			<td>Gloess et al. (2013): 88–92 %; calibrated to 0.89 to reflect high batch variability</td>
-		</tr>
-		<tr>
-			<td>Cold drip</td>
-			<td><code>cold_percolation</code></td>
-			<td>0.76</td>
-			<td>Percolation analogy; measured range 70–80 %</td>
-		</tr>
-		<tr>
-			<td>Immersion dripper</td>
-			<td><code>immersion</code></td>
-			<td>0.81</td>
-			<td>French press analogy; immersion with paper filter</td>
-		</tr>
-		<tr>
-			<td>Percolator</td>
-			<td><code>percolation</code></td>
-			<td>0.90</td>
-			<td>Ludwig et al. (2014): 88–93 % with recirculation</td>
-		</tr>
-		<tr>
-			<td>Indian filter</td>
-			<td><code>hybrid</code></td>
-			<td>0.73</td>
-			<td>Moka analogy; estimated range 70–75 %</td>
-		</tr>
-	</tbody>
-</table>
+| Method | Physics class | Default E₀ | Literature basis |
+|---|---|---|---|
+| Espresso | `pressure` | 0.67 | Andueza et al. (2003): 60–80 % caffeine recovery at 9 bar |
+| Pour over | `percolation` | 0.82 | Gloess et al. (2013): 75–90 % for filter methods |
+| Chemex | `percolation` | 0.79 | Gloess et al. (2013): 78–82 % (slower flow, thicker filter) |
+| French press | `immersion` | 0.80 | Gloess et al. (2013): 78–84 % for full-immersion methods |
+| Cold brew | `cold_immersion` | Dynamic (no fixed baseline) | Arrhenius model approaches 0.88 ceiling; Fuller & Rao (2017): 85–90 % at 12–16 h room temperature |
+| AeroPress | `hybrid` | 0.76 | Gloess et al. (2013): 72–79 % for standard recipes |
+| Moka pot | `hybrid` | 0.70 | Espinosa-Álvarez et al. (2021): 68–72 % at 1–2 bar |
+| Drip machine | `percolation` | 0.85 | Ludwig et al. (2014): 85–90 % for optimized drip machines |
+| Siphon | `percolation` | 0.83 | Immersion analogy; measured range 80–85 % |
+| Turkish | `immersion` | 0.89 | Gloess et al. (2013): 88–92 %; calibrated to 0.89 to reflect high batch variability |
+| Cold drip | `cold_percolation` | 0.76 | Percolation analogy; measured range 70–80 % |
+| Immersion dripper | `immersion` | 0.81 | French press analogy; immersion with paper filter |
+| Percolator | `percolation` | 0.90 | Ludwig et al. (2014): 88–93 % with recirculation |
+| Indian filter | `hybrid` | 0.73 | Moka analogy; estimated range 70–75 % |
 
 ---
 
@@ -430,30 +317,10 @@ Key characteristics:
 
 The caffeine fraction depends on the coffee species, and CaffiLab models it as a range rather than a single fixed number:
 
-<table>
-	<thead>
-		<tr>
-			<th>Species</th>
-			<th>Caffeine range</th>
-			<th>Midpoint used for estimate</th>
-			<th>Source</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>Arabica (<em>Coffea arabica</em>)</td>
-			<td>1.0% to 1.6%</td>
-			<td>1.3%</td>
-			<td>Farah (2012); Ky et al. (2001)</td>
-		</tr>
-		<tr>
-			<td>Robusta (<em>Coffea canephora</em>)</td>
-			<td>2.0% to 2.7%</td>
-			<td>2.35%</td>
-			<td>Farah (2012); Ky et al. (2001)</td>
-		</tr>
-	</tbody>
-</table>
+| Species | Caffeine range | Midpoint used for estimate | Source |
+|---|---:|---:|---|
+| Arabica (*Coffea arabica*) | 1.0% to 1.6% | 1.3% | Farah (2012); Ky et al. (2001) |
+| Robusta (*Coffea canephora*) | 2.0% to 2.7% | 2.35% | Farah (2012); Ky et al. (2001) |
 
 These are dry-weight working ranges used by the calculator. They are intentionally narrower than the full botanical extremes reported in the literature, because CaffiLab is trying to represent realistic consumer coffee while avoiding false precision.
 
@@ -513,48 +380,13 @@ Farm elevation correlates with caffeine content through UV exposure and pest-pre
 
 Named arabica cultivars have measurably different caffeine concentrations. CaffiLab applies an absolute shift to the blended F_range, weighted by the arabica proportion of the blend:
 
-<table>
-	<thead>
-		<tr>
-			<th>Cultivar</th>
-			<th>Dry-weight caffeine (approx.)</th>
-			<th>F_range shift</th>
-			<th>Notes</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>Unknown</td>
-			<td>—</td>
-			<td>0</td>
-			<td>Default; no shift applied.</td>
-		</tr>
-		<tr>
-			<td>Geisha</td>
-			<td>~0.9–1.1 %</td>
-			<td>−0.002</td>
-			<td>Distinctly lower than typical arabica (Ky et al., 2001; Panama Geisha HPLC studies).</td>
-		</tr>
-		<tr>
-			<td>SL28</td>
-			<td>~1.3–1.7 %</td>
-			<td>+0.002</td>
-			<td>Kenyan cultivar with elevated caffeine (Bertrand et al., 2003).</td>
-		</tr>
-		<tr>
-			<td>Caturra</td>
-			<td>~1.0–1.3 %</td>
-			<td>−0.001</td>
-			<td>Bourbon-derived; typical mid-range arabica.</td>
-		</tr>
-		<tr>
-			<td>Catimor</td>
-			<td>~1.5–2.0 %</td>
-			<td>+0.004</td>
-			<td>Timor hybrid with Robusta genetics; measurably higher caffeine (Ky et al., 2001).</td>
-		</tr>
-	</tbody>
-</table>
+| Cultivar | Dry-weight caffeine (approx.) | F_range shift | Notes |
+|---|---:|---:|---|
+| Unknown | — | 0 | Default; no shift applied. |
+| Geisha | ~0.9–1.1 % | −0.002 | Distinctly lower than typical arabica (Ky et al., 2001; Panama Geisha HPLC studies). |
+| SL28 | ~1.3–1.7 % | +0.002 | Kenyan cultivar with elevated caffeine (Bertrand et al., 2003). |
+| Caturra | ~1.0–1.3 % | −0.001 | Bourbon-derived; typical mid-range arabica. |
+| Catimor | ~1.5–2.0 % | +0.004 | Timor hybrid with Robusta genetics; measurably higher caffeine (Ky et al., 2001). |
 
 For blends, the cultivar shift is weighted by the arabica fraction: `shift_applied = cultivar_shift × (arabica_percent / 100)`.
 
@@ -568,42 +400,12 @@ F_effective = F_mid × (1 - chicory/100) × F_region
 
 Where `F_region` is derived from published caffeine variability data across producing regions:
 
-<table>
-	<thead>
-		<tr>
-			<th>Region</th>
-			<th>F_region range</th>
-			<th>Midpoint applied</th>
-			<th>Notes</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>India / Southeast Asia</td>
-			<td>×1.05–1.10</td>
-			<td>×1.075</td>
-			<td>Indian robusta-arabica blends and SE Asian robusta varieties skew higher.</td>
-		</tr>
-		<tr>
-			<td>Africa</td>
-			<td>×0.95–1.05</td>
-			<td>×1.000</td>
-			<td>Ethiopia, Kenya — widely studied; broad range centred on the global average.</td>
-		</tr>
-		<tr>
-			<td>Latin America</td>
-			<td>×0.95–1.05</td>
-			<td>×1.000</td>
-			<td>Brazil, Colombia, Central America — the calibration reference baseline.</td>
-		</tr>
-		<tr>
-			<td>Unknown (default)</td>
-			<td>—</td>
-			<td>×1.000</td>
-			<td>Neutral factor; backward-compatible when origin is unspecified.</td>
-		</tr>
-	</tbody>
-</table>
+| Region | F_region range | Midpoint applied | Notes |
+|---|---|---|---|
+| India / Southeast Asia | ×1.05–1.10 | ×1.075 | Indian robusta-arabica blends and SE Asian robusta varieties skew higher. |
+| Africa | ×0.95–1.05 | ×1.000 | Ethiopia, Kenya — widely studied; broad range centred on the global average. |
+| Latin America | ×0.95–1.05 | ×1.000 | Brazil, Colombia, Central America — the calibration reference baseline. |
+| Unknown (default) | — | ×1.000 | Neutral factor; backward-compatible when origin is unspecified. |
 
 Selecting any known region also tightens the confidence interval by reducing the base brewing uncertainty by 1 percentage point (e.g., 36 % floor → 35 % floor before other reductions apply).
 
