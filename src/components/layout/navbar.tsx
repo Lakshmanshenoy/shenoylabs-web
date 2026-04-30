@@ -59,7 +59,7 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/80 bg-background/85 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-border/80 bg-background/85 backdrop-blur-md dark:bg-[#000515]">
       <div className="mx-auto w-full max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
         {searchOpen ? (
           /* Expanded search row */

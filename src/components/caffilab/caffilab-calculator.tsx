@@ -141,6 +141,82 @@ const priceCurrencies: PriceCurrency[] = [
   "AED",
 ];
 
+const brewMethodValues = Object.keys(BREW_METHODS) as BrewMethod[];
+const grindSizeValues = Object.keys(GRIND_SIZES) as GrindSize[];
+const beanTypeValues: BeanType[] = ["unknown", "arabica", "robusta", "blend"];
+const beanDetailValues: BeanDetail[] = ["generic", "high_altitude", "low_altitude", "custom"];
+const volumeUnitValues: VolumeUnit[] = ["ml", "l", "fl_oz"];
+const weightUnitValues: WeightUnit[] = ["g", "oz", "lb"];
+const timeUnitValues: TimeUnit[] = ["min", "hr"];
+const temperatureUnitValues: TemperatureUnit[] = ["c", "f"];
+const priceUnitValues: PriceUnit[] = ["kg", "lb"];
+const packageClueValues: PackageClue[] = [
+  "none",
+  "specialty_single_origin",
+  "espresso_blend",
+  "south_indian_filter",
+  "commercial_instant",
+];
+const roastLevelValues: RoastLevel[] = ["light", "medium", "dark"];
+const agitationValues: AgitationLevel[] = ["none", "gentle", "moderate", "high"];
+const waterMineralsValues: WaterMinerals[] = ["unknown", "soft", "balanced", "hard"];
+const freshnessValues: Freshness[] = ["unknown", "fresh", "rested", "stale"];
+const filterTypeValues: FilterType[] = ["paper", "metal", "cloth", "none"];
+const arabicaGradeValues: ArabicaGrade[] = ["specialty", "commercial"];
+const elevationBandValues: ElevationBand[] = ["unknown", "low", "mid", "high"];
+const extractionQualityValues: ExtractionQuality[] = ["average", "poor", "well_prepared"];
+const cultivarValues: Cultivar[] = ["unknown", "geisha", "sl28", "caturra", "catimor"];
+
+type CaffiLabSessionInputs = {
+  brewMethod: BrewMethod;
+  coffeeAmount: string;
+  coffeeUnit: WeightUnit;
+  brewWaterAmount: string;
+  brewWaterUnit: VolumeUnit;
+  servingAmount: string;
+  servingUnit: VolumeUnit;
+  beanType: BeanType;
+  beanDetail: BeanDetail;
+  customCaffeinePercent: string;
+  arabicaPercent: string;
+  robustaPercent: string;
+  coffeePrice: string;
+  priceCurrency: PriceCurrency;
+  priceUnit: PriceUnit;
+  packageClue: PackageClue;
+  brewTimeAmount: string;
+  brewTimeUnit: TimeUnit;
+  dilutionAmount: string;
+  dilutionUnit: VolumeUnit;
+  grindSize: GrindSize;
+  roastLevel: RoastLevel;
+  temperatureAmount: string;
+  temperatureUnit: TemperatureUnit;
+  extractionYieldPercent: string;
+  pressureBars: string;
+  agitation: AgitationLevel;
+  waterMinerals: WaterMinerals;
+  waterPh: string;
+  freshness: Freshness;
+  filterType: FilterType;
+  chicoryPercent: string;
+  arabicaGrade: ArabicaGrade | "";
+  elevationBand: ElevationBand;
+  extractionQuality: ExtractionQuality;
+  cultivar: Cultivar;
+};
+
+type CaffiLabSessionPayload = {
+  version: "1.0";
+  timestamp: string;
+  inputs: CaffiLabSessionInputs;
+  model: {
+    estimateFormula: string;
+    decayFormula: string;
+  };
+  results: ReturnType<typeof estimateCaffeine>;
+};
+
 const inputClass =
   "h-11 w-full rounded-[6px] border border-[#3c4337] bg-[#11130f] px-3 text-sm text-[#f5f1e8] outline-none transition focus:border-[#9adf8f] focus:ring-2 focus:ring-[#9adf8f]/30";
 const labelClass = "text-xs font-medium uppercase text-[#a9b39c] [letter-spacing:0]";
@@ -157,6 +233,54 @@ function parseOptionalNumber(value: string) {
 
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isOneOf<T extends string>(value: unknown, allowed: readonly T[]): value is T {
+  return typeof value === "string" && allowed.includes(value as T);
+}
+
+function formatIsoTimestamp(iso: string) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) {
+    return iso;
+  }
+
+  return d.toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
+function sanitizeFileStem(value: string) {
+  return value.replace(/[^a-z0-9_-]/gi, "-");
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+        return;
+      }
+      reject(new Error("Could not convert image to data URL."));
+    };
+    reader.onerror = () => reject(new Error("Could not read image blob."));
+    reader.readAsDataURL(blob);
+  });
 }
 
 function formatNumber(value: number) {
@@ -526,11 +650,14 @@ export function CaffiLabCalculator() {
   const [deltaMg, setDeltaMg] = useState<number | null>(null);
   const prevEstimatedMgRef = useRef<number | null>(null);
   const customCaffeineInputRef = useRef<HTMLInputElement | null>(null);
+  const sessionFileInputRef = useRef<HTMLInputElement | null>(null);
   const [whatChanged, setWhatChanged] = useState<Array<{ id: number; label: string; deltaMg: number }>>([]);
   const currentFocusTopicRef = useRef<FocusTopic>("result");
   const [displayedMg, setDisplayedMg] = useState(0);
   const countUpRef = useRef<number | null>(null);
   const changeIdRef = useRef(0);
+  const [sessionMessage, setSessionMessage] = useState<string | null>(null);
+  const [sessionMessageTone, setSessionMessageTone] = useState<"ok" | "error">("ok");
 
   const method = BREW_METHODS[brewMethod];
   const estimate = useMemo(
@@ -627,6 +754,717 @@ export function CaffiLabCalculator() {
     timeUnit: brewTimeUnit,
     waterUnit: brewWaterUnit,
   });
+
+  const sessionPayload: CaffiLabSessionPayload = {
+    version: "1.0",
+    timestamp: new Date().toISOString(),
+    inputs: {
+      brewMethod,
+      coffeeAmount,
+      coffeeUnit,
+      brewWaterAmount,
+      brewWaterUnit,
+      servingAmount,
+      servingUnit,
+      beanType,
+      beanDetail,
+      customCaffeinePercent,
+      arabicaPercent,
+      robustaPercent,
+      coffeePrice,
+      priceCurrency,
+      priceUnit,
+      packageClue,
+      brewTimeAmount,
+      brewTimeUnit,
+      dilutionAmount,
+      dilutionUnit,
+      grindSize,
+      roastLevel,
+      temperatureAmount,
+      temperatureUnit,
+      extractionYieldPercent,
+      pressureBars,
+      agitation,
+      waterMinerals,
+      waterPh,
+      freshness,
+      filterType,
+      chicoryPercent,
+      arabicaGrade,
+      elevationBand,
+      extractionQuality,
+      cultivar,
+    },
+    model: {
+      estimateFormula: "Estimate = G × F_mid × E × 1000",
+      decayFormula: "C(t) = C0 × (1/2)^(t / half_life)",
+    },
+    results: estimate,
+  };
+
+  function triggerDownload(filename: string, contentType: string, content: string) {
+    const blob = new Blob([content], { type: contentType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleSaveSession() {
+    const now = new Date();
+    const fileTimestamp = sanitizeFileStem(now.toISOString().slice(0, 19));
+    const filename = `caffilab-session-${fileTimestamp}.json`;
+    triggerDownload(filename, "application/json;charset=utf-8", `${JSON.stringify(sessionPayload, null, 2)}\n`);
+    setSessionMessage("Session saved. Use this JSON to restore your full setup anytime.");
+    setSessionMessageTone("ok");
+  }
+
+  function openSessionLoader() {
+    sessionFileInputRef.current?.click();
+  }
+
+  function applySessionInputs(candidate: unknown) {
+    if (!isRecord(candidate)) {
+      throw new Error("Invalid session format.");
+    }
+
+    if (!isOneOf(candidate.brewMethod, brewMethodValues)) {
+      throw new Error("Session is missing a valid brew method.");
+    }
+
+    if (!isOneOf(candidate.beanType, beanTypeValues) || !isOneOf(candidate.beanDetail, beanDetailValues)) {
+      throw new Error("Session has invalid bean settings.");
+    }
+
+    setBrewMethod(candidate.brewMethod);
+    if (typeof candidate.coffeeAmount === "string") setCoffeeAmount(candidate.coffeeAmount);
+    if (isOneOf(candidate.coffeeUnit, weightUnitValues)) setCoffeeUnit(candidate.coffeeUnit);
+    if (typeof candidate.brewWaterAmount === "string") setBrewWaterAmount(candidate.brewWaterAmount);
+    if (isOneOf(candidate.brewWaterUnit, volumeUnitValues)) setBrewWaterUnit(candidate.brewWaterUnit);
+    if (typeof candidate.servingAmount === "string") setServingAmount(candidate.servingAmount);
+    if (isOneOf(candidate.servingUnit, volumeUnitValues)) setServingUnit(candidate.servingUnit);
+    setBeanType(candidate.beanType);
+    setBeanDetail(candidate.beanDetail);
+    if (typeof candidate.customCaffeinePercent === "string") setCustomCaffeinePercent(candidate.customCaffeinePercent);
+    if (typeof candidate.arabicaPercent === "string") setArabicaPercent(candidate.arabicaPercent);
+    if (typeof candidate.robustaPercent === "string") setRobustaPercent(candidate.robustaPercent);
+    if (typeof candidate.coffeePrice === "string") setCoffeePrice(candidate.coffeePrice);
+    if (isOneOf(candidate.priceCurrency, priceCurrencies)) setPriceCurrency(candidate.priceCurrency);
+    if (isOneOf(candidate.priceUnit, priceUnitValues)) setPriceUnit(candidate.priceUnit);
+    if (isOneOf(candidate.packageClue, packageClueValues)) setPackageClue(candidate.packageClue);
+    if (typeof candidate.brewTimeAmount === "string") setBrewTimeAmount(candidate.brewTimeAmount);
+    if (isOneOf(candidate.brewTimeUnit, timeUnitValues)) setBrewTimeUnit(candidate.brewTimeUnit);
+    if (typeof candidate.dilutionAmount === "string") setDilutionAmount(candidate.dilutionAmount);
+    if (isOneOf(candidate.dilutionUnit, volumeUnitValues)) setDilutionUnit(candidate.dilutionUnit);
+    if (isOneOf(candidate.grindSize, grindSizeValues)) setGrindSize(candidate.grindSize);
+    if (isOneOf(candidate.roastLevel, roastLevelValues)) setRoastLevel(candidate.roastLevel);
+    if (typeof candidate.temperatureAmount === "string") setTemperatureAmount(candidate.temperatureAmount);
+    if (isOneOf(candidate.temperatureUnit, temperatureUnitValues)) setTemperatureUnit(candidate.temperatureUnit);
+    if (typeof candidate.extractionYieldPercent === "string") setExtractionYieldPercent(candidate.extractionYieldPercent);
+    if (typeof candidate.pressureBars === "string") setPressureBars(candidate.pressureBars);
+    if (isOneOf(candidate.agitation, agitationValues)) setAgitation(candidate.agitation);
+    if (isOneOf(candidate.waterMinerals, waterMineralsValues)) setWaterMinerals(candidate.waterMinerals);
+    if (typeof candidate.waterPh === "string") setWaterPh(candidate.waterPh);
+    if (isOneOf(candidate.freshness, freshnessValues)) setFreshness(candidate.freshness);
+    if (isOneOf(candidate.filterType, filterTypeValues)) setFilterType(candidate.filterType);
+    if (typeof candidate.chicoryPercent === "string") setChicoryPercent(candidate.chicoryPercent);
+    if (candidate.arabicaGrade === "" || isOneOf(candidate.arabicaGrade, arabicaGradeValues)) {
+      setArabicaGrade(candidate.arabicaGrade);
+    }
+    if (isOneOf(candidate.elevationBand, elevationBandValues)) setElevationBand(candidate.elevationBand);
+    if (isOneOf(candidate.extractionQuality, extractionQualityValues)) {
+      setExtractionQuality(candidate.extractionQuality);
+    }
+    if (isOneOf(candidate.cultivar, cultivarValues)) setCultivar(candidate.cultivar);
+  }
+
+  async function handleLoadSession(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    try {
+      const raw = await file.text();
+      const parsed: unknown = JSON.parse(raw);
+      if (!isRecord(parsed) || !isRecord(parsed.inputs)) {
+        throw new Error("JSON does not match the CaffiLab session format.");
+      }
+
+      applySessionInputs(parsed.inputs);
+      setSessionMessage(`Session loaded from ${file.name}.`);
+      setSessionMessageTone("ok");
+      setShowAdvanced(true);
+    } catch (error) {
+      setSessionMessage(error instanceof Error ? error.message : "Could not load the session file.");
+      setSessionMessageTone("error");
+    } finally {
+      event.target.value = "";
+    }
+  }
+
+  async function handleDownloadReport() {
+    const generatedAt = new Date().toISOString();
+    const generatedLabel = formatIsoTimestamp(generatedAt);
+    const methodLabel = BREW_METHODS[brewMethod].label;
+    let logoDataUrl = "";
+    let horizontalFooterLogoDataUrl = "";
+
+    try {
+      const [iconResponse, footerResponse] = await Promise.all([
+        fetch("/brand/icon_logo_light.png", { cache: "force-cache" }),
+        fetch("/brand/Horizontal_logo_light.png", { cache: "force-cache" }),
+      ]);
+
+      if (iconResponse.ok) {
+        logoDataUrl = await blobToDataUrl(await iconResponse.blob());
+      }
+      if (footerResponse.ok) {
+        horizontalFooterLogoDataUrl = await blobToDataUrl(await footerResponse.blob());
+      }
+    } catch {
+      logoDataUrl = "";
+      horizontalFooterLogoDataUrl = "";
+    }
+
+    const brewDurationHours = brewMethod === "cold_brew" || brewMethod === "cold_drip" ? 2.5 : 0.75;
+    const peakTimeHours = Math.max(0.5, brewDurationHours);
+    const crashStartHours = peakTimeHours + 2.5;
+    const crashEndHours = peakTimeHours + 4.5;
+    const halfLifeHours = 5;
+    const remainingAfterCrash = Math.round(estimate.estimatedMg * Math.pow(0.5, crashEndHours / halfLifeHours));
+    const nextSafeIntakeHours = Math.max(4, Math.ceil(crashEndHours));
+    const sleepImpact = estimate.estimatedMg >= 220 ? "High" : estimate.estimatedMg >= 150 ? "Moderate" : "Low";
+    const intakeClassification = estimate.estimatedMg >= 300 ? "Very high intake" : estimate.estimatedMg >= 200 ? "High intake" : estimate.estimatedMg >= 100 ? "Moderate intake" : "Low intake";
+    const keyInsight = `You will still have about ${remainingAfterCrash} mg of caffeine in your system after ${crashEndHours.toFixed(1)} hours.`;
+    const estimatedEspressoShots = Math.max(1, Math.round(estimate.estimatedMg / 75));
+    const strengthBand = estimate.estimatedMg >= 260 ? "high" : estimate.estimatedMg >= 140 ? "medium" : "low";
+    const remainingPct = Math.round((remainingAfterCrash / estimate.estimatedMg) * 100);
+    const intakeAdj = intakeClassification.replace(" intake", "").toLowerCase();
+    const timelineRows = [0, 2, 4, 6, 8, 10]
+      .map((hour) => {
+        const mg = Math.round(estimate.estimatedMg * Math.pow(0.5, hour / halfLifeHours));
+        return `<tr><td>${hour} h</td><td>${mg} mg</td></tr>`;
+      })
+      .join("");
+
+    const brewingRows: Array<[string, string, "primary" | "secondary"]> = [
+      ["Method", methodLabel, "primary"],
+      ["Brew time", `${brewTimeAmount} ${brewTimeUnit}`, "primary"],
+      ["Temperature", `${temperatureAmount} ${temperatureUnit.toUpperCase()}`, "primary"],
+      ["Brew water", `${brewWaterAmount} ${brewWaterUnit}`, "secondary"],
+      ["Serving volume", `${servingAmount} ${servingUnit}`, "primary"],
+      ["Dilution", `${dilutionAmount} ${dilutionUnit}`, "secondary"],
+    ];
+    const compositionRows: Array<[string, string, "primary" | "secondary"]> = [
+      ["Bean species", beanType, "primary"],
+      ["Bean detail", beanDetail, "secondary"],
+      ["Custom caffeine %", customCaffeinePercent || "Not set", "secondary"],
+      ["Arabica %", arabicaPercent, "primary"],
+      ["Robusta %", robustaPercent, "primary"],
+      ["Chicory %", chicoryPercent, "primary"],
+      ["Arabica grade", arabicaGrade || "Not set", "secondary"],
+      ["Cultivar", cultivar, "secondary"],
+      ["Elevation", elevationBand, "secondary"],
+    ];
+    const parameterRows: Array<[string, string, "primary" | "secondary"]> = [
+      ["Coffee dose", `${coffeeAmount} ${coffeeUnit}`, "primary"],
+      ["Grind", grindSize, "primary"],
+      ["Roast", roastLevel, "secondary"],
+      ["Extraction yield %", extractionYieldPercent || "Auto", "primary"],
+      ["Pressure (bar)", pressureBars || "Not set", "secondary"],
+      ["Agitation", agitation, "secondary"],
+      ["Water minerals", waterMinerals, "primary"],
+      ["Water pH", waterPh || "Not set", "secondary"],
+      ["Freshness", freshness, "secondary"],
+      ["Filter", filterType, "secondary"],
+      ["Extraction quality", extractionQuality, "secondary"],
+      ["Package clue", packageClue, "secondary"],
+      ["Price", coffeePrice ? `${coffeePrice} ${priceCurrency}/${priceUnit}` : "Not set", "secondary"],
+    ];
+
+    const rowsToHtml = (rows: Array<[string, string, "primary" | "secondary"]>) =>
+      rows
+        .map(([k, v, tone]) => `<div class="row ${tone === "secondary" ? "row-secondary" : ""}"><span>${escapeHtml(k)}</span><strong>${escapeHtml(v)}</strong></div>`)
+        .join("");
+
+    const reportHtml = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Caffeine Impact Report</title>
+  <style>
+    :root {
+      --ink: #111318;
+      --muted: #596273;
+      --line: #dde3ed;
+      --panel: #f7fbff;
+      --brand: #0f766e;
+      --peak: #15803d;
+      --crash: #c2410c;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #eef2f8;
+      color: var(--ink);
+      font: 400 14px/1.5 var(--font);
+      padding: 24px;
+    }
+    .sheet {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      max-width: 980px;
+      margin: 0 auto 22px;
+      overflow: hidden;
+      box-shadow: 0 16px 44px rgba(15, 23, 42, 0.08);
+    }
+    .page { padding: 28px; }
+    .page + .page { border-top: 1px solid var(--line); }
+    .top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+    .eyebrow { color: var(--brand); font: 700 11px/1.2 var(--font); letter-spacing: 0.14em; text-transform: uppercase; }
+    .personal-label {
+      display: inline-block;
+      margin-top: 8px;
+      border: 1px solid #cdd9e8;
+      border-radius: 999px;
+      padding: 4px 10px;
+      color: #334155;
+      font: 600 12px/1.2 var(--font);
+      background: #f8fbff;
+    }
+    .logo {
+      width: 132px;
+      height: 132px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px;
+      object-fit: contain;
+      background: #ffffff;
+    }
+    h1 { margin: 10px 0 4px; font: 700 38px/1.1 var(--font); }
+    h2 { margin: 0 0 12px; font: 700 24px/1.15 var(--font); }
+    h3 { margin: 0 0 10px; font: 700 16px/1.2 var(--font); }
+    p { margin: 0; }
+    .sub { color: var(--muted); }
+    .hero {
+      margin: 22px 0;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: radial-gradient(circle at 12% 0%, #e4fff6, #f0fbff 40%, #fff8ef 100%);
+    }
+    .hero-grid {
+      margin-top: 14px;
+      display: grid;
+      gap: 9px;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+    .metric {
+      border: 1px solid #d7e1ed;
+      border-radius: 12px;
+      padding: 5.13px;
+      background: #ffffff;
+    }
+    .metric span { display: block; color: var(--muted); font: 600 11px/1.2 var(--font); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 5px; }
+    .metric strong { font: 700 11.97px/1.1 var(--font); display: block; }
+    .metric.hero-strong strong { font: 700 25.75px/1 var(--font); }
+    .curve-wrap {
+      margin-top: 11.14px;
+      padding: 6.86px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fbfdff;
+    }
+    .insight {
+      margin-top: 14px;
+      padding: 14px;
+      border-left: 4px solid var(--brand);
+      background: #f2fbf9;
+      border-radius: 8px;
+      font: 600 16px/1.45 var(--font);
+    }
+    .two-col { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .three-col { display: grid; gap: 14px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .group {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 14px;
+    }
+    .group.soft { background: var(--panel); }
+    .row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid #e8edf5;
+    }
+    .row:last-child { border-bottom: none; }
+    .row span { color: var(--muted); }
+    .row strong { font: 600 14px/1.4 var(--font); text-align: right; }
+    .row-secondary span, .row-secondary strong { color: #8b96a8; }
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font: 700 12px/1.2 var(--font);
+    }
+    .badge.safe { background: #dcfce7; color: #166534; }
+    .badge.warn { background: #fef3c7; color: #92400e; }
+    .badge.high { background: #ffe4e6; color: #be123c; }
+    .formula {
+      background: #f8fbff;
+      border: 1px solid #dbe8f8;
+      border-radius: 10px;
+      padding: 10px;
+      font: 500 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      white-space: pre-wrap;
+      margin-top: 10px;
+    }
+    .mini {
+      color: var(--muted);
+      font: 400 12px/1.4 var(--font);
+      margin-top: 8px;
+    }
+    .strength-bar {
+      margin-top: 8.55px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 6.004px;
+      background: #ffffff;
+    }
+    .strength-track {
+      margin-top: 8px;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(to right, #dcfce7, #fef3c7, #fecaca);
+      position: relative;
+      overflow: hidden;
+    }
+    .strength-marker {
+      position: absolute;
+      top: -3px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #0f172a;
+      border: 2px solid #ffffff;
+      box-shadow: 0 0 0 1px #cbd5e1;
+    }
+    .footer-brand {
+      margin-top: 24px;
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font: 400 12px/1.4 var(--font);
+    }
+    .footer-brand img {
+      width: 220px;
+      height: auto;
+      object-fit: contain;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font: 400 14px/1.45 var(--font);
+    }
+    th, td {
+      text-align: left;
+      padding: 7px 6px;
+      border-bottom: 1px solid #e7edf6;
+    }
+    th { color: var(--muted); font: 600 12px/1.2 var(--font); text-transform: uppercase; letter-spacing: 0.06em; }
+    .footer {
+      margin-top: 24px;
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      color: var(--muted);
+      font: 400 12px/1.4 var(--font);
+    }
+    .page-break { page-break-after: always; }
+    @media print {
+      body { margin: 0; padding: 10mm; background: #ffffff; }
+      .sheet { box-shadow: none; border: none; border-radius: 0; margin: 0; }
+      .page {
+        padding: 12mm;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .page-break { page-break-after: always; }
+      @page {
+        size: auto;
+        margin: 0;
+      }
+    }
+    .hero-top { margin-top: 8.55px; }
+    .hero-pairs {
+      display: grid;
+      gap: 5.13px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 5.13px;
+    }
+    .metric-lf span { margin-top: 0; margin-bottom: 3px; }
+    .metric-lf strong { font: 700 13.68px/1.1 var(--font); }
+    .insight-card {
+      margin-top: 8.55px;
+      padding: 10.26px 12.863px;
+      background: linear-gradient(135deg, #f0fdf4, #eff6ff);
+      border: 1.5px solid #a7f3d0;
+      border-radius: 14px;
+      text-align: center;
+    }
+    .insight-main {
+      margin: 5px 0 4px;
+      font: 700 12.863px/1.3 var(--font);
+      color: var(--ink);
+    }
+    .insight-pct {
+      color: var(--brand);
+      font: 600 14px/1.4 var(--font);
+      margin: 0;
+    }
+    .you-here-label { position: relative; height: 26px; margin-top: 2px; }
+    .you-here-inner {
+      position: absolute;
+      transform: translateX(-50%);
+      text-align: center;
+      color: #334155;
+      font: 700 10px/1.4 var(--font);
+      white-space: nowrap;
+    }
+    .what-means {
+      padding: 14px 16px;
+      background: #f8fbff;
+      border: 1px solid #dbe8f8;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+    .wm-title { font: 700 17px/1.2 var(--font); margin: 0 0 8px; }
+    .wm-body { font: 400 14px/1.6 var(--font); margin: 0 0 8px; color: var(--ink); }
+    .wm-advice { font: 400 13px/1.5 var(--font); color: #78716c; margin: 0; padding: 8px 10px; background: #fff7ed; border-radius: 8px; }
+    .table-ref-label { color: var(--muted); font: 500 12px/1.2 var(--font); margin: 14px 0 4px; }
+    .deemph-table th, .deemph-table td { padding: 5px 6px; font: 400 12px/1.4 var(--font); }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <section class="page page-break">
+      <div class="top">
+        <div>
+          <div class="eyebrow">ShenoyLabs · CaffiLab</div>
+          <h1>Caffeine Impact Report</h1>
+          <p class="sub">Generated on ${escapeHtml(generatedLabel)}</p>
+          <span class="personal-label">Personal Caffeine Report</span>
+        </div>
+        ${logoDataUrl ? `<img src="${logoDataUrl}" alt="ShenoyLabs logo" class="logo" />` : ""}
+      </div>
+
+      <div class="hero">
+        <h2>Hero Metrics</h2>
+        <div class="hero-top">
+          <div class="metric hero-strong"><strong>${estimate.estimatedMg} mg</strong><span>Total caffeine</span></div>
+        </div>
+        <div class="hero-pairs">
+          <div class="metric metric-lf"><span>Peak</span><strong>~${Math.round(peakTimeHours * 60)} min</strong></div>
+          <div class="metric metric-lf"><span>Crash</span><strong>${crashStartHours.toFixed(1)}&#8211;${crashEndHours.toFixed(1)} h</strong></div>
+          <div class="metric metric-lf"><span>Sleep impact</span><strong>${sleepImpact}</strong></div>
+          <div class="metric metric-lf"><span>Next intake</span><strong>~${nextSafeIntakeHours} h</strong></div>
+        </div>
+      </div>
+
+      <div class="curve-wrap">
+        <h3>Energy Curve</h3>
+        <svg viewBox="0 0 560 200" role="img" aria-label="Energy curve showing caffeine lifecycle: peak, stable, and crash zones" style="display: block; width: 57.45%; margin: 0 auto; border: 1px solid var(--line); border-radius: 10px; background: #ffffff;">
+          <defs>
+            <linearGradient id="curveGradient" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#15803d" />
+              <stop offset="55%" stop-color="#f59e0b" />
+              <stop offset="100%" stop-color="#c2410c" />
+            </linearGradient>
+          </defs>
+          <polygon points="24,168 98,88 170,44 170,168" fill="rgba(21,128,61,0.10)" />
+          <polygon points="170,44 255,68 338,98 420,126 420,168 170,168" fill="rgba(245,158,11,0.08)" />
+          <polygon points="420,126 500,145 538,154 538,168 420,168" fill="rgba(194,65,12,0.10)" />
+          <line x1="24" y1="168" x2="538" y2="168" stroke="#dbe3ee" stroke-width="1.5" />
+          <line x1="170" y1="26" x2="170" y2="168" stroke="#bbf7d0" stroke-dasharray="5 4" stroke-width="1.5" />
+          <line x1="420" y1="26" x2="420" y2="168" stroke="#fed7aa" stroke-dasharray="5 4" stroke-width="1.5" />
+          <polyline fill="none" stroke="url(#curveGradient)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" points="24,168 98,88 170,44 255,68 338,98 420,126 500,145 538,154" />
+          <text x="144" y="22" style="font: 600 10px sans-serif; fill: #15803d;">Best focus</text>
+          <text x="388" y="22" style="font: 600 10px sans-serif; fill: #c2410c;">Crash begins</text>
+          <text x="85" y="185" style="font: 700 10px sans-serif; fill: #15803d;">Peak</text>
+          <text x="277" y="185" style="font: 700 10px sans-serif; fill: #b45309;">Stable</text>
+          <text x="463" y="185" style="font: 700 10px sans-serif; fill: #c2410c;">Crash</text>
+        </svg>
+        <p class="mini">X-axis: time since intake · Y-axis: estimated caffeine level in system.</p>
+      </div>
+
+      <div class="insight-card">
+        <div style="font: 700 22px/1 var(--font); margin-bottom: 4px;">&#128161; Key Insight</div>
+        <p class="insight-main">~${remainingAfterCrash} mg caffeine remains in your system after ~${Math.round(crashEndHours)} hours</p>
+        <p class="insight-pct">~${remainingPct}% of your intake still active.</p>
+      </div>
+
+      <div class="strength-bar">
+        <h3>Caffeine strength</h3>
+        <p class="sub">Equivalent to ~${estimatedEspressoShots} espresso shots.</p>
+        <div class="strength-track">
+          <div class="strength-marker" style="left: ${strengthBand === "low" ? "16%" : strengthBand === "medium" ? "49%" : "82%"};"></div>
+        </div>
+        <div class="you-here-label">
+          <div class="you-here-inner" style="left: ${strengthBand === "low" ? "16%" : strengthBand === "medium" ? "49%" : "82%"}">&#8593; You are here</div>
+        </div>
+        <div style="margin-top: 2px; display: flex; justify-content: space-between; color: var(--muted); font: 500 12px/1.2 var(--font);">
+          <span>Low</span><span>Medium</span><span>High</span>
+        </div>
+      </div>
+
+      <div class="footer-brand">
+        <div>Scientific caffeine estimation engine</div>
+        ${horizontalFooterLogoDataUrl ? `<img src="${horizontalFooterLogoDataUrl}" alt="ShenoyLabs" />` : ""}
+      </div>
+    </section>
+
+    <section class="page page-break">
+      <h2>Inputs + Details</h2>
+      <p class="sub">All values below are from your exact selections in the calculator.</p>
+
+      <div class="three-col" style="margin-top: 18px;">
+        <article class="group soft">
+          <h3>Brewing</h3>
+          ${rowsToHtml(brewingRows)}
+        </article>
+        <article class="group soft">
+          <h3>Composition</h3>
+          ${rowsToHtml(compositionRows)}
+        </article>
+        <article class="group soft">
+          <h3>Parameters</h3>
+          ${rowsToHtml(parameterRows)}
+        </article>
+      </div>
+
+      <div class="footer-brand">
+        <div>Scientific caffeine estimation engine</div>
+        ${horizontalFooterLogoDataUrl ? `<img src="${horizontalFooterLogoDataUrl}" alt="ShenoyLabs" />` : ""}
+      </div>
+    </section>
+
+    <section class="page">
+      <h2>Analysis + Formulas</h2>
+      <div class="two-col" style="margin-top: 14px;">
+        <article class="group">
+          <div class="what-means">
+            <p class="wm-title">&#129504; What this means</p>
+            <p class="wm-body">You are in the <strong>${escapeHtml(intakeAdj)}</strong> caffeine range. Peak alertness in ~${Math.round(peakTimeHours * 60)} min.</p>
+            <p class="wm-advice">Avoid caffeine within 8&#8211;10 hours of sleep to prevent disruption.</p>
+          </div>
+          <p style="margin: 0 0 8px;"><span class="badge ${estimate.estimatedMg >= 300 ? "high" : estimate.estimatedMg >= 180 ? "warn" : "safe"}">${escapeHtml(intakeClassification)}</span></p>
+          <div class="row"><span>Peak window</span><strong>${peakTimeHours.toFixed(1)}&#8211;${(peakTimeHours + 1.6).toFixed(1)} h</strong></div>
+          <div class="row"><span>Confidence</span><strong>${estimate.confidenceLabel} (+/&#8722;${estimate.confidencePercent}%)</strong></div>
+          <div class="row"><span>Practical range</span><strong>${estimate.practicalLowerMg}&#8211;${estimate.practicalUpperMg} mg</strong></div>
+          <div class="row"><span>Strength</span><strong>${estimate.concentrationMgPer100Ml} mg/100ml</strong></div>
+        </article>
+
+        <article class="group">
+          <h3>Formula Steps</h3>
+          <div class="row"><span>Step 1: Coffee dose (G)</span><strong>${estimate.coffeeGrams} g</strong></div>
+          <div class="row"><span>Step 2: Caffeine % (F_mid)</span><strong>${(estimate.effectiveCaffeineFraction * 100).toFixed(2)} %</strong></div>
+          <div class="row"><span>Step 3: Extraction % (E)</span><strong>${Math.round(estimate.caffeineRecovery * 100)} %</strong></div>
+          <div class="row"><span>Final output</span><strong>${estimate.estimatedMg} mg</strong></div>
+
+          <div class="formula">Estimate = G × F_mid × E × 1000
+Estimate = ${estimate.coffeeGrams} × ${(estimate.effectiveCaffeineFraction * 100).toFixed(2)}% × ${Math.round(estimate.caffeineRecovery * 100)}% × 1000
+Estimate = ${estimate.estimatedMg} mg</div>
+
+          <div class="formula">C = C0 × (1/2)^(t / half_life)
+C(${crashEndHours.toFixed(1)}h) = ${estimate.estimatedMg} × (1/2)^(${crashEndHours.toFixed(1)} / ${halfLifeHours})
+C(${crashEndHours.toFixed(1)}h) = ${remainingAfterCrash} mg</div>
+
+          <p class="table-ref-label">Detailed breakdown (for reference)</p>
+          <table class="deemph-table">
+            <thead><tr><th>Time from intake</th><th>Remaining caffeine</th></tr></thead>
+            <tbody>${timelineRows}</tbody>
+          </table>
+
+          <p class="mini">Half-life decay formula shown for authenticity and residual-caffeine visibility.</p>
+        </article>
+      </div>
+
+      <div class="footer-brand">
+        <div>Scientific caffeine estimation engine</div>
+        ${horizontalFooterLogoDataUrl ? `<img src="${horizontalFooterLogoDataUrl}" alt="ShenoyLabs" />` : ""}
+      </div>
+    </section>
+  </div>
+</body>
+</html>`;
+
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("aria-hidden", "true");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+
+    const cleanup = () => {
+      setTimeout(() => {
+        iframe.remove();
+      }, 1000);
+    };
+
+    document.body.appendChild(iframe);
+    const doc = iframe.contentDocument;
+    if (!doc) {
+      setSessionMessage("Could not initialize report renderer. Please try again.");
+      setSessionMessageTone("error");
+      cleanup();
+      return;
+    }
+
+    doc.open();
+    doc.write(reportHtml);
+    doc.close();
+
+    const printTarget = iframe.contentWindow;
+    if (!printTarget) {
+      setSessionMessage("Could not prepare report preview. Please try again.");
+      setSessionMessageTone("error");
+      cleanup();
+      return;
+    }
+
+    setTimeout(() => {
+      printTarget.focus();
+      printTarget.print();
+      cleanup();
+    }, 250);
+
+    setSessionMessage("Report is ready. Choose Save as PDF in the print dialog.");
+    setSessionMessageTone("ok");
+  }
 
   useEffect(() => {
     if (beanDetail !== "custom" || !showAdvanced) {
@@ -773,6 +1611,7 @@ export function CaffiLabCalculator() {
     prevEstimatedMgRef.current = null;
     setDeltaMg(null);
     setWhatChanged([]);
+    setSessionMessage(null);
   }
 
   return (
@@ -949,6 +1788,46 @@ export function CaffiLabCalculator() {
               <RotateCcwIcon className="size-3" />
               Reset all
             </button>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              <button
+                type="button"
+                onClick={handleDownloadReport}
+                className="rounded-[6px] border border-[#536048] bg-[#11130f] px-3 py-2 text-xs font-medium text-[#f2c36b] transition hover:border-[#f2c36b]/60 hover:text-[#fde7bc]"
+              >
+                Download Report (PDF)
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveSession}
+                className="rounded-[6px] border border-[#3c4337] bg-[#11130f] px-3 py-2 text-xs font-medium text-[#cbd5c0] transition hover:border-[#9adf8f]/50 hover:text-[#f5f1e8]"
+              >
+                Save Session (JSON)
+              </button>
+              <button
+                type="button"
+                onClick={openSessionLoader}
+                className="rounded-[6px] border border-[#3c4337] bg-[#11130f] px-3 py-2 text-xs font-medium text-[#cbd5c0] transition hover:border-[#9adf8f]/50 hover:text-[#f5f1e8]"
+              >
+                Load Session (JSON)
+              </button>
+              <input
+                ref={sessionFileInputRef}
+                type="file"
+                accept="application/json,.json"
+                onChange={handleLoadSession}
+                className="hidden"
+              />
+            </div>
+            {sessionMessage ? (
+              <p
+                className={cn(
+                  "mt-2 text-xs",
+                  sessionMessageTone === "error" ? "text-[#f87171]" : "text-[#8fd9a4]",
+                )}
+              >
+                {sessionMessage}
+              </p>
+            ) : null}
             <div className="mt-6 grid gap-3">
               <RangeVisualizer
                 lower={estimate.practicalLowerMg}

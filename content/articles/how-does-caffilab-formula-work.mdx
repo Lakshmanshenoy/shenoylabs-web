@@ -3,7 +3,7 @@ title: "How Does the CaffiLab Formula Work?"
 excerpt: "A deep dive into the extraction science behind CaffiLab's caffeine estimation model — the math, the physics classes, the Arrhenius cold-brew model, and the research that backs it."
 date: "2025-07-14"
 createdDate: "2026-04-18"
-lastUpdated: "2026-04-23"
+lastUpdated: "2026-04-30"
 category: "research"
 primaryCategory: "research"
 tags: ["caffilab", "caffeine", "extraction", "coffee-science", "research"]
@@ -29,6 +29,19 @@ Where:
 - **× 1000** converts grams to milligrams
 
 The recovery term **E** is the most complex part. Because every brew method works differently at a physical level, CaffiLab uses **method-class-specific sub-models** rather than a single additive formula. The next section explains this architecture.
+
+## How formulas appear in the PDF report
+
+When you export a CaffiLab report, the formulas are shown in two layers:
+
+1. **Primary estimation formula** (prominent):
+	- Estimate = G × F_mid × E × 1000
+	- Includes substitution with your live values and final mg output.
+2. **Residual caffeine decay formula** (secondary):
+	- C = C0 × (1/2)^(t / half_life)
+	- Used to show remaining caffeine across the crash and post-crash timeline.
+
+This presentation is intentional: users see the practical headline result first, then the authenticity math directly below it.
 
 > **Model type:** CaffiLab uses a semi-mechanistic model — core extraction behavior is physics-informed, while secondary adjustments are empirically calibrated.
 
