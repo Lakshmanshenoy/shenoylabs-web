@@ -663,7 +663,7 @@ practicalUpperMg = estimatedMg × (1 + (uncertainty + 2) / 100)
 
 So at 15 % combined uncertainty, the lower bound uses 15 % and the upper bound uses 17 %.
 
-### Calibration factor α (v3.1 Phase 3)
+### Calibration factor α (v3.1 Phase 3 — updated v3.3)
 
 After all computation, a global calibration scalar is applied to the predicted value:
 
@@ -671,24 +671,49 @@ After all computation, a global calibration scalar is applied to the predicted v
 finalMg = predictedMg × α
 ```
 
-The current value is **α = 1.0** (identity — no adjustment). This constant will be updated once 30–50 measured samples are collected to anchor the model to empirical data. Until then it functions as a documented pass-through, ensuring the architecture is in place for future calibration without any model drift.
-
-### Per-method β correction (Phase 3 advanced — v3.2)
-
-Beyond the global α, CaffiLab also exposes a per-physics-class beta factor for finer-grained calibration:
+The current value is **α = 1.0** (identity — no adjustment). Once 30–50 paired brew-and-measure samples are collected, it is computed using the **median** ratio — not the mean — for robustness against outlier brews:
 
 ```text
-E_adjusted = E × β_method
+α = median(measured_mg / predicted_mg)  — across all samples
 ```
 
-Where `β_method` is independently computed for each physics class (pressure, percolation, immersion, cold immersion, cold percolation, hybrid) from measurements grouped by extraction mechanism. All betas are currently **1.0**. The architecture is in place so that once enough per-class data is available, each physics family can be corrected independently without touching the base model.
+The median is preferred because a single miscalibrated measurement (e.g. an instrument reading at extraction failure) cannot skew the estimate the way it would with an arithmetic mean. Use `computeCalibrationAlpha()` in `caffilab.ts` to derive the value from a `CalibrationSample` array.
 
-**How to compute β_method:**
+### Per-method β correction (Phase 3 advanced — v3.2, updated v3.3)
 
-1. Group your measurement dataset by extraction physics class.
-2. For each group: `β = mean(measured_mg / predicted_mg)`.
-3. Update the corresponding entry in `PER_METHOD_BETA` in `caffilab.ts`.
-4. Constraint: keep each β within ±10 % of 1.0 to avoid overfitting.
+Beyond the global α, CaffiLab exposes a per-physics-class beta factor for finer-grained calibration:
+
+```text
+E_adjusted = E × β_class
+```
+
+Where `β_class` is independently computed for each physics class (pressure, percolation, immersion, cold immersion, cold percolation, hybrid) from measurements grouped by extraction mechanism. All betas are currently **1.0**.
+
+**How to compute β_class (v3.3 protocol):**
+
+1. Group your `CalibrationSample` dataset by physics class.
+2. Require **≥ 5 samples** per class before applying the factor (enforced by `MIN_SAMPLES_PER_CLASS`).
+3. For each class with sufficient data: `β = median(measured_mg / predicted_mg)`.
+4. Clamp the result to **[0.9, 1.1]** — a hard constraint that prevents overfitting.
+5. Use `computePerClassBeta()` in `caffilab.ts` to automate steps 1–4.
+
+### Calibration dataset schema (Phase 3A, v3.3)
+
+Every calibration sample must record:
+
+| Field | Description |
+|-------|-------------|
+| id | Unique identifier |
+| source | Paper / blog / own experiment |
+| brewMethod / physics | Method and physics class |
+| doseG, beverageVolumeMl | Brew parameters |
+| grindCategory, brewTimeMin, temperatureC | Extraction conditions |
+| roastLevel, beanType, originRegion | Bean properties |
+| predictedMg | CaffiLab model output for these inputs |
+| measuredMg | Empirical caffeine measurement |
+| dataQuality | `direct_hplc` / `tds_derived` / `literature` / `estimated` |
+
+TDS-derived measurements (using caffeine ≈ 3.5 % of dissolved coffee solids; Gloess et al., 2013) are acceptable for bootstrapping calibration. The Cotter / Ristenpart UC Davis drip-coffee dataset (3186 samples; doi:10.25338/B8993H) provides the first available pool for the **percolation** class, once predicted values are computed for each brew condition.
 
 ### Calibration validation targets
 
@@ -699,6 +724,20 @@ The model is considered production-calibrated when:
 | Pre-calibration (current) | &lt;±15 % across methods |
 | After global α | &lt;±10 % overall |
 | After per-method β | &lt;±7 % per physics class |
+
+### Sensitivity analysis (Phase 4, v3.3)
+
+As part of the calibration rigor protocol, each input variable is stress-tested by perturbing it one step while holding all others at the espresso baseline (20 g dose, 43 ml water, default parameters). Expected sensitivity ranges are encoded in `SENSITIVITY_EXPECTED_RANGES` in `caffilab.ts`:
+
+| Variable | Expected impact | Red-flag threshold |
+|----------|----------------|-----------------|
+| Grind | 10–20 % | &gt;30 % (over-sensitive) |
+| Brew ratio | 5–15 % | &gt;30 % or &lt;2 % |
+| Roast level | 5–10 % | &gt;30 % or &lt;2 % |
+| Time (pressure) | 1–5 % | &gt;30 % |
+| Time (immersion) | 10–25 % early | saturates after ~10 min |
+
+A change larger than **30 %** signals potential double-counting of a variable across physics sub-models. A change smaller than **2 %** signals that the variable has negligible effect and should be reviewed.
 
 ---
 

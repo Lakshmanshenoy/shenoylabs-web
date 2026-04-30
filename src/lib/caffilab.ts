@@ -94,25 +94,32 @@ export function getRegionFactor(region: OriginRegion | undefined): number {
 }
 
 /**
- * Global calibration scaling factor (v3.1 spec, Phase 3).
+ * Global calibration scaling factor (v3.1 spec, Phase 3 — updated v3.3).
  *
- * Once 30–50 paired (brew-input, measured-caffeine) samples are collected, set:
- *   CALIBRATION_ALPHA = mean(measured_mg / predicted_mg)
+ * Once 30–50 paired (brew-input, measured-caffeine) samples are collected, compute:
+ *   CALIBRATION_ALPHA = median(measured_mg / predicted_mg)
  *
- * Until then it remains 1.0 (neutral; no effect on output).
+ * Median is used instead of mean for robustness against outlier brews (v3.3).
+ * Use computeCalibrationAlpha() to derive the value from a CalibrationSample array.
+ * Until sufficient data is collected it remains 1.0 (neutral; no effect on output).
  */
 export const CALIBRATION_ALPHA = 1.0;
 
 /**
- * Per-physics-class extraction recovery calibration factors (Phase 3 advanced, v3.2).
+ * Per-physics-class extraction recovery calibration factors (Phase 3 advanced, v3.2 — updated v3.3).
  *
- * After collecting per-method measurement data, compute:
- *   β_method = mean(measured_mg / predicted_mg)  grouped by physics class
+ * After collecting per-method measurement data, compute using the median:
+ *   β_class = median(measured_mg / predicted_mg)  grouped by physics class
  *
  * then update the relevant entry below.  Applied as:
- *   E_adjusted = E × β_method
+ *   E_adjusted = E × β_class
  *
- * All entries start at 1.0 (neutral). Constraint: keep each β within ±10 %.
+ * Use computePerClassBeta() to derive each value from a CalibrationSample array.
+ *
+ * Constraints (v3.3):
+ *   - β is clamped to [0.9, 1.1] — prevents overfitting
+ *   - Requires ≥ MIN_SAMPLES_PER_CLASS samples per class before applying
+ * All entries start at 1.0 (neutral).
  */
 export const PER_METHOD_BETA: Record<BrewPhysics, number> = {
   pressure:         1.0,
@@ -122,6 +129,114 @@ export const PER_METHOD_BETA: Record<BrewPhysics, number> = {
   cold_percolation: 1.0,
   hybrid:           1.0,
 };
+
+/**
+ * Minimum number of calibration samples required per physics class before a
+ * per-class β factor is applied (Phase 3C, v3.3). Below this threshold the
+ * class-level beta remains 1.0 to prevent noisy corrections.
+ */
+export const MIN_SAMPLES_PER_CLASS = 5;
+
+/**
+ * Calibration sample schema (Phase 3A, v3.3).
+ * Each entry pairs a full set of brew inputs with an empirically measured caffeine value.
+ * Populate an array of these and pass to computeCalibrationAlpha() / computePerClassBeta().
+ *
+ * Data quality tiers:
+ *   "direct_hplc"  — direct HPLC caffeine measurement (gold standard)
+ *   "tds_derived"  — estimated from TDS% × brew mass × caffeine-to-TDS ratio (~3.5 %;
+ *                    Gloess et al., 2013; Cotter/Ristenpart UC Davis dataset, 2022)
+ *   "literature"   — extracted from a peer-reviewed publication
+ *   "estimated"    — rough estimate; use only when no better source is available
+ */
+export type CalibrationSample = {
+  /** Unique identifier for the sample (e.g. "cotter-2022-drip-001"). */
+  id: string;
+  /** Citation or description of the source (paper / blog / own experiment). */
+  source: string;
+  brewMethod: BrewMethod;
+  physics: BrewPhysics;
+  doseG: number;
+  beverageVolumeMl: number;
+  grindCategory: GrindSize;
+  brewTimeMin: number;
+  temperatureC: number;
+  roastLevel: RoastLevel;
+  beanType: BeanType;
+  originRegion?: OriginRegion;
+  /** CaffiLab model prediction for this sample — from estimateCaffeine().estimatedMg. */
+  predictedMg: number;
+  /** Empirically measured caffeine for this sample. */
+  measuredMg: number;
+  dataQuality: "direct_hplc" | "tds_derived" | "literature" | "estimated";
+  notes?: string;
+};
+
+/**
+ * Expected sensitivity ranges for key model inputs (Phase 4, v3.3 sensitivity protocol).
+ *
+ * A perturbation test should change the output by approximately these percentages when
+ * a single variable is shifted one step while all others are held at baseline.
+ *
+ * Red-flag thresholds:
+ *   > redFlagHigh (30 %) → variable is too sensitive; possible double-counting
+ *   < redFlagLow  ( 2 %) → variable is too weak; consider removing or merging
+ */
+export const SENSITIVITY_EXPECTED_RANGES = {
+  grind:          { minPercent: 10, maxPercent: 20 },
+  ratio:          { minPercent:  5, maxPercent: 15 },
+  roast:          { minPercent:  5, maxPercent: 10 },
+  time_pressure:  { minPercent:  1, maxPercent:  5,  note: "Low; espresso time is seconds-scale" },
+  time_immersion: { minPercent: 10, maxPercent: 25,  note: "High early; saturates after ~10 min" },
+  redFlagHigh:    30,
+  redFlagLow:      2,
+} as const;
+
+/**
+ * Returns the median of an array of numbers.
+ * Used instead of arithmetic mean for robust calibration — less sensitive to outlier brews.
+ * Returns NaN for empty arrays.
+ */
+export function medianOf(values: number[]): number {
+  if (values.length === 0) return NaN;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+}
+
+/**
+ * Computes the global calibration α from a dataset (Phase 3B, v3.3).
+ * Uses the median of (measured / predicted) ratios — robust to outlier brews.
+ * Returns 1.0 if no valid samples are provided.
+ *
+ * Recommended minimum: 30 samples before applying the result.
+ */
+export function computeCalibrationAlpha(samples: CalibrationSample[]): number {
+  const ratios = samples
+    .filter((s) => s.predictedMg > 0)
+    .map((s) => s.measuredMg / s.predictedMg);
+  const alpha = medianOf(ratios);
+  return isNaN(alpha) ? 1.0 : alpha;
+}
+
+/**
+ * Computes β for a single physics class from a dataset (Phase 3C, v3.3).
+ * Returns null if the class has fewer than MIN_SAMPLES_PER_CLASS samples (β not applied).
+ * Result is clamped to [0.9, 1.1] to prevent overfitting.
+ */
+export function computePerClassBeta(
+  samples: CalibrationSample[],
+  physicsClass: BrewPhysics,
+): number | null {
+  const classData = samples.filter(
+    (s) => s.physics === physicsClass && s.predictedMg > 0,
+  );
+  if (classData.length < MIN_SAMPLES_PER_CLASS) return null;
+  const ratios = classData.map((s) => s.measuredMg / s.predictedMg);
+  const beta = medianOf(ratios);
+  if (isNaN(beta)) return null;
+  return Math.min(Math.max(beta, 0.9), 1.1);
+}
 
 export type GrindSize =
   | "extra_fine"
