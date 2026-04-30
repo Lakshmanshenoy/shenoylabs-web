@@ -231,11 +231,11 @@ export const SENSITIVITY_EXPECTED_RANGES = {
   time_pressure:    { minPercent:  1, maxPercent:  5,  note: "Low; espresso time is seconds-scale" },
   time_immersion:   { minPercent: 10, maxPercent: 25,  note: "High early; saturates after ~10 min" },
   processingMethod: {
-    hotMethods:  { min: 4, max: 7, redFlagAbove: 10 },
-    coldMethods: { min: 1, max: 2, redFlagAbove:  4 },
+    hotMethods:  { min: 1, max: 2, redFlagAbove: 5 },
+    coldMethods: { min: 1, max: 2, redFlagAbove: 4 },
   },
   grinderType: {
-    hotMethods:  { min: 2, max: 5,   redFlagAbove: 8 },
+    hotMethods:  { min: 2, max: 3,   redFlagAbove: 5 },
     coldMethods: { min: 0.5, max: 1.5, redFlagAbove: 3 },
   },
   waterHardness: { allMethods: { min: 0.3, max: 1.0, redFlagAbove: 3 } },

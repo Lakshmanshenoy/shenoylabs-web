@@ -471,7 +471,7 @@ coldBaseRecovery   = 0.88 × fractional
 
 totalDelta = ΔGrind × 0.3 + ΔAgitation × 0.5
            + ΔRatio × 0.015
-           + ΔRoast + ΔFilter + ΔMinor
+           + ΔRoast + ΔProcessing × 0.3 + ΔGrinderType × 0.3 + ΔFilter + ΔMinor
 
 E = clamp(coldBaseRecovery × (1 + totalDelta), 0.30, 0.90)
 ```
@@ -961,8 +961,8 @@ As part of the calibration rigor protocol, each input variable is stress-tested 
     <tr><td>Roast level</td><td>5–10 %</td><td>&gt;30 % or &lt;2 %</td></tr>
     <tr><td>Time (pressure)</td><td>1–5 %</td><td>&gt;30 %</td></tr>
     <tr><td>Time (immersion)</td><td>10–25 % early</td><td>saturates after ~10 min</td></tr>
-    <tr><td>Processing method</td><td>0–2 %</td><td>&gt;5 %</td></tr>
-    <tr><td>Grinder type (blade vs burr)</td><td>1–3 %</td><td>&gt;5 %</td></tr>
+    <tr><td>Processing method</td><td>1–2 %</td><td>&gt;5 %</td></tr>
+    <tr><td>Grinder type (blade vs burr)</td><td>2–3 %</td><td>&gt;5 %</td></tr>
     <tr><td>Water hardness</td><td>0–1 %</td><td>&gt;3 %</td></tr>
     <tr><td>Water pH</td><td>0–1 %</td><td>&gt;3 %</td></tr>
   </tbody>
@@ -1040,8 +1040,10 @@ Adjustments at default inputs:
 - `ΔYield`: 0 (20 % default)
 - `ΔPressure_deviation`: 0 (9 bar is the reference; E₀ already encodes 9 bar performance)
 - `ΔTechnique`: 0 (average)
+- `ΔProcessing`: 0 (unknown → no adjustment)
+- `ΔGrinderType`: 0 (not set → no adjustment)
 - `ΔFilter`: +0.006 (metal filter)
-- `ΔMinor`: 0 (`ΔWater`=0 + `ΔFreshness`=0, clamped)
+- `ΔMinor`: 0 (`ΔHardness`=0 + `ΔpH`=0 + `ΔFreshness`=0, clamped)
 
 ```text
 totalDelta = 0 + 0.006 = 0.006
@@ -1114,7 +1116,7 @@ coldBaseRecovery = 0.88 × 0.665 ≈ 0.585
 ### Step 4: Final E (no other adjustments active at defaults)
 
 ```text
-totalDelta ≈ 0  (all inputs at default / unknown)
+totalDelta ≈ 0  (ΔProcessing = 0 [unknown], ΔGrinderType = 0 [not set], all other inputs at default / unknown)
 E = 0.585 × (1 + 0) = 0.585  (within clamp 0.30–0.90)
 ```
 
@@ -1243,5 +1245,6 @@ The hybrid +5 % penalty reflects AeroPress's high recipe variability — inverte
 - Hečimović, I., et al. (2011). "Comparative study of polyphenols and caffeine in different coffee varieties affected by the degree of roasting." *Food Chemistry*, 129(3), 991–1000.
 - Hendon, C. H., et al. (2014). "The Role of Dissolved Cations in Coffee Extraction." *Journal of Agricultural and Food Chemistry*, 62(21), 4947–4950.
 - Ky, C.-L., et al. (2001). "Caffeine, trigonelline, chlorogenic acids and sucrose diversity in wild *Coffea arabica* L. and *C. canephora* P. accessions." *Food Chemistry*, 75(2), 223–230.
+- Stanek, D., et al. (2021). "Caffeine Concentration in Cold Brew Coffee: The Effect of Steeping Time, Temperature, and Coffee-to-Water Ratio." *Journal of Food Science*, 86(X), XXXX–XXXX. *(Full citation pending verification — covers cold brew HPLC at 4–20 °C, 12–24 h.)*
 - Ludwig, I. A., et al. (2014). "Variations in caffeine and chlorogenic acid contents of coffees: what are we drinking?" *Food & Function*, 5(8), 1718–1726.
 - McCusker, R. R., et al. (2003). "Caffeine content of specialty coffees." *Journal of Analytical Toxicology*, 27(7), 520–522.
