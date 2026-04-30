@@ -51,6 +51,10 @@ coverAlt: "Coffee dripping into a glass vessel on a counter"
       <td>v3.5.2</td>
       <td>Blade-grinder penalty scaled by physics class: −0.010 (immersion), −0.018 (hybrid), −0.025 (percolation/pressure). High-buffer water interaction added: additional −0.007 when pH > 7.5 and hardness > 250 ppm simultaneously. AeroPress inversion toggle added: +0.04 recovery for inverted setup. Elevation extraction micro-refinement conditioned on T &lt; 95 °C (at boiling point, thermal energy overcomes high-altitude cell-wall density).</td>
     </tr>
+    <tr>
+      <td>v3.6</td>
+      <td>Hardening & monitoring: Interaction guard prevents surface-area stacking (natural + blade + coarse → combined_effect ×0.95); ΔMinor monitoring flags repeated clamp hits; processing cold-scaling rationale documented (ΔProcessing ×0.3); β stability guard prevents small-sample updates (do not apply β when |Δβ| &gt; 0.02 and samples &lt; 10); global sensitivity cap enforces total secondary variable influence ≤ 60 % (proportional scaling if exceeded). No core model change — safety-only refinements.</td>
+    </tr>
   </tbody>
 </table>
 
@@ -390,6 +394,38 @@ Blade grinders produce a bimodal particle distribution (coarse boulders + fine p
 </table>
 
 "Not set" (field left blank) produces zero adjustment for backward compatibility with saved configurations. "Unknown" (user explicitly selects "I don't know") applies a small penalty acknowledging uncharacterised grind distribution. Cold methods apply a ×0.3 damp because extended cold steeping times allow equilibration to partially compensate for particle-size unevenness.
+
+### v3.6 — Hardening and monitoring
+
+v3.6 focuses on safety and stability rather than changing any core formula. The release adds lightweight guards and monitoring so extreme or stacked secondary inputs cannot produce implausible outputs without a human-in-the-loop review.
+
+#### Interaction guard (surface-area stacking)
+
+Certain combinations of secondary inputs can unintentionally amplify an effective surface-area reduction (or amplification). To prevent pathological stacking, v3.6 applies a soft dampening in the specific case where:
+
+- `Processing === "natural"`
+- `Grinder === "blade"`
+- `Grind === "coarse"`
+
+In this case the combined secondary adjustment is multiplied by `0.95` (5% damp) before entering `totalDelta`. This preserves the directional effect of each variable while preventing extreme under-extraction bias where layered penalties would otherwise compound.
+
+#### ΔMinor monitoring
+
+The `ΔMinor` term remains bounded to ±0.02. v3.6 adds instrumentation: when `ΔMinor` repeatedly hits the +0.02 ceiling across multiple samples or interactive changes, the model flags the dataset/estimate for manual review. The UI surfaces a "Review recommended" badge in the *Model factors* panel so model maintainers can inspect whether the clamp reflects under-modelling or legitimate signal.
+
+#### Processing (cold scaling) documentation
+
+v3.6 documents the existing behaviour explicitly: `ΔProcessing` is scaled by `×0.3` for cold methods because diffusion and mucilage effects are suppressed at low temperatures. This is now recorded in the article to reduce future refactor confusion.
+
+#### β stability guard
+
+To prevent small-sample noise from destabilising per-class calibration, v3.6 refuses to update a `β` value when the proposed change is large and sample counts are small. Concretely, if `|β_new − β_old| > 0.02` and `sample_count < 10`, the update is skipped and the calibration system flags the dataset for expansion.
+
+#### Global sensitivity cap
+
+v3.6 enforces a realistic upper bound on the combined influence of secondary variables: the sum of variable percentage contributions (post-scaling) is limited to 60%. If inputs would push the combined influence above that threshold, all secondary deltas are scaled down proportionally so the total influence equals 60%. This keeps the headline estimate interpretable and prevents hidden compounding.
+
+These changes are safety-only: the core multiplicative model and the calibration pipeline (`computeCalibrationAlpha()`, `computePerClassBeta()`) are unchanged. The release is primarily about monitoring, documentation, and preventing pathological stacking in user-supplied inputs.
 
 ---
 
