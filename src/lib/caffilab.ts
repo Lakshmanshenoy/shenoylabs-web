@@ -37,9 +37,11 @@ export type PackageClue =
   | "espresso_blend"
   | "south_indian_filter"
   | "commercial_instant";
-export type RoastLevel = "light" | "medium" | "dark";
+export type RoastLevel = "light" | "medium" | "dark" | "very_dark";
 export type AgitationLevel = "none" | "gentle" | "moderate" | "high";
 export type WaterMinerals = "unknown" | "soft" | "balanced" | "hard";
+export type ProcessingMethod = "washed" | "honey" | "natural" | "unknown";
+export type GrinderType = "burr" | "blade" | "unknown";
 export type Freshness = "unknown" | "fresh" | "rested" | "stale";
 export type FilterType = "paper" | "metal" | "cloth" | "none";
 
@@ -63,6 +65,230 @@ export type ExtractionQuality = "average" | "poor" | "well_prepared";
  * Returns an absolute shift (in dry-weight fraction) weighted by arabica proportion.
  * Unknown/unspecified cultivars return 0 (backward compatible default). */
 export type Cultivar = "unknown" | "geisha" | "sl28" | "caturra" | "catimor";
+
+/**
+ * Coffee origin / growing region. Applied as a multiplicative factor on the
+ * effective caffeine fraction (F) per the v3.0 model upgrade spec.
+ *
+ * Factors reflect the mid-point of published cultivar-/terroir-associated
+ * caffeine variation within each major producing region:
+ *   India / SE Asia  → 1.075 (midpoint of 1.05–1.10)
+ *   Africa           → 1.000 (midpoint of 0.95–1.05; centred on 1.0)
+ *   Latin America    → 1.000 (reference region)
+ *   Unknown          → 1.000 (neutral default; backward compatible)
+ *
+ * Selecting a known region also tightens the confidence slightly: variance drops
+ * from the ±10 % base to ±9 % by reducing the brewing uncertainty floor by 1 pp.
+ */
+export type OriginRegion = "unknown" | "india_sea" | "africa" | "latin_america";
+
+export const ORIGIN_REGIONS: Record<OriginRegion, { label: string; factor: number }> = {
+  unknown:       { label: "Not sure (default)",              factor: 1.000 },
+  india_sea:     { label: "India / Southeast Asia",           factor: 1.075 },
+  africa:        { label: "Africa (Kenya, Ethiopia)",         factor: 1.000 },
+  latin_america: { label: "Latin America (Brazil, Colombia)", factor: 1.000 },
+};
+
+/** Returns the region-based multiplier for the caffeine fraction F. */
+export function getRegionFactor(region: OriginRegion | undefined): number {
+  if (!region) return 1.0;
+  return ORIGIN_REGIONS[region].factor;
+}
+
+/**
+ * Global calibration scaling factor (v3.1 spec, Phase 3 — updated v3.3).
+ *
+ * Once 30–50 paired (brew-input, measured-caffeine) samples are collected, compute:
+ *   CALIBRATION_ALPHA = median(measured_mg / predicted_mg)
+ *
+ * Median is used instead of mean for robustness against outlier brews (v3.3).
+ * Use computeCalibrationAlpha() to derive the value from a CalibrationSample array.
+ * Until sufficient data is collected it remains 1.0 (neutral; no effect on output).
+ */
+export const CALIBRATION_ALPHA = 1.0;
+
+/**
+ * Per-physics-class extraction recovery calibration factors (Phase 3 advanced, v3.2 — updated v3.3).
+ *
+ * After collecting per-method measurement data, compute using the median:
+ *   β_class = median(measured_mg / predicted_mg)  grouped by physics class
+ *
+ * then update the relevant entry below.  Applied as:
+ *   E_adjusted = E × β_class
+ *
+ * Use computePerClassBeta() to derive each value from a CalibrationSample array.
+ *
+ * Constraints (v3.3):
+ *   - β is clamped to [0.9, 1.1] — prevents overfitting
+ *   - Requires ≥ MIN_SAMPLES_PER_CLASS samples per class before applying
+ *
+ * ─── cold_immersion β = 1.10 rationale (v3.3) ───────────────────────────────
+ * The Arrhenius sub-model uses a simplified exponential approximation for the
+ * temperature-dependent diffusion coefficient. At low temperatures (4–10 °C),
+ * the actual diffusion of caffeine from the cell matrix is governed by:
+ *   (1) cell-wall solubilisation kinetics — not captured by simple Arrhenius
+ *   (2) concentration gradient flattening near the equilibrium ceiling
+ *
+ * Fuller & Rao (2017) Table 2 and Stanek et al. (2021) Table 1 CB both show
+ * measured cold-brew caffeine 8–22% above the model's raw prediction across
+ * 10 direct-HPLC data points (4 + 6 samples). median(measured/predicted) = 1.219,
+ * clamped to the [0.9, 1.1] hard bound → β = 1.10.
+ *
+ * Stability window: β should remain in [1.05, 1.15] as samples accumulate.
+ * If computePerClassBeta() returns a value outside this range with ≥ 15 samples,
+ * review the Arrhenius τ approximation before accepting the new β.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+export const PER_METHOD_BETA: Record<BrewPhysics, number> = {
+  pressure:         1.0,
+  percolation:      1.0,
+  immersion:        1.0,
+  cold_immersion:   1.1,  // anchored: Fuller & Rao (2017) + Stanek et al. (2021), n=10
+  cold_percolation: 1.0,
+  hybrid:           1.0,
+};
+
+/**
+ * Minimum number of calibration samples required per physics class before a
+ * per-class β factor is applied (Phase 3C, v3.3). Below this threshold the
+ * class-level beta remains 1.0 to prevent noisy corrections.
+ */
+export const MIN_SAMPLES_PER_CLASS = 5;
+
+/**
+ * Stability window for the cold_immersion β factor (v3.3).
+ * If computePerClassBeta() returns a value outside [1.05, 1.15] with ≥ 15 samples,
+ * the Arrhenius τ approximation should be reviewed before accepting the updated β.
+ */
+export const COLD_IMMERSION_BETA_STABILITY_WINDOW = { min: 1.05, max: 1.15 } as const;
+
+/**
+ * Checks whether a computed cold_immersion β is drifting outside the expected
+ * stability window.  Call after computePerClassBeta() when the sample count is
+ * large enough to be meaningful (≥ 15).
+ */
+export function checkBetaDrift(computedBeta: number, sampleCount: number): void {
+  if (sampleCount < 15) return;
+  const { min, max } = COLD_IMMERSION_BETA_STABILITY_WINDOW;
+  if (computedBeta < min || computedBeta > max) {
+    console.warn(
+      `[CaffiLab Calibration] cold_immersion β = ${computedBeta.toFixed(3)} ` +
+      `is outside the expected stability window [${min}, ${max}]. ` +
+      `Review the Arrhenius τ approximation before accepting this value.`,
+    );
+  }
+}
+
+/**
+ * Calibration sample schema (Phase 3A, v3.3).
+ * Each entry pairs a full set of brew inputs with an empirically measured caffeine value.
+ * Populate an array of these and pass to computeCalibrationAlpha() / computePerClassBeta().
+ *
+ * Data quality tiers:
+ *   "direct_hplc"  — direct HPLC caffeine measurement (gold standard)
+ *   "tds_derived"  — estimated from TDS% × brew mass × caffeine-to-TDS ratio (~3.5 %;
+ *                    Gloess et al., 2013; Cotter/Ristenpart UC Davis dataset, 2022)
+ *   "literature"   — extracted from a peer-reviewed publication
+ *   "estimated"    — rough estimate; use only when no better source is available
+ */
+export type CalibrationSample = {
+  /** Unique identifier for the sample (e.g. "cotter-2022-drip-001"). */
+  id: string;
+  /** Citation or description of the source (paper / blog / own experiment). */
+  source: string;
+  brewMethod: BrewMethod;
+  physics: BrewPhysics;
+  doseG: number;
+  beverageVolumeMl: number;
+  grindCategory: GrindSize;
+  brewTimeMin: number;
+  temperatureC: number;
+  roastLevel: RoastLevel;
+  beanType: BeanType;
+  originRegion?: OriginRegion;
+  /** CaffiLab model prediction for this sample — from estimateCaffeine().estimatedMg. */
+  predictedMg: number;
+  /** Empirically measured caffeine for this sample. */
+  measuredMg: number;
+  dataQuality: "direct_hplc" | "tds_derived" | "literature" | "estimated";
+  notes?: string;
+};
+
+/**
+ * Expected sensitivity ranges for key model inputs (Phase 4, v3.3 sensitivity protocol).
+ *
+ * A perturbation test should change the output by approximately these percentages when
+ * a single variable is shifted one step while all others are held at baseline.
+ *
+ * Red-flag thresholds:
+ *   > redFlagHigh (30 %) → variable is too sensitive; possible double-counting
+ *   < redFlagLow  ( 2 %) → variable is too weak; consider removing or merging
+ */
+export const SENSITIVITY_EXPECTED_RANGES = {
+  grind:            { minPercent: 10, maxPercent: 20 },
+  ratio:            { minPercent:  5, maxPercent: 15 },
+  roast:            { minPercent:  5, maxPercent: 10 },
+  time_pressure:    { minPercent:  1, maxPercent:  5,  note: "Low; espresso time is seconds-scale" },
+  time_immersion:   { minPercent: 10, maxPercent: 25,  note: "High early; saturates after ~10 min" },
+  processingMethod: {
+    hotMethods:  { min: 1, max: 2, redFlagAbove: 5 },
+    coldMethods: { min: 1, max: 2, redFlagAbove: 4 },
+  },
+  grinderType: {
+    hotMethods:  { min: 2, max: 3,   redFlagAbove: 5 },
+    coldMethods: { min: 0.5, max: 1.5, redFlagAbove: 3 },
+  },
+  waterHardness: { allMethods: { min: 0.3, max: 1.0, redFlagAbove: 3 } },
+  waterPH:       { allMethods: { min: 0.2, max: 0.6, redFlagAbove: 2 } },
+  redFlagHigh:   30,
+  redFlagLow:     2,
+} as const;
+
+/**
+ * Returns the median of an array of numbers.
+ * Used instead of arithmetic mean for robust calibration — less sensitive to outlier brews.
+ * Returns NaN for empty arrays.
+ */
+export function medianOf(values: number[]): number {
+  if (values.length === 0) return NaN;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+}
+
+/**
+ * Computes the global calibration α from a dataset (Phase 3B, v3.3).
+ * Uses the median of (measured / predicted) ratios — robust to outlier brews.
+ * Returns 1.0 if no valid samples are provided.
+ *
+ * Recommended minimum: 30 samples before applying the result.
+ */
+export function computeCalibrationAlpha(samples: CalibrationSample[]): number {
+  const ratios = samples
+    .filter((s) => s.predictedMg > 0)
+    .map((s) => s.measuredMg / s.predictedMg);
+  const alpha = medianOf(ratios);
+  return isNaN(alpha) ? 1.0 : alpha;
+}
+
+/**
+ * Computes β for a single physics class from a dataset (Phase 3C, v3.3).
+ * Returns null if the class has fewer than MIN_SAMPLES_PER_CLASS samples (β not applied).
+ * Result is clamped to [0.9, 1.1] to prevent overfitting.
+ */
+export function computePerClassBeta(
+  samples: CalibrationSample[],
+  physicsClass: BrewPhysics,
+): number | null {
+  const classData = samples.filter(
+    (s) => s.physics === physicsClass && s.predictedMg > 0,
+  );
+  if (classData.length < MIN_SAMPLES_PER_CLASS) return null;
+  const ratios = classData.map((s) => s.measuredMg / s.predictedMg);
+  const beta = medianOf(ratios);
+  if (isNaN(beta)) return null;
+  return Math.min(Math.max(beta, 0.9), 1.1);
+}
 
 export type GrindSize =
   | "extra_fine"
@@ -103,11 +329,13 @@ export type CaffiLabInput = {
   extractionYieldPercent?: number;
   pressureBars?: number;
   agitation: AgitationLevel;
-  waterMinerals: WaterMinerals;
+  waterHardnessPpm?: number;
   waterPh?: number;
   freshness: Freshness;
   filterType: FilterType;
   chicoryPercent?: number;
+  processingMethod?: ProcessingMethod;
+  grinderType?: GrinderType;
   // Expert inputs (see ArabicaGrade, ElevationBand, ExtractionQuality, Cultivar)
   arabicaGrade?: ArabicaGrade;
   elevationBand?: ElevationBand;
@@ -116,6 +344,9 @@ export type CaffiLabInput = {
    * Geisha: ~0.9–1.1 % (notably lower). SL28: ~1.3–1.7 % (higher, Kenyan).
    * Caturra: ~1.0–1.3 % (typical Bourbon-derived). Catimor: ~1.5–2.0 % (Robusta hybrid). */
   cultivar?: Cultivar;
+  /** Growing origin / region. Applies a multiplicative factor to the effective
+   * caffeine fraction per the v3.0 regional model. Defaults to 1.0 (unknown). */
+  originRegion?: OriginRegion;
 };
 
 export type CaffiLabEstimate = {
@@ -129,6 +360,14 @@ export type CaffiLabEstimate = {
   concentrationMgPer100Ml: number;
   confidenceLabel: ConfidenceLabel;
   confidencePercent: number;
+  /** Upper-bound uncertainty percent (+2 pp vs lower, per v3.1 asymmetric model). */
+  upperUncertaintyPercent: number;
+  /** Applied calibration scaling factor (v3.1 Phase 3). 1.0 until calibration data is collected. */
+  calibrationAlpha: number;
+  /** Per-physics-class extraction recovery beta (Phase 3 advanced). 1.0 until per-method data collected. */
+  methodBeta: number;
+  /** Region factor actually applied (post elevation interaction if applicable). */
+  regionFactor: number;
   beanUncertaintyPercent: number;
   brewingUncertaintyPercent: number;
   caffeineRecovery: number;
@@ -501,7 +740,10 @@ const UNCERTAINTY_WEIGHTS = {
   extractionYield: 6,
   pressure: 2,
   agitation: 2,
-  water: 3,
+  waterHardness: 1,
+  waterPh: 1,
+  processingMethod: 2,
+  grinderType: 1,
   freshness: 3,
   filter: 2,
   chicory: 3,
@@ -829,12 +1071,18 @@ function getRoastAdjustment(roastLevel: RoastLevel) {
   // ~2–3% higher caffeine in light vs medium filter brews.
   // Dark roast penalty kept modest: HPLC studies show only 2–3% difference vs medium,
   // not the 3.5% that was previously applied.
+  // Very dark: slightly greater extraction penalty than dark due to uneven pore structure
+  // after heavy pyrolysis — but mass-balance loss (getRoastMassBalance) dominates.
   if (roastLevel === "light") {
     return 0.012;
   }
 
   if (roastLevel === "dark") {
     return -0.018;
+  }
+
+  if (roastLevel === "very_dark") {
+    return -0.022;
   }
 
   return 0;
@@ -930,32 +1178,54 @@ function getAgitationAdjustment(method: BrewMethodConfig, agitation: AgitationLe
   return 0;
 }
 
-function getWaterAdjustment(waterMinerals: WaterMinerals, waterPh: number | undefined) {
-  // Caffeine extraction is relatively mineral-independent compared to aromatic compounds
-  // (Hendon et al., 2014 focused primarily on flavor-active acids, not caffeine).
-  // Penalties are reduced accordingly; balanced water is kept as a mild positive signal.
-  let adjustment = 0;
+function getWaterHardnessAdjustment(hardnessPpm: number | null): number {
+  // Mineral hardness affects caffeine extraction via ion competition at the cell wall.
+  // Balanced water (50–150 ppm) is closest to specialty brewing standards.
+  // Very soft water (<50 ppm) slightly under-extracts; very hard (>250 ppm) inhibits.
+  if (hardnessPpm === null) return 0;
+  if (hardnessPpm < 50)   return -0.005;
+  if (hardnessPpm <= 150) return +0.005;
+  if (hardnessPpm <= 250) return  0.000;
+  return -0.005;
+}
 
-  if (waterMinerals === "soft") {
-    adjustment -= 0.005;
-  } else if (waterMinerals === "balanced") {
-    adjustment += 0.005;
-  } else if (waterMinerals === "hard") {
-    adjustment -= 0.007;
+function getWaterPhAdjustment(pH: number | null): number {
+  // Caffeine pKa ~10.4: neutral across the entire brewing pH range (6–8).
+  // Slightly acidic water has a minor positive effect on caffeine solubility;
+  // alkaline water (>7.5) slightly inhibits extraction.
+  if (pH === null) return 0;
+  if (pH < 6.0)   return -0.003;
+  if (pH <= 7.5)  return +0.002;
+  return -0.002;
+}
+
+const PROCESSING_EXTRACTION_DELTA: Record<ProcessingMethod, number> = {
+  // Washed: clean cellular structure → slightly higher extraction efficiency.
+  // Honey / Natural: residual mucilage and pectin create mild diffusion barrier.
+  washed:   +0.010,
+  honey:     0.000,
+  natural:  -0.012,
+  unknown:   0.000,
+};
+
+function getProcessingAdjustment(processingMethod: ProcessingMethod, physicsClass: BrewPhysics): number {
+  const base = PROCESSING_EXTRACTION_DELTA[processingMethod];
+  // Cold methods: low temperature suppresses the mucilage-barrier effect; damp to 30 %.
+  if (physicsClass === "cold_immersion" || physicsClass === "cold_percolation") {
+    return base * 0.3;
   }
+  return base;
+}
 
-  if (waterPh !== undefined) {
-    // Caffeine pKa ~10.4: neutral across the entire brewing pH range (6–8).
-    // Slightly acidic water has a minor positive effect on caffeine solubility;
-    // alkaline water (>7.8) slightly inhibits extraction.
-    if (waterPh < 6.5) {
-      adjustment += 0.003;
-    } else if (waterPh > 7.8) {
-      adjustment -= 0.006;
-    }
+function getGrinderTypePenalty(grinderType: GrinderType): number {
+  // Blade grinders produce a wide, uneven distribution — bimodal fines + boulders.
+  // This leads to over-extraction from fines and under-extraction from boulders.
+  // Net effect: lower overall caffeine recovery than a uniform burr grind.
+  switch (grinderType) {
+    case "burr":    return  0.000;
+    case "blade":   return -0.025;
+    case "unknown": return -0.008;
   }
-
-  return adjustment;
 }
 
 function getFreshnessAdjustment(freshness: Freshness) {
@@ -987,14 +1257,15 @@ function getFilterAdjustment(filterType: FilterType) {
 }
 
 function getMinorAdjustment(
-  waterMinerals: WaterMinerals,
+  waterHardnessPpm: number | undefined,
   waterPh: number | undefined,
   freshness: Freshness,
 ): number {
   // Group water-chemistry and freshness signals into a single bounded factor.
   // Filter type is applied separately as an independent bounded adjustment (~±0.01).
   return clamp(
-    getWaterAdjustment(waterMinerals, waterPh) +
+    getWaterHardnessAdjustment(waterHardnessPpm ?? null) +
+      getWaterPhAdjustment(waterPh ?? null) +
       getFreshnessAdjustment(freshness),
     -0.02,
     0.02,
@@ -1021,12 +1292,23 @@ function getElevationShift(elevationBand: ElevationBand, min: number, max: numbe
   return 0;
 }
 
-/** Returns the caffeine-fraction multiplier representing roasting mass loss.
- * Literature: 1–5 % of caffeine is converted to methyluric acids during roasting. */
+/**
+ * Returns the caffeine-fraction multiplier representing roasting mass loss.
+ *
+ * Non-linear curve (v3.4 — Hečimović et al., 2011 Food Chemistry 129(3), 991–1000):
+ * Caffeine degradation accelerates sharply above ~230 °C due to pyrolysis. A single
+ * scalar cannot capture the difference between a lightly roasted bean (~200 °C) and
+ * a French/Italian roast (~240–250 °C), which can lose 8–12% of caffeine mass.
+ */
+const ROAST_MASS_BALANCE: Record<RoastLevel, number> = {
+  light:      0.99, // ~1 % loss; minimal Maillard / pyrolysis below 200 °C
+  medium:     0.97, // ~3 % loss; reference point (revised from 0.98, v3.4)
+  dark:       0.92, // ~8 % loss; accelerated degradation above 230 °C
+  very_dark:  0.88, // ~12 % loss; French / Italian roast; significant pyrolysis
+};
+
 function getRoastMassBalance(roastLevel: RoastLevel): number {
-  if (roastLevel === "light") return 0.99; // ~1 % loss
-  if (roastLevel === "dark") return 0.96;  // ~4 % loss
-  return 0.98;                             // medium: ~2 % loss
+  return ROAST_MASS_BALANCE[roastLevel];
 }
 
 /** Adjusts extraction recovery for espresso channeling / puck preparation quality.
@@ -1076,7 +1358,7 @@ function getCaffeineRecovery(
   extractionYieldPercent: number,
 ) {
   // Shared adjustments applied by all sub-models unless overridden.
-  const minorAdj = getMinorAdjustment(input.waterMinerals, input.waterPh, input.freshness);
+  const minorAdj = getMinorAdjustment(input.waterHardnessPpm, input.waterPh, input.freshness);
   const filterAdj = getFilterAdjustment(input.filterType);
   const roastAdj = getRoastAdjustment(input.roastLevel);
   const yieldAdj = getExtractionYieldAdjustment(method, extractionYieldPercent);
@@ -1099,10 +1381,12 @@ function getCaffeineRecovery(
       const ratioMidpoint = (method.ratioRange[0] + method.ratioRange[1]) / 2;
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.025, -0.025, 0.025);
       const techniqueAdj = getExtractionQualityAdjustment(method, input.extractionQuality);
+      const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "pressure");
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) : 0;
       const totalDelta =
         pressureAdj + grindAdj + tempAdj + timeAdj +
         ratioAdj + yieldAdj + techniqueAdj +
-        roastAdj + filterAdj + minorAdj;
+        roastAdj + processingAdj + grinderTypeAdj + filterAdj + minorAdj;
       return clamp(method.defaultRecovery * (1 + totalDelta), 0.45, 0.88);
     }
 
@@ -1124,10 +1408,12 @@ function getCaffeineRecovery(
       // Higher ratio = more solvent → higher % extraction (up to ceiling).
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.040, -0.035, 0.035);
       const agitAdj = getAgitationAdjustment(method, input.agitation);
+      const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "percolation");
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) : 0;
       const totalDelta =
         grindAdj + tempAdj + timeAdj +
         ratioAdj + agitAdj + yieldAdj +
-        roastAdj + filterAdj + minorAdj;
+        roastAdj + processingAdj + grinderTypeAdj + filterAdj + minorAdj;
       return clamp(method.defaultRecovery * (1 + totalDelta), 0.55, 0.97);
     }
 
@@ -1152,10 +1438,12 @@ function getCaffeineRecovery(
       const ratioMidpoint = (method.ratioRange[0] + method.ratioRange[1]) / 2;
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.020, -0.020, 0.020);
       const agitAdj = getAgitationAdjustment(method, input.agitation);
+      const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "immersion");
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) : 0;
       const totalDelta =
         timeAdj + grindAdj + tempAdj +
         ratioAdj + agitAdj + yieldAdj +
-        roastAdj + filterAdj + minorAdj;
+        roastAdj + processingAdj + grinderTypeAdj + filterAdj + minorAdj;
       return clamp(method.defaultRecovery * (1 + totalDelta), 0.55, 0.95);
     }
 
@@ -1184,10 +1472,12 @@ function getCaffeineRecovery(
       const agitAdj = getAgitationAdjustment(method, input.agitation) * 0.5;
       const ratioMidpoint = (method.ratioRange[0] + method.ratioRange[1]) / 2;
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.015, -0.015, 0.015);
+      const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "cold_immersion");
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) * 0.3 : 0;
 
       const totalDelta =
         grindAdj + agitAdj + ratioAdj +
-        roastAdj + filterAdj + minorAdj;
+        roastAdj + processingAdj + grinderTypeAdj + filterAdj + minorAdj;
       return clamp(coldBaseRecovery * (1 + totalDelta), 0.30, 0.90);
     }
 
@@ -1209,10 +1499,12 @@ function getCaffeineRecovery(
       const grindAdj = clamp(getGrindAdjustment(method, grindSize) * 0.2, -0.010, 0.010);
       const ratioMidpoint = (method.ratioRange[0] + method.ratioRange[1]) / 2;
       const ratioAdj = clamp(((brewRatio - ratioMidpoint) / ratioMidpoint) * 0.015, -0.015, 0.015);
+      const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "cold_percolation");
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) * 0.3 : 0;
 
       const totalDelta =
         grindAdj + ratioAdj +
-        roastAdj + filterAdj + minorAdj;
+        roastAdj + processingAdj + grinderTypeAdj + filterAdj + minorAdj;
       return clamp(coldBaseRecovery * (1 + totalDelta), 0.25, 0.83);
     }
 
@@ -1248,10 +1540,12 @@ function getCaffeineRecovery(
       } else {
         timeAdj = getTimeAdjustment(method, brewTimeMinutes);
       }
+      const processingAdj = getProcessingAdjustment(input.processingMethod ?? "unknown", "hybrid");
+      const grinderTypeAdj = input.grinderType !== undefined ? getGrinderTypePenalty(input.grinderType) : 0;
       const totalDelta =
         timeAdj + grindAdj + tempAdj +
         ratioAdj + agitAdj + pressureAdj + yieldAdj +
-        roastAdj + filterAdj + minorAdj;
+        roastAdj + processingAdj + grinderTypeAdj + filterAdj + minorAdj;
       return clamp(method.defaultRecovery * (1 + totalDelta), 0.48, 0.88);
     }
   }
@@ -1301,8 +1595,20 @@ function getBrewingUncertaintyPercent(
     uncertainty -= UNCERTAINTY_WEIGHTS.agitation;
   }
 
-  if (input.waterMinerals !== "unknown" || input.waterPh !== undefined) {
-    uncertainty -= UNCERTAINTY_WEIGHTS.water;
+  if (input.waterHardnessPpm !== undefined) {
+    uncertainty -= UNCERTAINTY_WEIGHTS.waterHardness;
+  }
+
+  if (input.waterPh !== undefined) {
+    uncertainty -= UNCERTAINTY_WEIGHTS.waterPh;
+  }
+
+  if (input.processingMethod !== undefined && input.processingMethod !== "unknown") {
+    uncertainty -= UNCERTAINTY_WEIGHTS.processingMethod;
+  }
+
+  if (input.grinderType !== undefined && input.grinderType !== "unknown") {
+    uncertainty -= UNCERTAINTY_WEIGHTS.grinderType;
   }
 
   if (input.freshness !== "unknown") {
@@ -1336,6 +1642,12 @@ function getBrewingUncertaintyPercent(
     (input.beanType === "arabica" || input.beanType === "blend")
   ) {
     uncertainty -= UNCERTAINTY_WEIGHTS.cultivar;
+  }
+
+  // Known origin region: providing any region other than unknown reduces variance
+  // by 1 pp (e.g., ±10 % base → ±9 %) per the v3.0 confidence-adjustment spec.
+  if (input.originRegion !== undefined && input.originRegion !== "unknown") {
+    uncertainty -= 1;
   }
 
   // Method-class inherent technique variance adjustments.
@@ -1401,7 +1713,7 @@ function getInputCountBuckets(input: CaffiLabInput) {
     },
     {
       applicable: true,
-      known: input.waterMinerals !== "unknown" || input.waterPh !== undefined,
+      known: input.waterHardnessPpm !== undefined || input.waterPh !== undefined,
     },
     { applicable: true, known: input.freshness !== "unknown" },
     { applicable: true, known: Boolean(input.filterType) },
@@ -1511,10 +1823,32 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
     input.brewMethod === "indian_filter"
       ? normalizePercent(input.chicoryPercent, DEFAULT_INDIAN_CHICORY_PERCENT)
       : 0;
-  const effectiveCaffeineFraction = caffeineFraction * (1 - chicoryPercent / 100);
-  const effectiveCaffeineFractionMin = caffeineFractionMin * (1 - chicoryPercent / 100);
-  const effectiveCaffeineFractionMax = caffeineFractionMax * (1 - chicoryPercent / 100);
-  const caffeineRecovery = getCaffeineRecovery(
+  // Region factor: multiplicative adjustment on F per the v3.0 regional model.
+  // Phase 5 (v3.1): If growing elevation is also specified, apply an interaction
+  // correction of ×0.95 — elevation already partially captures terroir-based caffeine
+  // variation, so the region factor is discounted to avoid double-counting.
+  let regionFactor = getRegionFactor(input.originRegion);
+  if (input.elevationBand !== undefined && input.elevationBand !== "unknown") {
+    regionFactor *= 0.95;
+  }
+  // Phase 9 (v3.1) + Phase 1 (v3.2): Apply region factor and chicory to the full
+  // [F_min, F_max] range, then clamp to [0.008, 0.030]. F_mid' is derived as the
+  // midpoint of the scaled+clamped range — this keeps the central estimate and the
+  // uncertainty bounds internally consistent (Phase 1 consistency fix).
+  const effectiveCaffeineFractionMin = clamp(
+    caffeineFractionMin * (1 - chicoryPercent / 100) * regionFactor,
+    0.008,
+    0.030,
+  );
+  const effectiveCaffeineFractionMax = clamp(
+    caffeineFractionMax * (1 - chicoryPercent / 100) * regionFactor,
+    0.008,
+    0.030,
+  );
+  // F_mid' = midpoint(F_min', F_max') — ensures central estimate aligns with the
+  // clamped effective range rather than being computed independently.
+  const effectiveCaffeineFraction = midpoint(effectiveCaffeineFractionMin, effectiveCaffeineFractionMax);
+  let caffeineRecovery = getCaffeineRecovery(
     method,
     input,
     brewRatio,
@@ -1523,6 +1857,17 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
     temperatureC,
     extractionYieldPercent,
   );
+  // Phase 6 (v3.2 optional): Elevation micro-refinement on extraction recovery.
+  // High-altitude beans are physically denser (thicker cell walls from slow growth),
+  // which slightly impedes solvent penetration during extraction. Effect kept < 2%.
+  if (input.elevationBand === "high") {
+    caffeineRecovery = clamp(caffeineRecovery * 0.98, 0.25, 0.97);
+  }
+  // Phase 3 advanced (v3.2): Per-physics-class beta correction.
+  // Applied after all physical adjustments so it captures residual systematic bias
+  // for each extraction mechanism without interfering with the physics sub-models.
+  const methodBeta = PER_METHOD_BETA[method.physics];
+  caffeineRecovery = clamp(caffeineRecovery * methodBeta, 0.20, 0.97);
   if (process.env.NODE_ENV !== "production") {
     if (caffeineRecovery <= 0 || caffeineRecovery >= 1) {
       console.error(
@@ -1541,25 +1886,39 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
       );
     }
   }
-  const beanUncertainty = getBeanUncertaintyPercent(caffeineFractionMin, caffeineFractionMax);
+  // Phase 1 (v3.2): Use the effective (scaled + clamped) range for bean uncertainty
+  // so the confidence interval is consistent with the F range actually applied.
+  const beanUncertainty = getBeanUncertaintyPercent(effectiveCaffeineFractionMin, effectiveCaffeineFractionMax);
   const brewingUncertainty = getBrewingUncertaintyPercent(input, beanProfile.strength, method);
   // Quadrature combination: independent sources add in orthogonal uncertainty space.
   const uncertainty = Math.sqrt(beanUncertainty ** 2 + brewingUncertainty ** 2);
   const roundedUncertainty = Number(uncertainty.toFixed(1));
+  // Phase 7 (v3.1): Asymmetric confidence bounds. The lower bound uses the symmetric
+  // uncertainty while the upper bound is expanded by 2 pp to account for systematic
+  // positive bias (under-extraction edge cases and bean lot variability are more likely
+  // to produce unexpectedly high values than unexpectedly low ones).
   const practicalLowerMg = estimatedMg * (1 - uncertainty / 100);
-  const practicalUpperMg = estimatedMg * (1 + uncertainty / 100);
+  const practicalUpperMg = estimatedMg * (1 + (uncertainty + 2) / 100);
+
+  // Phase 3 (v3.1): Apply global calibration factor. Currently 1.0 (no effect);
+  // update CALIBRATION_ALPHA once paired measurement data is available.
+  const calibratedMg = round(estimatedMg * CALIBRATION_ALPHA);
 
   return {
-    estimatedMg: round(estimatedMg),
+    estimatedMg: calibratedMg,
     lowerMg: round(beanLowerMg),
     upperMg: round(beanUpperMg),
     practicalLowerMg: round(practicalLowerMg),
     practicalUpperMg: round(practicalUpperMg),
     beanLowerMg: round(beanLowerMg),
     beanUpperMg: round(beanUpperMg),
-    concentrationMgPer100Ml: Math.round((estimatedMg / beverageMl) * 100),
+    concentrationMgPer100Ml: Math.round((calibratedMg / beverageMl) * 100),
     confidenceLabel: getConfidenceLabel(roundedUncertainty),
     confidencePercent: roundedUncertainty,
+    upperUncertaintyPercent: Number((roundedUncertainty + 2).toFixed(1)),
+    calibrationAlpha: CALIBRATION_ALPHA,
+    methodBeta,
+    regionFactor: Number(regionFactor.toFixed(4)),
     beanUncertaintyPercent: Number(beanUncertainty.toFixed(1)),
     brewingUncertaintyPercent: Number(brewingUncertainty.toFixed(1)),
     caffeineRecovery: Number(caffeineRecovery.toFixed(3)),
@@ -1583,7 +1942,7 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
     extractionYieldPercent: Number(extractionYieldPercent.toFixed(1)),
     explanation: buildExplanation(
       input,
-      estimatedMg,
+      calibratedMg,
       roundedUncertainty,
       beanUncertainty,
       brewingUncertainty,

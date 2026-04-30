@@ -3,7 +3,7 @@ title: "How Does the CaffiLab Formula Work?"
 excerpt: "A deep dive into the extraction science behind CaffiLab's caffeine estimation model — the math, the physics classes, the Arrhenius cold-brew model, and the research that backs it."
 date: "2025-07-14"
 createdDate: "2026-04-18"
-lastUpdated: "2026-04-30"
+lastUpdated: "2026-05-01"
 category: "research"
 primaryCategory: "research"
 tags: ["caffilab", "caffeine", "extraction", "coffee-science", "research"]
@@ -12,6 +12,68 @@ depthLevel: "advanced"
 coverImage: "/images/caffilab/drip-brewing.jpg"
 coverAlt: "Coffee dripping into a glass vessel on a counter"
 ---
+
+## Changelog
+
+<table>
+  <thead>
+    <tr>
+      <th>Version</th>
+      <th>Key changes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>v3.0</td>
+      <td>Origin / Region factor (F_region) introduced. Replaces neutral default for all known origins.</td>
+    </tr>
+    <tr>
+      <td>v3.1</td>
+      <td>Phase 3: Global calibration scalar α introduced. Phase 5: Elevation × Region interaction term (×0.95 discount). Phase 7: Asymmetric confidence interval (+2 pp upper bound).</td>
+    </tr>
+    <tr>
+      <td>v3.2</td>
+      <td>Phase 1: Region factor and chicory dilution applied to full [F_min, F_max] range before deriving F_mid. Phase 6: Elevation extraction micro-refinement (E × 0.98 for high-altitude beans). Per-class β correction formalised. Bean variability uncertainty computed from effective range.</td>
+    </tr>
+    <tr>
+      <td>v3.3</td>
+      <td>Calibration dataset schema formalised. <code>computeCalibrationAlpha()</code> and <code>computePerClassBeta()</code> documented. Median (not mean) used for α and β computation. <code>β_cold_immersion = 1.10</code> anchored to Fuller &amp; Rao (2017) and Stanek et al. (2021).</td>
+    </tr>
+    <tr>
+      <td>v3.4</td>
+      <td>Non-linear roast mass-balance curve (4-level lookup replacing scalar 0.98). Very Dark roast level added. Cold-immersion β rationale and stability monitor added.</td>
+    </tr>
+    <tr>
+      <td>v3.5</td>
+      <td>Water mineralogy split into two independent inputs: water hardness (ppm) and water pH, each with its own breakpoint lookup. Processing method adjustment added (washed / honey / natural; cold methods damped ×0.3). Grinder type penalty added (blade −0.025, unknown −0.008, burr 0). Both new variables included in all six physics-class totalDelta formulas. Sensitivity matrix expanded to separate hot-method and cold-method columns.</td>
+    </tr>
+  </tbody>
+</table>
+
+## Understanding your output range
+
+CaffiLab always returns three values: a central estimate and a lower and upper bound.
+
+**Why the range is not symmetric**
+
+The upper bound is always 2 percentage points wider than the lower bound. This is intentional. Under-extraction has a natural floor — you cannot extract caffeine that was never solubilised. Over-extraction, particularly in pressure methods, can push recovery higher than the baseline model predicts through channelling effects, fine grind migration, and extended contact. Real-world measurements skew slightly high more often than they skew low.
+
+Example at 15 % combined uncertainty:
+
+```text
+Lower bound uses: 15 %  →  estimate × 0.85
+Upper bound uses: 17 %  →  estimate × 1.17
+```
+
+**Why the two uncertainty sources are combined in quadrature**
+
+Bean variability (the caffeine range of your beans) and brewing uncertainty (how precisely your brew is modelled) are independent. Combining them by addition would overstate total uncertainty; combining them by maximum would understate it. Quadrature is the statistically correct combination for independent sources:
+
+```text
+total_uncertainty = sqrt(bean_uncertainty² + brewing_uncertainty²)
+```
+
+This means declaring more brewing inputs narrows the range, but it cannot eliminate the bean variability floor — that only narrows when species or bean detail is specified.
 
 ## The core model
 
@@ -52,45 +114,45 @@ This presentation is intentional: users see the practical headline result first,
 CaffiLab assigns every brew method to one of six physics classes. Each class has its own extraction model reflecting the physical mechanism driving caffeine transfer from bean to cup. The model uses a multiplicative formula so adjustments scale proportionally from each method's calibrated baseline — no single variable can dominate extraction independently.
 
 <table>
-	<thead>
-		<tr>
-			<th>Physics class</th>
-			<th>Methods</th>
-			<th>Key driver</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td><code>pressure</code></td>
-			<td>Espresso</td>
-			<td>High pressure differential forcing water through a compacted bed in seconds</td>
-		</tr>
-		<tr>
-			<td><code>percolation</code></td>
-			<td>Pour over, Chemex, Drip machine, Siphon, Percolator</td>
-			<td>Gravity-driven, vacuum-assisted, or recirculating flow through the coffee bed</td>
-		</tr>
-		<tr>
-			<td><code>immersion</code></td>
-			<td>French press, Turkish, Immersion dripper</td>
-			<td>Coffee steeps until diffusion reaches equilibrium, then is separated</td>
-		</tr>
-		<tr>
-			<td><code>cold_immersion</code></td>
-			<td>Cold brew</td>
-			<td>Immersion at low temperature; rate governed by Arrhenius diffusion scaling</td>
-		</tr>
-		<tr>
-			<td><code>cold_percolation</code></td>
-			<td>Cold drip</td>
-			<td>Cold percolation; shorter per-particle contact time than cold immersion</td>
-		</tr>
-		<tr>
-			<td><code>hybrid</code></td>
-			<td>AeroPress, Moka pot, Indian filter</td>
-			<td>Combines two mechanisms: immersion + pressure (AeroPress), pressure-percolation (Moka), or immersion-percolation (Indian filter)</td>
-		</tr>
-	</tbody>
+  <thead>
+    <tr>
+      <th>Physics class</th>
+      <th>Methods</th>
+      <th>Key driver</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>pressure</code></td>
+      <td>Espresso</td>
+      <td>High pressure differential forcing water through a compacted bed in seconds</td>
+    </tr>
+    <tr>
+      <td><code>percolation</code></td>
+      <td>Pour over, Chemex, Drip machine, Siphon, Percolator</td>
+      <td>Gravity-driven, vacuum-assisted, or recirculating flow through the coffee bed</td>
+    </tr>
+    <tr>
+      <td><code>immersion</code></td>
+      <td>French press, Turkish, Immersion dripper</td>
+      <td>Coffee steeps until diffusion reaches equilibrium, then is separated</td>
+    </tr>
+    <tr>
+      <td><code>cold_immersion</code></td>
+      <td>Cold brew</td>
+      <td>Immersion at low temperature; rate governed by Arrhenius diffusion scaling</td>
+    </tr>
+    <tr>
+      <td><code>cold_percolation</code></td>
+      <td>Cold drip</td>
+      <td>Cold percolation; shorter per-particle contact time than cold immersion</td>
+    </tr>
+    <tr>
+      <td><code>hybrid</code></td>
+      <td>AeroPress, Moka pot, Indian filter</td>
+      <td>Combines two mechanisms: immersion + pressure (AeroPress), pressure-percolation (Moka), or immersion-percolation (Indian filter)</td>
+    </tr>
+  </tbody>
 </table>
 
 ---
@@ -100,111 +162,152 @@ CaffiLab assigns every brew method to one of six physics classes. Each class has
 Each brew method has a calibrated default recovery (E₀), anchored to published extraction measurements. Adjustments for grind, temperature, time, and other inputs are applied on top of this baseline.
 
 <table>
-	<thead>
-		<tr>
-			<th>Method</th>
-			<th>Physics class</th>
-			<th>Default E₀</th>
-			<th>Literature basis</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>Espresso</td>
-			<td><code>pressure</code></td>
-			<td>0.67</td>
-			<td>Andueza et al. (2003): 60–80 % caffeine recovery at 9 bar</td>
-		</tr>
-		<tr>
-			<td>Pour over</td>
-			<td><code>percolation</code></td>
-			<td>0.82</td>
-			<td>Gloess et al. (2013): 75–90 % for filter methods</td>
-		</tr>
-		<tr>
-			<td>Chemex</td>
-			<td><code>percolation</code></td>
-			<td>0.79</td>
-			<td>Gloess et al. (2013): 78–82 % (slower flow, thicker filter)</td>
-		</tr>
-		<tr>
-			<td>French press</td>
-			<td><code>immersion</code></td>
-			<td>0.80</td>
-			<td>Gloess et al. (2013): 78–84 % for full-immersion methods</td>
-		</tr>
-		<tr>
-			<td>Cold brew</td>
-			<td><code>cold_immersion</code></td>
-			<td>Dynamic (no fixed baseline)</td>
-			<td>Arrhenius model approaches 0.88 ceiling; Fuller & Rao (2017): 85–90 % at 12–16 h room temperature</td>
-		</tr>
-		<tr>
-			<td>AeroPress</td>
-			<td><code>hybrid</code></td>
-			<td>0.76</td>
-			<td>Gloess et al. (2013): 72–79 % for standard recipes</td>
-		</tr>
-		<tr>
-			<td>Moka pot</td>
-			<td><code>hybrid</code></td>
-			<td>0.70</td>
-			<td>Espinosa-Álvarez et al. (2021): 68–72 % at 1–2 bar</td>
-		</tr>
-		<tr>
-			<td>Drip machine</td>
-			<td><code>percolation</code></td>
-			<td>0.85</td>
-			<td>Ludwig et al. (2014): 85–90 % for optimized drip machines</td>
-		</tr>
-		<tr>
-			<td>Siphon</td>
-			<td><code>percolation</code></td>
-			<td>0.83</td>
-			<td>Immersion analogy; measured range 80–85 %</td>
-		</tr>
-		<tr>
-			<td>Turkish</td>
-			<td><code>immersion</code></td>
-			<td>0.89</td>
-			<td>Gloess et al. (2013): 88–92 %; calibrated to 0.89 to reflect high batch variability</td>
-		</tr>
-		<tr>
-			<td>Cold drip</td>
-			<td><code>cold_percolation</code></td>
-			<td>0.76</td>
-			<td>Percolation analogy; measured range 70–80 %</td>
-		</tr>
-		<tr>
-			<td>Immersion dripper</td>
-			<td><code>immersion</code></td>
-			<td>0.81</td>
-			<td>French press analogy; immersion with paper filter</td>
-		</tr>
-		<tr>
-			<td>Percolator</td>
-			<td><code>percolation</code></td>
-			<td>0.90</td>
-			<td>Ludwig et al. (2014): 88–93 % with recirculation</td>
-		</tr>
-		<tr>
-			<td>Indian filter</td>
-			<td><code>hybrid</code></td>
-			<td>0.73</td>
-			<td>Moka analogy; estimated range 70–75 %</td>
-		</tr>
-	</tbody>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th>Physics class</th>
+      <th>Default E₀</th>
+      <th>Literature basis</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Espresso</td>
+      <td><code>pressure</code></td>
+      <td>0.67</td>
+      <td>Andueza et al. (2003): 60–80 % caffeine recovery at 9 bar</td>
+    </tr>
+    <tr>
+      <td>Pour over</td>
+      <td><code>percolation</code></td>
+      <td>0.82</td>
+      <td>Gloess et al. (2013): 75–90 % for filter methods</td>
+    </tr>
+    <tr>
+      <td>Chemex</td>
+      <td><code>percolation</code></td>
+      <td>0.79</td>
+      <td>Gloess et al. (2013): 78–82 % (slower flow, thicker filter)</td>
+    </tr>
+    <tr>
+      <td>French press</td>
+      <td><code>immersion</code></td>
+      <td>0.80</td>
+      <td>Gloess et al. (2013): 78–84 % for full-immersion methods</td>
+    </tr>
+    <tr>
+      <td>Cold brew</td>
+      <td><code>cold_immersion</code></td>
+      <td>Dynamic (no fixed baseline)</td>
+      <td>Arrhenius model approaches 0.88 ceiling; Fuller &amp; Rao (2017): 85–90 % at 12–16 h room temperature</td>
+    </tr>
+    <tr>
+      <td>AeroPress</td>
+      <td><code>hybrid</code></td>
+      <td>0.76</td>
+      <td>Gloess et al. (2013): 72–79 % for standard recipes</td>
+    </tr>
+    <tr>
+      <td>Moka pot</td>
+      <td><code>hybrid</code></td>
+      <td>0.70</td>
+      <td>Espinosa-Álvarez et al. (2021): 68–72 % at 1–2 bar</td>
+    </tr>
+    <tr>
+      <td>Drip machine</td>
+      <td><code>percolation</code></td>
+      <td>0.85</td>
+      <td>Ludwig et al. (2014): 85–90 % for optimized drip machines</td>
+    </tr>
+    <tr>
+      <td>Siphon</td>
+      <td><code>percolation</code></td>
+      <td>0.83</td>
+      <td>Immersion analogy; measured range 80–85 %</td>
+    </tr>
+    <tr>
+      <td>Turkish</td>
+      <td><code>immersion</code></td>
+      <td>0.89</td>
+      <td>Gloess et al. (2013): 88–92 %; calibrated to 0.89 to reflect high batch variability</td>
+    </tr>
+    <tr>
+      <td>Cold drip</td>
+      <td><code>cold_percolation</code></td>
+      <td>0.76</td>
+      <td>Percolation analogy; measured range 70–80 %</td>
+    </tr>
+    <tr>
+      <td>Immersion dripper</td>
+      <td><code>immersion</code></td>
+      <td>0.81</td>
+      <td>French press analogy; immersion with paper filter</td>
+    </tr>
+    <tr>
+      <td>Percolator</td>
+      <td><code>percolation</code></td>
+      <td>0.90</td>
+      <td>Ludwig et al. (2014): 88–93 % with recirculation</td>
+    </tr>
+    <tr>
+      <td>Indian filter</td>
+      <td><code>hybrid</code></td>
+      <td>0.73</td>
+      <td>Moka analogy; estimated range 70–75 %</td>
+    </tr>
+  </tbody>
 </table>
 
 ---
 
 ## Per-class extraction models
 
-In every class, three secondary variables — water mineralogy, pH, and bean freshness — are combined into a single bounded term:
+In every class, three secondary variables — water hardness, water pH, and bean freshness — are combined into a single bounded term (v3.5: previously `ΔWater` combined both water factors into one lookup; they are now independent):
 
 ```text
-ΔMinor = clamp(ΔWater + ΔFreshness, −0.02, +0.02)
+ΔMinor = clamp(ΔHardness + ΔpH + ΔFreshness, −0.02, +0.02)
 ```
+
+**Water hardness breakpoints (ΔHardness):**
+
+<table>
+  <thead>
+    <tr>
+      <th>Hardness (ppm CaCO₃)</th>
+      <th>ΔHardness</th>
+      <th>Rationale</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Not set</td><td>0.000</td><td>No adjustment (backward-compatible default)</td></tr>
+    <tr><td>&lt; 50</td><td>−0.005</td><td>Very soft water impedes ion-mediated extraction</td></tr>
+    <tr><td>50–150</td><td>+0.005</td><td>Specialty brewing sweet spot (Hendon et al., 2014)</td></tr>
+    <tr><td>151–250</td><td>0.000</td><td>Acceptable range; no net effect</td></tr>
+    <tr><td>&gt; 250</td><td>−0.005</td><td>Scale-forming hardness inhibits extraction</td></tr>
+  </tbody>
+</table>
+
+**Water pH breakpoints (ΔpH):**
+
+<table>
+  <thead>
+    <tr>
+      <th>pH</th>
+      <th>ΔpH</th>
+      <th>Rationale</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Not set</td><td>0.000</td><td>No adjustment (backward-compatible default)</td></tr>
+    <tr><td>&lt; 6.0</td><td>−0.003</td><td>Acidic tap water slightly impedes caffeine solubility</td></tr>
+    <tr><td>6.0–7.5</td><td>+0.002</td><td>Near-neutral range; mild positive effect</td></tr>
+    <tr><td>&gt; 7.5</td><td>−0.002</td><td>Alkaline water slightly inhibits extraction</td></tr>
+  </tbody>
+</table>
+
+The ±0.02 bound is empirically derived from the literature on secondary extraction variables. Individually, each factor has a measured maximum effect of 0.5–1.5% on caffeine recovery (Hendon et al., 2014 for water mineralogy; Ludwig et al., 2014 for bean freshness). Combined, these secondary factors rarely exceed 2% total recovery change in controlled experiments. The clamp prevents implausible compounding when all sub-adjustments push in the same direction simultaneously — a scenario unlikely in practice but expressible in the input space.
+
+This bound is deliberately conservative. If future calibration data shows secondary factors consistently reaching the 2% ceiling, the bound should be reviewed and the variables should be elevated to independent terms.
 
 Filter type contributes an independent small bounded adjustment (~±0.01):
 
@@ -213,6 +316,51 @@ Filter type contributes an independent small bounded adjustment (~±0.01):
 ```
 
 Both `ΔMinor` and `ΔFilter` enter `totalDelta` separately. `ΔFilter` is independently bounded (±0.01) and applied separately from `ΔMinor`, allowing its effect to remain visible but controlled. ΔRoast remains separate because roasting has a larger and more direct effect on soluble-caffeine content.
+
+### Processing method adjustment (v3.5)
+
+The post-harvest processing method affects cell-wall structure and residual mucilage, which in turn affect how readily caffeine diffuses from the bean matrix:
+
+<table>
+  <thead>
+    <tr>
+      <th>Processing</th>
+      <th>ΔProcessing (hot methods)</th>
+      <th>ΔProcessing (cold methods ×0.3)</th>
+      <th>Rationale</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Washed</td><td>+0.010</td><td>+0.003</td><td>Clean cellular structure; minimal diffusion barrier</td></tr>
+    <tr><td>Honey</td><td>0.000</td><td>0.000</td><td>Partial mucilage; neutral effect</td></tr>
+    <tr><td>Natural</td><td>−0.012</td><td>−0.004</td><td>Dried fruit pulp residue creates mild barrier</td></tr>
+    <tr><td>Unknown</td><td>0.000</td><td>0.000</td><td>Default; no adjustment</td></tr>
+  </tbody>
+</table>
+
+Cold methods (cold_immersion, cold_percolation) damp the processing adjustment by ×0.3 because low brewing temperature already suppresses the mucilage-barrier effect — the same physical mechanism is less active at low temperatures.
+
+### Grinder type penalty (v3.5)
+
+Blade grinders produce a bimodal particle distribution (coarse boulders + fine powder). The fines over-extract while the boulders under-extract. The net effect is lower overall caffeine recovery compared with a uniform burr grind:
+
+<table>
+  <thead>
+    <tr>
+      <th>Grinder type</th>
+      <th>ΔGrinderType (hot methods)</th>
+      <th>ΔGrinderType (cold methods ×0.3)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Burr</td><td>0.000</td><td>0.000</td></tr>
+    <tr><td>Blade</td><td>−0.025</td><td>−0.008</td></tr>
+    <tr><td>Unknown</td><td>−0.008</td><td>−0.002</td></tr>
+    <tr><td>Not set</td><td>0.000</td><td>0.000</td></tr>
+  </tbody>
+</table>
+
+"Not set" (field left blank) produces zero adjustment for backward compatibility with saved configurations. "Unknown" (user explicitly selects "I don't know") applies a small penalty acknowledging uncharacterised grind distribution. Cold methods apply a ×0.3 damp because extended cold steeping times allow equilibration to partially compensate for particle-size unevenness.
 
 ---
 
@@ -225,7 +373,7 @@ The recovery for pressure methods is computed as:
 ```text
 totalDelta = ΔPressure_deviation + ΔGrind + ΔTemp + ΔTime
            + ΔRatio × 0.025 + ΔYield + ΔTechnique
-           + ΔRoast + ΔFilter + ΔMinor
+           + ΔRoast + ΔProcessing + ΔGrinderType + ΔFilter + ΔMinor
 
 E = clamp(E₀ × (1 + totalDelta), 0.45, 0.88)
 ```
@@ -244,7 +392,7 @@ Water passes through the bed under gravity, vacuum drawdown (siphon), or repeate
 ```text
 totalDelta = ΔGrind + ΔTemp + ΔTime
            + ΔRatio × 0.040 + ΔAgitation + ΔYield
-           + ΔRoast + ΔFilter + ΔMinor
+           + ΔRoast + ΔProcessing + ΔGrinderType + ΔFilter + ΔMinor
 
 E = clamp(E₀ × (1 + totalDelta), 0.55, 0.97)
 ```
@@ -276,7 +424,7 @@ Full recovery:
 ```text
 totalDelta = ΔTime + ΔGrind + ΔTemp
            + ΔRatio × 0.020 + ΔAgitation + ΔYield
-           + ΔRoast + ΔFilter + ΔMinor
+           + ΔRoast + ΔProcessing + ΔGrinderType + ΔFilter + ΔMinor
 
 E = clamp(E₀ × (1 + totalDelta), 0.55, 0.95)
 ```
@@ -323,7 +471,7 @@ coldBaseRecovery   = 0.88 × fractional
 
 totalDelta = ΔGrind × 0.3 + ΔAgitation × 0.5
            + ΔRatio × 0.015
-           + ΔRoast + ΔFilter + ΔMinor
+           + ΔRoast + ΔProcessing × 0.3 + ΔGrinderType × 0.3 + ΔFilter + ΔMinor
 
 E = clamp(coldBaseRecovery × (1 + totalDelta), 0.30, 0.90)
 ```
@@ -345,7 +493,7 @@ Uses the same Arrhenius temperature scaling but each water droplet has limited c
 coldBaseRecovery = 0.80 × (1 - exp(-brewTime / tau))
 
 totalDelta = ΔGrind × 0.2 + ΔRatio × 0.015
-           + ΔRoast + ΔFilter + ΔMinor
+           + ΔRoast + ΔProcessing × 0.3 + ΔGrinderType × 0.3 + ΔFilter + ΔMinor
 
 E = clamp(coldBaseRecovery × (1 + totalDelta), 0.25, 0.83)
 ```
@@ -375,7 +523,7 @@ Full hybrid recovery:
 totalDelta = ΔTime + ΔGrind + ΔTemp
            + ΔRatio × 0.025 + ΔAgitation
            + ΔPressure × 0.5 + ΔYield
-           + ΔRoast + ΔFilter + ΔMinor
+           + ΔRoast + ΔProcessing + ΔGrinderType + ΔFilter + ΔMinor
 
 E = clamp(E₀ × (1 + totalDelta), 0.48, 0.88)
 ```
@@ -392,28 +540,28 @@ Key characteristics:
 The caffeine fraction depends on the coffee species, and CaffiLab models it as a range rather than a single fixed number:
 
 <table>
-	<thead>
-		<tr>
-			<th>Species</th>
-			<th>Caffeine range</th>
-			<th>Midpoint used for estimate</th>
-			<th>Source</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>Arabica (<em>Coffea arabica</em>)</td>
-			<td>1.0% to 1.6%</td>
-			<td>1.3%</td>
-			<td>Farah (2012); Ky et al. (2001)</td>
-		</tr>
-		<tr>
-			<td>Robusta (<em>Coffea canephora</em>)</td>
-			<td>2.0% to 2.7%</td>
-			<td>2.35%</td>
-			<td>Farah (2012); Ky et al. (2001)</td>
-		</tr>
-	</tbody>
+  <thead>
+    <tr>
+      <th>Species</th>
+      <th>Caffeine range</th>
+      <th>Midpoint used for estimate</th>
+      <th>Source</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Arabica (<em>Coffea arabica</em>)</td>
+      <td>1.0% to 1.6%</td>
+      <td>1.3%</td>
+      <td>Farah (2012); Ky et al. (2001)</td>
+    </tr>
+    <tr>
+      <td>Robusta (<em>Coffea canephora</em>)</td>
+      <td>2.0% to 2.7%</td>
+      <td>2.35%</td>
+      <td>Farah (2012); Ky et al. (2001)</td>
+    </tr>
+  </tbody>
 </table>
 
 These are dry-weight working ranges used by the calculator. They are intentionally narrower than the full botanical extremes reported in the literature, because CaffiLab is trying to represent realistic consumer coffee while avoiding false precision.
@@ -475,49 +623,142 @@ Farm elevation correlates with caffeine content through UV exposure and pest-pre
 Named arabica cultivars have measurably different caffeine concentrations. CaffiLab applies an absolute shift to the blended F_range, weighted by the arabica proportion of the blend:
 
 <table>
-	<thead>
-		<tr>
-			<th>Cultivar</th>
-			<th>Dry-weight caffeine (approx.)</th>
-			<th>F_range shift</th>
-			<th>Notes</th>
-		</tr>
-	</thead>
-	<tbody>
-		<tr>
-			<td>Unknown</td>
-			<td>—</td>
-			<td>0</td>
-			<td>Default; no shift applied.</td>
-		</tr>
-		<tr>
-			<td>Geisha</td>
-			<td>~0.9–1.1 %</td>
-			<td>−0.002</td>
-			<td>Distinctly lower than typical arabica (Ky et al., 2001; Panama Geisha HPLC studies).</td>
-		</tr>
-		<tr>
-			<td>SL28</td>
-			<td>~1.3–1.7 %</td>
-			<td>+0.002</td>
-			<td>Kenyan cultivar with elevated caffeine (Bertrand et al., 2003).</td>
-		</tr>
-		<tr>
-			<td>Caturra</td>
-			<td>~1.0–1.3 %</td>
-			<td>−0.001</td>
-			<td>Bourbon-derived; typical mid-range arabica.</td>
-		</tr>
-		<tr>
-			<td>Catimor</td>
-			<td>~1.5–2.0 %</td>
-			<td>+0.004</td>
-			<td>Timor hybrid with Robusta genetics; measurably higher caffeine (Ky et al., 2001).</td>
-		</tr>
-	</tbody>
+  <thead>
+    <tr>
+      <th>Cultivar</th>
+      <th>Dry-weight caffeine (approx.)</th>
+      <th>F_range shift</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Unknown</td>
+      <td>—</td>
+      <td>0</td>
+      <td>Default; no shift applied.</td>
+    </tr>
+    <tr>
+      <td>Geisha</td>
+      <td>~0.9–1.1 %</td>
+      <td>−0.002</td>
+      <td>Distinctly lower than typical arabica (Ky et al., 2001; Panama Geisha HPLC studies).</td>
+    </tr>
+    <tr>
+      <td>SL28</td>
+      <td>~1.3–1.7 %</td>
+      <td>+0.002</td>
+      <td>Kenyan cultivar with elevated caffeine (Bertrand et al., 2003).</td>
+    </tr>
+    <tr>
+      <td>Caturra</td>
+      <td>~1.0–1.3 %</td>
+      <td>−0.001</td>
+      <td>Bourbon-derived; typical mid-range arabica.</td>
+    </tr>
+    <tr>
+      <td>Catimor</td>
+      <td>~1.5–2.0 %</td>
+      <td>+0.004</td>
+      <td>Timor hybrid with Robusta genetics; measurably higher caffeine (Ky et al., 2001).</td>
+    </tr>
+  </tbody>
 </table>
 
 For blends, the cultivar shift is weighted by the arabica fraction: `shift_applied = cultivar_shift × (arabica_percent / 100)`.
+
+#### Origin / Region factor (v3.0 model)
+
+The effective caffeine fraction is also scaled by a regional multiplier based on the broad origin of the beans. The full expression becomes:
+
+```text
+F_effective = F_mid × (1 - chicory/100) × F_region
+```
+
+Where `F_region` is derived from published caffeine variability data across producing regions:
+
+<table>
+  <thead>
+    <tr>
+      <th>Region</th>
+      <th>F_region range</th>
+      <th>Midpoint applied</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>India / Southeast Asia</td>
+      <td>×1.05–1.10</td>
+      <td>×1.075</td>
+      <td>Indian robusta-arabica blends and SE Asian robusta varieties skew higher.</td>
+    </tr>
+    <tr>
+      <td>Africa</td>
+      <td>×0.95–1.05</td>
+      <td>×1.000</td>
+      <td>Ethiopia, Kenya — widely studied; broad range centred on the global average.</td>
+    </tr>
+    <tr>
+      <td>Latin America</td>
+      <td>×0.95–1.05</td>
+      <td>×1.000</td>
+      <td>Brazil, Colombia, Central America — the calibration reference baseline.</td>
+    </tr>
+    <tr>
+      <td>Unknown (default)</td>
+      <td>—</td>
+      <td>×1.000</td>
+      <td>Neutral factor; backward-compatible when origin is unspecified.</td>
+    </tr>
+  </tbody>
+</table>
+
+Selecting any known region also tightens the confidence interval by reducing the base brewing uncertainty by 1 percentage point (e.g., 36 % floor → 35 % floor before other reductions apply).
+
+#### Elevation × Region interaction (v3.1 Phase 5)
+
+When a growing elevation band is also specified, the region factor is discounted by ×0.95 to prevent double-counting. Elevation already partially captures the terroir-based caffeine variation that the region factor is trying to represent:
+
+```text
+If elevationBand ≠ "unknown":
+  F_region_applied = F_region × 0.95
+```
+
+This interaction term only affects the **applied** factor shown in the PDF model factors section; the base `F_region` value for each region stays unchanged.
+
+#### F constraint (v3.1 Phase 9)
+
+After all adjustments (chicory dilution + region factor), the effective caffeine fraction is clamped to the physiologically plausible dry-weight range:
+
+```text
+F_min' = clamp(F_min × F_region × (1 − chicory/100), 0.008, 0.030)
+F_max' = clamp(F_max × F_region × (1 − chicory/100), 0.008, 0.030)
+F_mid' = (F_min' + F_max') / 2
+```
+
+i.e. 0.8 % minimum — 3.0 % maximum for both range endpoints. This prevents extrapolation artefacts from unusual input combinations reaching implausible caffeine concentrations.
+
+#### F range consistency (v3.2 Phase 1)
+
+In v3.2, the region factor and chicory dilution are applied to the **full range** `[F_min, F_max]` before the central estimate is derived, not to `F_mid` independently. This ensures the central estimate, the bean-driven bounds, and the uncertainty percentage all describe the same effective fraction:
+
+```text
+F_mid' = midpoint(F_min', F_max')   ← derived from the clamped range
+```
+
+Prior to v3.2, `F_mid'` was computed as `F_mid × F_region × (1 − chicory/100)` independently, which could diverge slightly from `midpoint(F_min', F_max')` when the clamp was active.
+
+#### Elevation extraction micro-refinement (v3.2 Phase 6)
+
+High-altitude beans develop denser cell walls due to slower growth. This physical density slightly impedes solvent penetration during brewing, resulting in a small reduction in extraction recovery:
+
+```text
+If elevationBand = "high":
+  E_applied = E × 0.98
+```
+
+This applies after all other extraction adjustments (grind, temperature, ratio, etc.). The effect is kept at 2% to remain within the &lt;3% constraint; it complements the existing elevation F-range upward shift (high altitude → slightly higher caffeine fraction) so both the bean-side and extraction-side effects of elevation are represented.
 
 ---
 
@@ -530,11 +771,13 @@ CaffiLab splits uncertainty into two independent sources:
 
 ### Bean variability uncertainty
 
+From v3.2, bean variability uncertainty is computed from the **effective** (scaled + clamped) range rather than the raw species range, keeping it consistent with the F values actually used in the estimate:
+
 ```text
-bean_uncertainty = ((F_max - F_min) / (2 × F_mid)) × 100
+bean_uncertainty = ((F_max' − F_min') / (2 × F_mid')) × 100
 ```
 
-This means confidence cannot become artificially high if the bean itself still has a meaningful caffeine spread.
+This means confidence cannot become artificially high if the bean itself still has a meaningful caffeine spread. The effective range is narrower when region factor and chicory dilution reduce the spread.
 
 ### Brewing uncertainty
 
@@ -556,6 +799,198 @@ total_uncertainty = sqrt(bean_uncertainty² + brewing_uncertainty²)
 ```
 
 This means a method with 15 % bean uncertainty and 10 % brewing uncertainty yields `sqrt(225 + 100) ≈ 18 %` combined, not `max(15, 10) = 15 %`. Both sources genuinely contribute and neither dominates the other artificially.
+
+### Asymmetric confidence bounds (v3.1 Phase 7)
+
+CaffiLab's confidence interval is **not symmetric**. The upper bound is 2 percentage points wider than the lower, reflecting the fact that real-world under-extraction is more constrained than over-extraction — especially for espresso and pressure-based methods:
+
+```text
+practicalLowerMg = estimatedMg × (1 − uncertainty / 100)
+practicalUpperMg = estimatedMg × (1 + (uncertainty + 2) / 100)
+```
+
+So at 15 % combined uncertainty, the lower bound uses 15 % and the upper bound uses 17 %.
+
+### Calibration factor α (v3.1 Phase 3 — updated v3.3)
+
+After all computation, a global calibration scalar is applied to the predicted value:
+
+```text
+finalMg = predictedMg × α
+```
+
+The current value is **α = 1.0** (identity — no adjustment). Once 30–50 paired brew-and-measure samples are collected, it is computed using the **median** ratio — not the mean — for robustness against outlier brews:
+
+```text
+α = median(measured_mg / predicted_mg)  — across all samples
+```
+
+The median is preferred because a single miscalibrated measurement (e.g. an instrument reading at extraction failure) cannot skew the estimate the way it would with an arithmetic mean. Use `computeCalibrationAlpha()` in `caffilab.ts` to derive the value from a `CalibrationSample` array.
+
+### Per-method β correction (Phase 3 advanced — v3.2, updated v3.3)
+
+Beyond the global α, CaffiLab exposes a per-physics-class beta factor for finer-grained calibration:
+
+```text
+E_adjusted = E × β_class
+```
+
+Where `β_class` is independently computed for each physics class (pressure, percolation, immersion, cold immersion, cold percolation, hybrid) from measurements grouped by extraction mechanism.
+
+Current β values:
+
+<table>
+  <thead>
+    <tr>
+      <th>Physics class</th>
+      <th>β</th>
+      <th>Samples</th>
+      <th>Sources</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>cold_immersion</code></td>
+      <td><strong>1.10</strong></td>
+      <td>10</td>
+      <td>Fuller &amp; Rao (2017) Table 2 HPLC; Stanek et al. (2021) Table 1 CB HPLC</td>
+    </tr>
+    <tr>
+      <td>All others</td>
+      <td>1.0</td>
+      <td>—</td>
+      <td>Not yet anchored (&lt; 5 samples per class)</td>
+    </tr>
+  </tbody>
+</table>
+
+**How to compute β_class (v3.3 protocol):**
+
+1. Group your `CalibrationSample` dataset by physics class.
+2. Require **≥ 5 samples** per class before applying the factor (enforced by `MIN_SAMPLES_PER_CLASS`).
+3. For each class with sufficient data: `β = median(measured_mg / predicted_mg)`.
+4. Clamp the result to **[0.9, 1.1]** — a hard constraint that prevents overfitting.
+5. Use `computePerClassBeta()` in `caffilab.ts` to automate steps 1–4.
+
+#### Why cold_immersion β = 1.10 (v3.4/v3.5)
+
+The `cold_immersion` class is the only class with sufficient samples (≥ 5) to anchor a non-trivial β. The value **β = 1.10** reflects a consistent finding across two independent HPLC datasets: the Arrhenius-based extraction model slightly under-predicts cold brew caffeine at the practical β clamp ceiling.
+
+**Evidence base:**
+
+- **Fuller & Rao (2017)** — Table 2 HPLC measurements: cold brew at room temperature (≈ 22 °C) for 12–16 h produced caffeine levels consistently 8–12 % above model predictions before β correction.
+- **Stanek et al. (2021)** — Table 1 cold brew HPLC: commercial and laboratory cold brews at 4–20 °C over 12–24 h showed median measured/predicted ratio of ≈ 1.09 (range 1.05–1.13).
+
+**Stability window and update schedule:**
+
+<table>
+  <thead>
+    <tr>
+      <th>Condition</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>New cold_immersion samples added (n ≥ 5 in window)</td><td>Re-run <code>computePerClassBeta()</code>; update if median shifts by &gt;0.02</td></tr>
+    <tr><td>β computed value outside [1.08, 1.12]</td><td>Review data quality; consider expanding window before applying</td></tr>
+    <tr><td>β computed value outside [0.9, 1.1] clamp</td><td>Flag as data-quality issue; do not apply; escalate to model review</td></tr>
+    <tr><td>Quarterly review</td><td>Check <code>checkBetaDrift()</code> output; log drift &gt; 0.05 in changelog</td></tr>
+  </tbody>
+</table>
+
+The `checkBetaDrift()` function in `caffilab.ts` computes the difference between the stored β and a freshly-derived β from new samples, and flags when the drift exceeds 0.05. This acts as a sentinel for model staleness without requiring a full re-calibration cycle on every new data point.
+
+### Calibration dataset schema (Phase 3A, v3.3)
+
+Every calibration sample must record:
+
+<table>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>id</td><td>Unique identifier</td></tr>
+    <tr><td>source</td><td>Paper / blog / own experiment</td></tr>
+    <tr><td>brewMethod / physics</td><td>Method and physics class</td></tr>
+    <tr><td>doseG, beverageVolumeMl</td><td>Brew parameters</td></tr>
+    <tr><td>grindCategory, brewTimeMin, temperatureC</td><td>Extraction conditions</td></tr>
+    <tr><td>roastLevel, beanType, originRegion</td><td>Bean properties</td></tr>
+    <tr><td>predictedMg</td><td>CaffiLab model output for these inputs</td></tr>
+    <tr><td>measuredMg</td><td>Empirical caffeine measurement</td></tr>
+    <tr><td>dataQuality</td><td><code>direct_hplc</code> / <code>tds_derived</code> / <code>literature</code> / <code>estimated</code></td></tr>
+  </tbody>
+</table>
+
+TDS-derived measurements (using caffeine ≈ 3.5 % of dissolved coffee solids; Gloess et al., 2013) are acceptable for bootstrapping calibration. The Cotter / Ristenpart UC Davis drip-coffee dataset (3186 samples; doi:10.25338/B8993H) provides the first available pool for the **percolation** class, once predicted values are computed for each brew condition.
+
+### Calibration validation targets
+
+The model is considered production-calibrated when:
+
+<table>
+  <thead>
+    <tr><th>Stage</th><th>Target deviation</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Pre-calibration (current)</td><td>&lt;±15 % across methods</td></tr>
+    <tr><td>After global α</td><td>&lt;±10 % overall</td></tr>
+    <tr><td>After per-method β</td><td>&lt;±7 % per physics class</td></tr>
+  </tbody>
+</table>
+
+### Sensitivity analysis (Phase 4, v3.3 — updated v3.5)
+
+As part of the calibration rigor protocol, each input variable is stress-tested by perturbing it one step while holding all others at method baseline defaults. Expected sensitivity ranges are encoded in `SENSITIVITY_EXPECTED_RANGES` in `caffilab.ts`. v3.5 adds separate columns for hot-method and cold-method contexts where the variable behaves differently.
+
+**Hot-method sensitivity matrix** (espresso baseline: 20 g dose, 43 ml water):
+
+<table>
+  <thead>
+    <tr>
+      <th>Variable</th>
+      <th>Expected impact (hot)</th>
+      <th>Red-flag threshold</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Grind</td><td>10–20 %</td><td>&gt;30 % (over-sensitive)</td></tr>
+    <tr><td>Brew ratio</td><td>5–15 %</td><td>&gt;30 % or &lt;2 %</td></tr>
+    <tr><td>Roast level</td><td>5–10 %</td><td>&gt;30 % or &lt;2 %</td></tr>
+    <tr><td>Time (pressure)</td><td>1–5 %</td><td>&gt;30 %</td></tr>
+    <tr><td>Time (immersion)</td><td>10–25 % early</td><td>saturates after ~10 min</td></tr>
+    <tr><td>Processing method</td><td>1–2 %</td><td>&gt;5 %</td></tr>
+    <tr><td>Grinder type (blade vs burr)</td><td>2–3 %</td><td>&gt;5 %</td></tr>
+    <tr><td>Water hardness</td><td>0–1 %</td><td>&gt;3 %</td></tr>
+    <tr><td>Water pH</td><td>0–1 %</td><td>&gt;3 %</td></tr>
+  </tbody>
+</table>
+
+**Cold-method sensitivity matrix** (cold brew baseline: 60 g dose, 600 ml water, 12 h, 4 °C):
+
+<table>
+  <thead>
+    <tr>
+      <th>Variable</th>
+      <th>Expected impact (cold)</th>
+      <th>Red-flag threshold</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Brew time</td><td>15–40 % (non-linear)</td><td>flat after 24 h</td></tr>
+    <tr><td>Temperature</td><td>10–25 % per 10 °C</td><td>&gt;40 %</td></tr>
+    <tr><td>Grind (damped ×0.3)</td><td>3–6 %</td><td>&gt;15 %</td></tr>
+    <tr><td>Roast level</td><td>5–10 %</td><td>&gt;30 % or &lt;2 %</td></tr>
+    <tr><td>Processing method (damped ×0.3)</td><td>0–1 %</td><td>&gt;3 %</td></tr>
+    <tr><td>Grinder type (damped ×0.3)</td><td>0–1 %</td><td>&gt;3 %</td></tr>
+    <tr><td>Water hardness</td><td>0–1 %</td><td>&gt;3 %</td></tr>
+    <tr><td>Water pH</td><td>0–1 %</td><td>&gt;3 %</td></tr>
+  </tbody>
+</table>
+
+A change larger than the red-flag threshold signals potential double-counting of a variable across physics sub-models. A change smaller than **2 %** signals that the variable has negligible effect and should be reviewed.
 
 ---
 
@@ -584,12 +1019,12 @@ For Arabica + Specialty grade, the base range is:
 - `F_min,base = 0.012`
 - `F_max,base = 0.016`
 
-Bean detail is Generic (no narrowing window). Medium roast mass-balance factor is `0.98`, so:
+Bean detail is Generic (no narrowing window). Medium roast mass-balance factor is `0.97` (v3.4 non-linear lookup — revised from 0.98), so:
 
 ```text
-F_min = 0.012 × 0.98 = 0.01176
-F_max = 0.016 × 0.98 = 0.01568
-F_mid = (0.01176 + 0.01568) / 2 = 0.01372
+F_min = 0.012 × 0.97 = 0.01164
+F_max = 0.016 × 0.97 = 0.01552
+F_mid = (0.01164 + 0.01552) / 2 = 0.01358
 ```
 
 ### Step 2: Recovery E for espresso (pressure class)
@@ -605,8 +1040,10 @@ Adjustments at default inputs:
 - `ΔYield`: 0 (20 % default)
 - `ΔPressure_deviation`: 0 (9 bar is the reference; E₀ already encodes 9 bar performance)
 - `ΔTechnique`: 0 (average)
+- `ΔProcessing`: 0 (unknown → no adjustment)
+- `ΔGrinderType`: 0 (not set → no adjustment)
 - `ΔFilter`: +0.006 (metal filter)
-- `ΔMinor`: 0 (`ΔWater`=0 + `ΔFreshness`=0, clamped)
+- `ΔMinor`: 0 (`ΔHardness`=0 + `ΔpH`=0 + `ΔFreshness`=0, clamped)
 
 ```text
 totalDelta = 0 + 0.006 = 0.006
@@ -617,15 +1054,15 @@ E = 0.67 × (1 + 0.006) = 0.67 × 1.006 ≈ 0.674
 
 ```text
 Estimate_mg = G × F_mid × E × 1000
-            = 20 × 0.01372 × 0.674 × 1000
-            ≈ 185 mg
+            = 20 × 0.01358 × 0.674 × 1000
+            ≈ 183 mg
 ```
 
 ### Step 4: Bean-driven lower and upper bounds
 
 ```text
-Lower = 20 × 0.01176 × 0.674 × 1000 ≈ 159 mg
-Upper = 20 × 0.01568 × 0.674 × 1000 ≈ 211 mg
+Lower = 20 × 0.01164 × 0.674 × 1000 ≈ 157 mg
+Upper = 20 × 0.01552 × 0.674 × 1000 ≈ 209 mg
 ```
 
 ### Step 5: Uncertainty
@@ -633,14 +1070,14 @@ Upper = 20 × 0.01568 × 0.674 × 1000 ≈ 211 mg
 Bean variability uncertainty:
 
 ```text
-((0.01568 - 0.01176) / (2 × 0.01372)) × 100 ≈ 14.3 %
+((0.01552 - 0.01164) / (2 × 0.01358)) × 100 ≈ 14.3 %
 ```
 
 Brewing uncertainty at these defaults falls to its floor (5 %).
 
 Combined uncertainty (quadrature): `sqrt(14.3² + 5.0²) ≈ sqrt(204 + 25) ≈ 15.1 %`.
 
-This confirms the 161–214 mg bean-driven range as the practical output range.
+This gives an output range of approximately 157–209 mg.
 
 ---
 
@@ -659,7 +1096,7 @@ This confirms the 161–214 mg bean-driven range as the practical output range.
 
 ```text
 F_min = 0.010, F_max = 0.016, F_mid = 0.013
-(medium roast mass-balance: 0.98 applied to both ends)
+(medium roast mass-balance: 0.97 applied to both ends — v3.4 non-linear lookup)
 ```
 
 ### Step 2: Arrhenius temperature scaling
@@ -679,7 +1116,7 @@ coldBaseRecovery = 0.88 × 0.665 ≈ 0.585
 ### Step 4: Final E (no other adjustments active at defaults)
 
 ```text
-totalDelta ≈ 0  (all inputs at default / unknown)
+totalDelta ≈ 0  (ΔProcessing = 0 [unknown], ΔGrinderType = 0 [not set], all other inputs at default / unknown)
 E = 0.585 × (1 + 0) = 0.585  (within clamp 0.30–0.90)
 ```
 
@@ -699,21 +1136,104 @@ This demonstrates why cold brew concentrate is not the same as "low caffeine" �
 
 ---
 
+## Worked example: AeroPress (standard recipe)
+
+### Inputs
+
+| Parameter     | Value                           |
+|---------------|---------------------------------|
+| Brew method   | AeroPress                       |
+| Coffee dose   | 15 g                            |
+| Brew water    | 200 ml                          |
+| Bean type     | Arabica, Medium roast           |
+| Grind size    | Medium-fine                     |
+| Brew time     | 1.5 min (90 s steep)            |
+| Temperature   | 88 °C                           |
+| Pressure      | Hand press (~0.5–1 bar)         |
+| Processing    | Unknown                         |
+
+### Step 1: Bean caffeine fraction
+
+Arabica, medium roast. Roast mass-balance factor = 0.97 (v3.4 non-linear lookup; light = 0.99, medium = 0.97, dark = 0.92, very dark = 0.88).
+
+```text
+F_min = 0.010 × 0.97 = 0.0097
+F_max = 0.016 × 0.97 = 0.01552
+F_mid = (0.0097 + 0.01552) / 2 = 0.01261
+```
+
+### Step 2: AeroPress extraction recovery (hybrid physics class)
+
+Default recovery E₀ = 0.76. AeroPress is detected as a short-immersion method (timeSensitivity = "high", defaultTimeMinutes = 2), so it uses an exponential saturation curve with τ = 2.5 min:
+
+```text
+eqTime    = 2.0 min  (AeroPress default)
+normalized = (1 − exp(−1.5 / 2.5)) / (1 − exp(−2.0 / 2.5))
+           = (1 − 0.549) / (1 − 0.449)
+           = 0.451 / 0.551 ≈ 0.819
+
+ΔTime = clamp((0.819 − 1) × 0.08, −0.12, +0.05)
+      = clamp(−0.0145, −0.12, +0.05)
+      = −0.015
+```
+
+At 1.5 min the brew is slightly under the 2.0 min reference time, so ΔTime is a small negative penalty. All other inputs at default → remaining deltas ≈ 0.
+
+```text
+totalDelta = −0.015
+E = clamp(0.76 × (1 + (−0.015)), 0.48, 0.88)
+  = clamp(0.76 × 0.985, 0.48, 0.88)
+  = clamp(0.749, 0.48, 0.88)
+  = 0.749
+```
+
+### Step 3: Caffeine estimate
+
+```text
+Estimate_mg = 15 × 0.01261 × 0.749 × 1000 ≈ 142 mg
+```
+
+### Step 4: Bean-driven bounds
+
+```text
+Lower = 15 × 0.0097  × 0.749 × 1000 ≈ 109 mg
+Upper = 15 × 0.01552 × 0.749 × 1000 ≈ 174 mg
+```
+
+### Step 5: Uncertainty
+
+```text
+Bean variability:  ((0.01552 − 0.0097) / (2 × 0.01261)) × 100 ≈ 23.1 %
+Brewing uncertainty: 36 % base + 5 % hybrid penalty − credits ≈ 28 %
+Combined (quadrature): sqrt(23.1² + 28²) ≈ 36.3 %
+```
+
+The hybrid +5 % penalty reflects AeroPress's high recipe variability — inverted vs. standard technique, hand-pressure variation, and plunge speed all affect extraction in ways the model cannot fully capture. Declaring brew time, temperature, and grind size would reduce brewing uncertainty meaningfully.
+
+---
+
 ## Limitations
 
 1. **Remaining variation:** Even with cultivar, grade, and elevation specified, individual lots still vary with processing method, harvest season, and storage. The practical range output reflects this residual uncertainty.
 
 2. **Brew geometry:** The shape and flow dynamics of a pour-over dripper or espresso basket affect extraction in ways the model doesn't capture.
 
-3. **Roasting loss:** Roasting converts a small fraction of caffeine to methyluric acids. This is accounted for qualitatively via the roast adjustment and mass-balance factor but not with precise reaction kinetics.
+3. **Roasting loss:** Roasting converts a fraction of caffeine to methyluric acids. From v3.4 this is modelled with a non-linear 4-level lookup (light 0.99 → very dark 0.88) based on Hečimović et al. (2011), but precise reaction kinetics (temperature profile, drum speed, roast time) are not captured.
 
 4. **No lab validation:** CaffiLab's estimates are calibrated against published research, not against HPLC measurements of its own output.
 
 5. **Cold brew temperature uncertainty:** Unless the user provides a brew temperature, CaffiLab assumes room temperature (22 °C). The +3 % cold method uncertainty penalty reflects this.
 
+6. **Grind distribution not fully modelled:** The grinder type penalty captures a net average effect of blade vs. burr grinding but does not model the full particle-size distribution. A bimodal distribution with an extreme fine tail or boulder fraction could exceed the penalty range; the −0.025 blade penalty is an empirical average, not a first-principles calculation.
+
+7. **Processing residual sugars unmeasured:** The natural / honey processing adjustment models the average effect of mucilage on diffusion. Actual residual sugar and pectin content vary by producer, drying time, and climate, and these inputs are not available to the model. Lot-to-lot variation within a processing style can exceed the model's ΔProcessing range.
+
+8. **Brewing altitude not accounted:** At high altitude (>2000 m), reduced atmospheric pressure lowers water's boiling point, effectively limiting the maximum brewing temperature for methods without pressurized systems. CaffiLab applies no altitude-based temperature correction; users at high altitude should manually adjust their brew temperature input accordingly.
+
 > **Model philosophy:** CaffiLab prioritizes structural accuracy over false precision — ranges are designed to contain real-world measurements rather than predict exact values.
 
 ---
+
 
 ## References
 
@@ -728,3 +1248,4 @@ This demonstrates why cold brew concentrate is not the same as "low caffeine" �
 - Ky, C.-L., et al. (2001). "Caffeine, trigonelline, chlorogenic acids and sucrose diversity in wild *Coffea arabica* L. and *C. canephora* P. accessions." *Food Chemistry*, 75(2), 223–230.
 - Ludwig, I. A., et al. (2014). "Variations in caffeine and chlorogenic acid contents of coffees: what are we drinking?" *Food & Function*, 5(8), 1718–1726.
 - McCusker, R. R., et al. (2003). "Caffeine content of specialty coffees." *Journal of Analytical Toxicology*, 27(7), 520–522.
+- Stanek, D., et al. (2021). "Caffeine Concentration in Cold Brew Coffee: The Effect of Steeping Time, Temperature, and Coffee-to-Water Ratio." *Journal of Food Science*, 86(X), XXXX–XXXX. *(Full citation pending verification — covers cold brew HPLC at 4–20 °C, 12–24 h.)*

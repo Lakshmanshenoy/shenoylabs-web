@@ -19,7 +19,10 @@ import {
 
 import {
   BREW_METHODS,
+  CALIBRATION_ALPHA,
   GRIND_SIZES,
+  ORIGIN_REGIONS,
+  PER_METHOD_BETA,
   defaultBrewWaterMl,
   defaultBrewTimeValue,
   defaultTemperatureValue,
@@ -36,14 +39,16 @@ import {
   type FilterType,
   type Freshness,
   type GrindSize,
+  type GrinderType,
+  type OriginRegion,
   type PackageClue,
   type PriceCurrency,
   type PriceUnit,
+  type ProcessingMethod,
   type RoastLevel,
   type TemperatureUnit,
   type TimeUnit,
   type VolumeUnit,
-  type WaterMinerals,
   type WeightUnit,
 } from "@/lib/caffilab";
 import { cn } from "@/lib/utils";
@@ -74,7 +79,8 @@ type FocusTopic =
   | "arabica_grade"
   | "elevation"
   | "extraction_quality"
-  | "cultivar";
+  | "cultivar"
+  | "origin_region";
 
 const brewMethods = Object.entries(BREW_METHODS) as Array<
   [BrewMethod, (typeof BREW_METHODS)[BrewMethod]]
@@ -127,6 +133,7 @@ const TOPIC_LABELS: Partial<Record<FocusTopic, string>> = {
   elevation: "Elevation",
   extraction_quality: "Extr. quality",
   cultivar: "Cultivar",
+  origin_region: "Origin / Region",
 };
 
 const priceCurrencies: PriceCurrency[] = [
@@ -157,15 +164,17 @@ const packageClueValues: PackageClue[] = [
   "south_indian_filter",
   "commercial_instant",
 ];
-const roastLevelValues: RoastLevel[] = ["light", "medium", "dark"];
+const roastLevelValues: RoastLevel[] = ["light", "medium", "dark", "very_dark"];
 const agitationValues: AgitationLevel[] = ["none", "gentle", "moderate", "high"];
-const waterMineralsValues: WaterMinerals[] = ["unknown", "soft", "balanced", "hard"];
+const processingMethodValues: ProcessingMethod[] = ["unknown", "washed", "honey", "natural"];
+const grinderTypeValues: GrinderType[] = ["unknown", "burr", "blade"];
 const freshnessValues: Freshness[] = ["unknown", "fresh", "rested", "stale"];
 const filterTypeValues: FilterType[] = ["paper", "metal", "cloth", "none"];
 const arabicaGradeValues: ArabicaGrade[] = ["specialty", "commercial"];
 const elevationBandValues: ElevationBand[] = ["unknown", "low", "mid", "high"];
 const extractionQualityValues: ExtractionQuality[] = ["average", "poor", "well_prepared"];
 const cultivarValues: Cultivar[] = ["unknown", "geisha", "sl28", "caturra", "catimor"];
+const originRegionValues: OriginRegion[] = ["unknown", "india_sea", "africa", "latin_america"];
 
 type CaffiLabSessionInputs = {
   brewMethod: BrewMethod;
@@ -195,15 +204,18 @@ type CaffiLabSessionInputs = {
   extractionYieldPercent: string;
   pressureBars: string;
   agitation: AgitationLevel;
-  waterMinerals: WaterMinerals;
+  waterHardnessPpm: string;
   waterPh: string;
   freshness: Freshness;
   filterType: FilterType;
   chicoryPercent: string;
+  processingMethod: ProcessingMethod;
+  grinderType: GrinderType;
   arabicaGrade: ArabicaGrade | "";
   elevationBand: ElevationBand;
   extractionQuality: ExtractionQuality;
   cultivar: Cultivar;
+  originRegion: OriginRegion;
 };
 
 type CaffiLabSessionPayload = {
@@ -434,7 +446,7 @@ function getTopicExplanation({
     yield: `Extraction yield defaults to ${method.defaultYieldPercent}% for ${method.label}. If you measured TDS/yield, entering it is one of the strongest ways to calibrate the estimate.`,
     pressure: "Pressure is only shown for espresso. Around 9 bar is treated as the target; pressure changes are kept modest because grind/flow usually explain more caffeine variation than pressure alone.",
     agitation: "Agitation or stirring increases contact between water and grounds, so it nudges recovery upward for immersion and manual brew methods.",
-    water_chemistry: "Water minerals and pH are a small caffeine correction but a meaningful extraction clue. Balanced mineral water is treated as closest to specialty brewing standards.",
+    water_chemistry: "Water hardness (ppm) and pH each shift caffeine extraction slightly. Balanced water (50–150 ppm) and near-neutral pH (6.5–7.5) are closest to specialty brewing standards. Both fields are optional and default to zero adjustment.",
     freshness: "Bean freshness changes gas, flow, and extraction behavior. Very fresh coffee can resist even extraction; stale coffee often loses volatile structure and extracts less predictably.",
     filter: "Filter type mainly changes oils and insoluble material, but it can slightly shift measured strength. Paper is a touch cleaner/lower; metal and no-filter methods retain more material.",
     chicory: `Indian filter coffee often includes chicory. CaffiLab defaults to ${chicoryPercent || "20"}% chicory for this method; chicory contributes body and bitterness but essentially no caffeine.`,
@@ -442,6 +454,7 @@ function getTopicExplanation({
     elevation: "Growing elevation slightly correlates with caffeine content through UV exposure and pest pressure. High-altitude farms (>1500 m) shift the estimated range upward by ~15 % of the range width; low-altitude (<800 m) shifts it downward by the same amount.",
     extraction_quality: "Espresso extraction quality captures channeling and puck preparation. A poorly prepared puck (uneven tamping, channeling) reduces caffeine extraction significantly; a well-prepared shot can yield a small recovery gain. Average is the neutral default.",
     cultivar: "Named arabica cultivar shifts the bean caffeine fraction range based on HPLC measurements. Geisha (~0.9–1.1 % dry weight) is distinctly lower; SL28 (~1.3–1.7 %) is elevated, typical of Kenyan lots; Caturra (~1.0–1.3 %) is a Bourbon-derived mid-range variety; Catimor (~1.5–2.0 %) is a Robusta hybrid and sits notably higher. Unknown is the safe default when you are not sure.",
+    origin_region: "Growing origin applies a regional multiplier to the caffeine fraction. India and Southeast Asia tend toward higher-caffeine varieties (+7.5 % on the midpoint estimate). Africa and Latin America are the global reference baseline. Selecting any region also tightens the confidence interval slightly by reducing the baseline brewing uncertainty by 1 percentage point.",
   };
 
   return notes[focusTopic];
@@ -633,8 +646,10 @@ export function CaffiLabCalculator() {
   const [extractionYieldPercent, setExtractionYieldPercent] = useState("");
   const [pressureBars, setPressureBars] = useState("9");
   const [agitation, setAgitation] = useState<AgitationLevel>("none");
-  const [waterMinerals, setWaterMinerals] = useState<WaterMinerals>("unknown");
+  const [waterHardnessPpm, setWaterHardnessPpm] = useState("");
   const [waterPh, setWaterPh] = useState("");
+  const [processingMethod, setProcessingMethod] = useState<ProcessingMethod>("unknown");
+  const [grinderType, setGrinderType] = useState<GrinderType>("unknown");
   const [freshness, setFreshness] = useState<Freshness>("unknown");
   const [filterType, setFilterType] = useState<FilterType>("paper");
   const [chicoryPercent, setChicoryPercent] = useState("20");
@@ -642,6 +657,7 @@ export function CaffiLabCalculator() {
   const [elevationBand, setElevationBand] = useState<ElevationBand>("unknown");
   const [extractionQuality, setExtractionQuality] = useState<ExtractionQuality>("average");
   const [cultivar, setCultivar] = useState<Cultivar>("unknown");
+  const [originRegion, setOriginRegion] = useState<OriginRegion>("unknown");
   const [focusTopic, setFocusTopic] = useState<FocusTopic>("result");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showExpert, setShowExpert] = useState(false);
@@ -690,8 +706,10 @@ export function CaffiLabCalculator() {
         extractionYieldPercent: parseOptionalNumber(extractionYieldPercent),
         pressureBars: parseOptionalNumber(pressureBars),
         agitation,
-        waterMinerals,
+        waterHardnessPpm: parseOptionalNumber(waterHardnessPpm),
         waterPh: parseOptionalNumber(waterPh),
+        processingMethod,
+        grinderType,
         freshness,
         filterType,
         chicoryPercent: parseOptionalNumber(chicoryPercent),
@@ -699,6 +717,7 @@ export function CaffiLabCalculator() {
         elevationBand,
         extractionQuality,
         cultivar,
+        originRegion,
       }),
     [
       arabicaPercent,
@@ -714,6 +733,7 @@ export function CaffiLabCalculator() {
       elevationBand,
       extractionQuality,
       cultivar,
+      originRegion,
       coffeeAmount,
       coffeePrice,
       customCaffeinePercent,
@@ -734,8 +754,10 @@ export function CaffiLabCalculator() {
       servingUnit,
       temperatureAmount,
       temperatureUnit,
-      waterMinerals,
+      waterHardnessPpm,
       waterPh,
+      processingMethod,
+      grinderType,
       robustaPercent,
     ],
   );
@@ -786,15 +808,18 @@ export function CaffiLabCalculator() {
       extractionYieldPercent,
       pressureBars,
       agitation,
-      waterMinerals,
+      waterHardnessPpm,
       waterPh,
       freshness,
       filterType,
       chicoryPercent,
+      processingMethod,
+      grinderType,
       arabicaGrade,
       elevationBand,
       extractionQuality,
       cultivar,
+      originRegion,
     },
     model: {
       estimateFormula: "Estimate = G × F_mid × E × 1000",
@@ -868,8 +893,10 @@ export function CaffiLabCalculator() {
     if (typeof candidate.extractionYieldPercent === "string") setExtractionYieldPercent(candidate.extractionYieldPercent);
     if (typeof candidate.pressureBars === "string") setPressureBars(candidate.pressureBars);
     if (isOneOf(candidate.agitation, agitationValues)) setAgitation(candidate.agitation);
-    if (isOneOf(candidate.waterMinerals, waterMineralsValues)) setWaterMinerals(candidate.waterMinerals);
+    if (typeof candidate.waterHardnessPpm === "string") setWaterHardnessPpm(candidate.waterHardnessPpm);
     if (typeof candidate.waterPh === "string") setWaterPh(candidate.waterPh);
+    if (isOneOf(candidate.processingMethod, processingMethodValues)) setProcessingMethod(candidate.processingMethod);
+    if (isOneOf(candidate.grinderType, grinderTypeValues)) setGrinderType(candidate.grinderType);
     if (isOneOf(candidate.freshness, freshnessValues)) setFreshness(candidate.freshness);
     if (isOneOf(candidate.filterType, filterTypeValues)) setFilterType(candidate.filterType);
     if (typeof candidate.chicoryPercent === "string") setChicoryPercent(candidate.chicoryPercent);
@@ -881,6 +908,7 @@ export function CaffiLabCalculator() {
       setExtractionQuality(candidate.extractionQuality);
     }
     if (isOneOf(candidate.cultivar, cultivarValues)) setCultivar(candidate.cultivar);
+    if (isOneOf(candidate.originRegion, originRegionValues)) setOriginRegion(candidate.originRegion);
   }
 
   async function handleLoadSession(event: React.ChangeEvent<HTMLInputElement>) {
@@ -971,6 +999,7 @@ export function CaffiLabCalculator() {
       ["Arabica grade", arabicaGrade || "Not set", "secondary"],
       ["Cultivar", cultivar, "secondary"],
       ["Elevation", elevationBand, "secondary"],
+      ["Origin / Region", ORIGIN_REGIONS[originRegion].label, "secondary"],
     ];
     const parameterRows: Array<[string, string, "primary" | "secondary"]> = [
       ["Coffee dose", `${coffeeAmount} ${coffeeUnit}`, "primary"],
@@ -979,13 +1008,29 @@ export function CaffiLabCalculator() {
       ["Extraction yield %", extractionYieldPercent || "Auto", "primary"],
       ["Pressure (bar)", pressureBars || "Not set", "secondary"],
       ["Agitation", agitation, "secondary"],
-      ["Water minerals", waterMinerals, "primary"],
+      ["Water hardness (ppm)", waterHardnessPpm || "Not set", "primary"],
       ["Water pH", waterPh || "Not set", "secondary"],
       ["Freshness", freshness, "secondary"],
       ["Filter", filterType, "secondary"],
       ["Extraction quality", extractionQuality, "secondary"],
       ["Package clue", packageClue, "secondary"],
       ["Price", coffeePrice ? `${coffeePrice} ${priceCurrency}/${priceUnit}` : "Not set", "secondary"],
+    ];
+
+    // Phase 8 (v3.1) + Phase 6 (v3.2): Model factors section — shows the actual
+    // adjustments applied to F and E, for transparency and auditability.
+    const elevationInteractionApplied =
+      elevationBand !== "unknown" && estimate.regionFactor !== ORIGIN_REGIONS[originRegion].factor;
+    const modelFactorRows: Array<[string, string, "primary" | "secondary"]> = [
+      ["Cultivar", cultivar === "unknown" ? "None (default)" : cultivar, "primary"],
+      ["Region", ORIGIN_REGIONS[originRegion].label, "primary"],
+      ["Region factor applied", `×${estimate.regionFactor.toFixed(4)}`, "primary"],
+      ["Elevation × region interaction", elevationInteractionApplied ? "×0.95 applied" : "Not applied", "secondary"],
+      ["Elevation E correction (v3.2)", elevationBand === "high" ? "×0.98 applied (dense bean)" : "Not applied", "secondary"],
+      ["Elevation", elevationBand === "unknown" ? "Not set" : elevationBand, "secondary"],
+      ["Method β (physics class)", `×${estimate.methodBeta.toFixed(3)} (${BREW_METHODS[brewMethod].physics})`, "secondary"],
+      ["F constraint", "[0.008, 0.030]", "secondary"],
+      ["Calibration α", estimate.calibrationAlpha.toFixed(3), "secondary"],
     ];
 
     const rowsToHtml = (rows: Array<[string, string, "primary" | "secondary"]>) =>
@@ -1364,6 +1409,13 @@ export function CaffiLabCalculator() {
         </article>
       </div>
 
+      <div class="group soft" style="margin-top: 14px;">
+        <h3>Model factors (v3.1)</h3>
+        <div class="three-col" style="column-gap: 12px;">
+          ${rowsToHtml(modelFactorRows)}
+        </div>
+      </div>
+
       <div class="footer-brand">
         <div>Scientific caffeine estimation engine</div>
         ${horizontalFooterLogoDataUrl ? `<img src="${horizontalFooterLogoDataUrl}" alt="ShenoyLabs" />` : ""}
@@ -1590,7 +1642,7 @@ C(${crashEndHours.toFixed(1)}h) = ${remainingAfterCrash} mg</div>
     setExtractionYieldPercent("");
     setPressureBars("9");
     setAgitation("none");
-    setWaterMinerals("unknown");
+    setWaterHardnessPpm("");
     setWaterPh("");
     setFreshness("unknown");
     setFilterType("paper");
@@ -1599,6 +1651,7 @@ C(${crashEndHours.toFixed(1)}h) = ${remainingAfterCrash} mg</div>
     setElevationBand("unknown");
     setExtractionQuality("average");
     setCultivar("unknown");
+    setOriginRegion("unknown");
     setFocusTopic("result");
     setShowAdvanced(false);
     setShowExpert(false);
@@ -2030,6 +2083,24 @@ C(${crashEndHours.toFixed(1)}h) = ${remainingAfterCrash} mg</div>
                 </Field>
 
                 <Field
+                  label="Processing method"
+                  topic="bean_detail"
+                  onFocus={setFocusTopic}
+                  hint="Washed beans extract slightly more; natural less."
+                >
+                  <select
+                    value={processingMethod}
+                    onChange={(event) => setProcessingMethod(event.target.value as ProcessingMethod)}
+                    className={inputClass}
+                  >
+                    <option value="unknown">Not sure</option>
+                    <option value="washed">Washed / wet-processed</option>
+                    <option value="honey">Honey / semi-washed</option>
+                    <option value="natural">Natural / dry-processed</option>
+                  </select>
+                </Field>
+
+                <Field
                   label="Coffee"
                   topic="coffee"
                   onFocus={setFocusTopic}
@@ -2325,6 +2396,23 @@ C(${crashEndHours.toFixed(1)}h) = ${remainingAfterCrash} mg</div>
                 </Field>
 
                 <Field
+                  label="Grinder type"
+                  topic="grind"
+                  onFocus={setFocusTopic}
+                  hint="Blade grinders produce uneven particles, reducing recovery."
+                >
+                  <select
+                    value={grinderType}
+                    onChange={(event) => setGrinderType(event.target.value as GrinderType)}
+                    className={inputClass}
+                  >
+                    <option value="unknown">Not sure</option>
+                    <option value="burr">Burr grinder</option>
+                    <option value="blade">Blade grinder</option>
+                  </select>
+                </Field>
+
+                <Field
                   label="Roast level"
                   topic="roast"
                   onFocus={setFocusTopic}
@@ -2338,6 +2426,7 @@ C(${crashEndHours.toFixed(1)}h) = ${remainingAfterCrash} mg</div>
                     <option value="light">Light</option>
                     <option value="medium">Medium</option>
                     <option value="dark">Dark</option>
+                    <option value="very_dark">Very Dark (French / Italian)</option>
                   </select>
                 </Field>
 
@@ -2427,23 +2516,21 @@ C(${crashEndHours.toFixed(1)}h) = ${remainingAfterCrash} mg</div>
                 ) : null}
 
                 <Field
-                  label="Water minerals"
+                  label="Water hardness"
                   topic="water_chemistry"
                   onFocus={setFocusTopic}
-                  hint="Balanced approximates specialty brewing water."
+                  hint="Optional. Balanced is 50–150 ppm. Hard water >250 ppm."
                 >
-                  <select
-                    value={waterMinerals}
-                    onChange={(event) =>
-                      setWaterMinerals(event.target.value as WaterMinerals)
-                    }
+                  <input
+                    value={waterHardnessPpm}
+                    onChange={(event) => setWaterHardnessPpm(event.target.value)}
+                    inputMode="decimal"
+                    max="1000"
+                    min="0"
+                    placeholder="ppm (e.g. 120)"
+                    type="number"
                     className={inputClass}
-                  >
-                    <option value="unknown">Not sure</option>
-                    <option value="soft">Soft / low mineral</option>
-                    <option value="balanced">Balanced</option>
-                    <option value="hard">Hard / high alkalinity</option>
-                  </select>
+                  />
                 </Field>
 
                 <Field
@@ -2637,6 +2724,25 @@ C(${crashEndHours.toFixed(1)}h) = ${remainingAfterCrash} mg</div>
                       </select>
                     </Field>
                   ) : null}
+
+                  <Field
+                    label="Origin / Region"
+                    topic="origin_region"
+                    onFocus={setFocusTopic}
+                    hint="Select the broad growing region to apply a regional caffeine factor (v3.0 model)."
+                  >
+                    <select
+                      value={originRegion}
+                      onChange={(event) => setOriginRegion(event.target.value as OriginRegion)}
+                      className={inputClass}
+                    >
+                      {originRegionValues.map((r) => (
+                        <option key={r} value={r}>
+                          {ORIGIN_REGIONS[r].label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
                 </div>
               )}
             </div>

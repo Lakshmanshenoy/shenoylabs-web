@@ -3,7 +3,7 @@ title: "How to Use the CaffiLab Caffeine Calculator"
 excerpt: "A step-by-step guide to estimating caffeine in your coffee using CaffiLab — from basic inputs to advanced extraction tuning."
 date: "2025-07-14"
 createdDate: "2026-04-18"
-lastUpdated: "2026-04-30"
+lastUpdated: "2026-05-01"
 category: "tools"
 primaryCategory: "tools"
 tags: ["caffilab", "caffeine", "coffee", "calculator", "guide"]
@@ -55,7 +55,14 @@ Use the optional **Bean detail** control if you know more about the bean than ju
 - **Low-altitude** biases toward the higher-caffeine side.
 - **Custom caffeine %** lets you enter a measured or published dry-weight caffeine percentage.
 
-This does not add fake precision. It simply tells CaffiLab which bean range is most appropriate.
+You can also select the **Processing method** for the beans:
+
+- **Washed** — clean cellular structure, slight extraction advantage (+0.010 for hot methods).
+- **Honey** — partial mucilage, neutral effect.
+- **Natural** — dried fruit pulp residue creates a mild diffusion barrier (−0.012 for hot methods).
+- **Unknown** (default) — no adjustment.
+
+For cold brew, the processing method effect is damped by 70 % because low temperature already suppresses the mucilage-barrier mechanism.
 
 ### 4. Coffee dose
 
@@ -97,12 +104,14 @@ You will also see the uncertainty sources broken out:
 Click **Advanced inputs** to reveal additional parameters:
 
 - **Grind size:** Finer grinds expose more surface area, increasing extraction.
-- **Roast level:** Light roasts can yield slightly more caffeine in comparable brews than very dark roasts.
+- **Grinder type (v3.5):** Blade grinders produce an uneven bimodal particle distribution — coarse boulders and fine powder — that lowers overall caffeine recovery compared with a uniform burr grind. Select **Burr** for a burr grinder (zero penalty), **Blade** for a blade grinder (−0.025 recovery hit), or **Unknown** for a small default penalty (−0.008). For cold methods this effect is damped by 70 %.
+- **Roast level:** From v3.4, CaffiLab uses a non-linear roast mass-balance curve: light (×0.99), medium (×0.97), dark (×0.92), and very dark — French or Italian roast — (×0.88). Heavy roasting degrades significantly more caffeine than the model previously assumed. Select **Very Dark** for heavily charred or French / Italian roasts.
 - **Temperature:** Higher temperatures increase extraction rate significantly. For cold brew, entering your actual brew temperature (fridge vs room temp) changes the model's time constant.
 - **Bean detail / custom caffeine %:** Refines the bean caffeine range if you know more than the species label.
 - **Extraction yield:** If you measure TDS (total dissolved solids), entering yield is one of the strongest ways to calibrate the estimate.
 - **Pressure:** Only for espresso — 9 bar is the reference point.
-- **Water minerals and pH:** Balanced mineral water is closest to specialty brewing standards.
+- **Water hardness (ppm):** Enter the hardness of your brewing water in parts per million (ppm CaCO₃). Balanced water (50–150 ppm) is closest to specialty brewing standards and earns a small +0.005 extraction bonus. Very soft water (&lt;50 ppm) and very hard water (&gt;250 ppm) each apply a small −0.005 penalty. Leave blank for no adjustment.
+- **Water pH:** Enter your water pH if known. Near-neutral water (6.0–7.5) earns a +0.002 bonus. Acidic (&lt;6.0) or alkaline (&gt;7.5) water applies a small penalty. Leave blank for no adjustment.
 - **Bean freshness:** Very fresh beans can resist even extraction; stale beans extract less predictably.
 - **Filter type:** Paper filters produce a slightly cleaner brew; metal filters retain more material.
 - **Chicory:** For Indian filter coffee — chicory adds body but no caffeine.
@@ -124,8 +133,32 @@ Click **Expert inputs** for three additional bean-quality parameters that furthe
   - **Caturra** (~1.0–1.3 %) — Bourbon-derived, mid-range arabica.
   - **Catimor** (~1.5–2.0 %) — Robusta hybrid, sits notably higher.
   - **Unknown** is the default if you are not sure which variety you have.
+- **Origin / Region:** Select the broad growing region where the beans were produced. CaffiLab applies a regional multiplier to the caffeine fraction based on known terroir and varietal patterns:
+  - **India / Southeast Asia** applies a +7.5 % factor on the midpoint estimate (range: ×1.05–1.10). Coffees from India, Vietnam, and Indonesia tend toward higher-caffeine varieties and growing conditions.
+  - **Africa** and **Latin America** are the reference baseline (factor: 1.00). Ethiopian, Kenyan, Colombian, and Brazilian lots are well-represented in the calibration data.
+  - **Not sure (default)** leaves the factor at 1.00. Use this if you do not know the origin.
+  - Providing any known region also tightens the confidence interval slightly by reducing the base brewing uncertainty by 1 percentage point.
+  - **Elevation × region interaction (v3.1):** If you also set **Growing Elevation**, the region factor is multiplied by ×0.95 automatically. This prevents double-counting: elevation already partially captures the terroir signal that the region factor represents. The applied factor is shown in the *Model factors* section of the printed report.
+- **Growing Elevation:** High-altitude beans develop more slowly and may accumulate slightly different caffeine concentrations. When this is set alongside Origin / Region, the ×0.95 interaction correction described above is applied. Additionally, from v3.2, selecting **High** elevation applies a small extraction recovery correction (×0.98): denser bean cell walls common at high altitude slightly impede solvent penetration during brewing. This is independent of the caffeine fraction adjustment — it acts on the extraction efficiency, not the bean content.
 
 These Expert inputs do not change the brewing recovery model — they refine the starting caffeine fraction in the bean before any extraction calculation.
+
+## Confidence bounds and what they mean
+
+CaffiLab reports a **range** (e.g., 151–214 mg) alongside the central estimate. These bounds are computed from two independent uncertainty sources combined in quadrature — see [how the formula works](/articles/how-does-caffilab-formula-work) for the full derivation.
+
+From v3.1, the bounds are **asymmetric**: the upper bound is 2 percentage points wider than the lower. Under-extraction is more constrained in practice than over-extraction (especially for espresso and pressure methods), so the upside risk is deliberately wider.
+
+## Calibration status
+
+CaffiLab's output passes through two calibration layers before display:
+
+- **Global α** — a single scaling factor applied to the final estimate. Currently 1.0 (no adjustment). Computed using `median(measured / predicted)` across all samples — the median is used rather than the mean so that a single miscalibrated measurement cannot distort the factor.
+- **Per-method β** — a separate factor for each extraction physics class. The `cold_immersion` class (cold brew) now has **β = 1.10**, anchored from 10 direct-HPLC samples (Fuller &amp; Rao 2017; Stanek et al. 2021). All other classes remain at 1.0 pending sufficient data. Requires at least 5 samples per class before it is applied; clamped to [0.9, 1.1] to prevent overfitting.
+
+Both values are shown in the *Model factors* section of the printed PDF report. A value of 1.000 means the architecture is in place but the model has not yet been empirically anchored for that class.
+
+**Dataset schema.** Each calibration sample records method, dose, volume, grind, brew time, temperature, roast, bean type, the model's prediction, and the measured caffeine value. The first available calibration pool is the Cotter / Ristenpart UC Davis drip-coffee dataset (3186 samples; doi:10.25338/B8993H), which covers the percolation physics class at three temperatures (87 / 90 / 93 °C) and three extraction levels.
 
 ## Tips for accurate estimates
 
@@ -234,5 +267,7 @@ The PDF pages include the horizontal ShenoyLabs logo in the footer for clean bra
 ## A note on accuracy
 
 CaffiLab is an estimation tool, not a laboratory instrument. Actual caffeine content varies with cultivar, altitude, growing conditions, roast batch, water chemistry, and brewing geometry. The model is calibrated against published extraction research and aims to give you a useful, directionally accurate number — not a precise chemical measurement.
+
+Known limitations: grind particle distribution beyond a blade/burr distinction is not modelled; processing residual sugar and pectin levels vary within a single processing style and are not captured; and brewing altitude is not corrected for (if you brew above 2000 m, your actual water temperature may be lower than what you enter, since boiling point decreases with altitude).
 
 For most practical purposes — understanding whether you're having 100 mg or 300 mg, comparing brew methods, or tracking daily intake — CaffiLab gives you a much better answer than generic tables.
