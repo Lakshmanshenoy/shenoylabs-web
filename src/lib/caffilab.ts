@@ -103,6 +103,26 @@ export function getRegionFactor(region: OriginRegion | undefined): number {
  */
 export const CALIBRATION_ALPHA = 1.0;
 
+/**
+ * Per-physics-class extraction recovery calibration factors (Phase 3 advanced, v3.2).
+ *
+ * After collecting per-method measurement data, compute:
+ *   β_method = mean(measured_mg / predicted_mg)  grouped by physics class
+ *
+ * then update the relevant entry below.  Applied as:
+ *   E_adjusted = E × β_method
+ *
+ * All entries start at 1.0 (neutral). Constraint: keep each β within ±10 %.
+ */
+export const PER_METHOD_BETA: Record<BrewPhysics, number> = {
+  pressure:         1.0,
+  percolation:      1.0,
+  immersion:        1.0,
+  cold_immersion:   1.0,
+  cold_percolation: 1.0,
+  hybrid:           1.0,
+};
+
 export type GrindSize =
   | "extra_fine"
   | "fine"
@@ -175,6 +195,8 @@ export type CaffiLabEstimate = {
   upperUncertaintyPercent: number;
   /** Applied calibration scaling factor (v3.1 Phase 3). 1.0 until calibration data is collected. */
   calibrationAlpha: number;
+  /** Per-physics-class extraction recovery beta (Phase 3 advanced). 1.0 until per-method data collected. */
+  methodBeta: number;
   /** Region factor actually applied (post elevation interaction if applicable). */
   regionFactor: number;
   beanUncertaintyPercent: number;
@@ -1605,6 +1627,11 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
   if (input.elevationBand === "high") {
     caffeineRecovery = clamp(caffeineRecovery * 0.98, 0.25, 0.97);
   }
+  // Phase 3 advanced (v3.2): Per-physics-class beta correction.
+  // Applied after all physical adjustments so it captures residual systematic bias
+  // for each extraction mechanism without interfering with the physics sub-models.
+  const methodBeta = PER_METHOD_BETA[method.physics];
+  caffeineRecovery = clamp(caffeineRecovery * methodBeta, 0.20, 0.97);
   if (process.env.NODE_ENV !== "production") {
     if (caffeineRecovery <= 0 || caffeineRecovery >= 1) {
       console.error(
@@ -1654,6 +1681,7 @@ export function estimateCaffeine(input: CaffiLabInput): CaffiLabEstimate {
     confidencePercent: roundedUncertainty,
     upperUncertaintyPercent: Number((roundedUncertainty + 2).toFixed(1)),
     calibrationAlpha: CALIBRATION_ALPHA,
+    methodBeta,
     regionFactor: Number(regionFactor.toFixed(4)),
     beanUncertaintyPercent: Number(beanUncertainty.toFixed(1)),
     brewingUncertaintyPercent: Number(brewingUncertainty.toFixed(1)),

@@ -140,6 +140,15 @@ CaffiLab reports a **range** (e.g., 151–214 mg) alongside the central estimate
 
 From v3.1, the bounds are **asymmetric**: the upper bound is 2 percentage points wider than the lower. Under-extraction is more constrained in practice than over-extraction (especially for espresso and pressure methods), so the upside risk is deliberately wider.
 
+## Calibration status
+
+CaffiLab's output passes through two calibration layers before display:
+
+- **Global α** — a single scaling factor applied to the final estimate. Currently 1.0 (no adjustment). Will be updated once 30–50 paired brew-and-measure samples are collected: `α = mean(measured / predicted)`.
+- **Per-method β** — a separate factor for each extraction physics class (pressure, percolation, immersion, cold brew, hybrid). Also 1.0 for all classes currently. Once enough per-class data is available, each physics family can be corrected independently without touching the underlying model.
+
+Both values are shown in the *Model factors* section of the printed PDF report. A value of 1.000 means the architecture is in place but the model has not yet been empirically anchored for that factor.
+
 ## Tips for accurate estimates
 
 1. **Weigh your coffee.** Scoops vary; a kitchen scale makes the dose precise.

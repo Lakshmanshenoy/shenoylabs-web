@@ -673,6 +673,33 @@ finalMg = predictedMg × α
 
 The current value is **α = 1.0** (identity — no adjustment). This constant will be updated once 30–50 measured samples are collected to anchor the model to empirical data. Until then it functions as a documented pass-through, ensuring the architecture is in place for future calibration without any model drift.
 
+### Per-method β correction (Phase 3 advanced — v3.2)
+
+Beyond the global α, CaffiLab also exposes a per-physics-class beta factor for finer-grained calibration:
+
+```text
+E_adjusted = E × β_method
+```
+
+Where `β_method` is independently computed for each physics class (pressure, percolation, immersion, cold immersion, cold percolation, hybrid) from measurements grouped by extraction mechanism. All betas are currently **1.0**. The architecture is in place so that once enough per-class data is available, each physics family can be corrected independently without touching the base model.
+
+**How to compute β_method:**
+
+1. Group your measurement dataset by extraction physics class.
+2. For each group: `β = mean(measured_mg / predicted_mg)`.
+3. Update the corresponding entry in `PER_METHOD_BETA` in `caffilab.ts`.
+4. Constraint: keep each β within ±10 % of 1.0 to avoid overfitting.
+
+### Calibration validation targets
+
+The model is considered production-calibrated when:
+
+| Stage | Target deviation |
+|-------|----------------|
+| Pre-calibration (current) | < ±15 % across methods |
+| After global α | < ±10 % overall |
+| After per-method β | < ±7 % per physics class |
+
 ---
 
 ## Worked example: Arabica espresso with all defaults

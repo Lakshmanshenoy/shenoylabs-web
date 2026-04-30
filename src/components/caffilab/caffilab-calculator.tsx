@@ -22,6 +22,7 @@ import {
   CALIBRATION_ALPHA,
   GRIND_SIZES,
   ORIGIN_REGIONS,
+  PER_METHOD_BETA,
   defaultBrewWaterMl,
   defaultBrewTimeValue,
   defaultTemperatureValue,
@@ -1013,6 +1014,7 @@ export function CaffiLabCalculator() {
       ["Elevation × region interaction", elevationInteractionApplied ? "×0.95 applied" : "Not applied", "secondary"],
       ["Elevation E correction (v3.2)", elevationBand === "high" ? "×0.98 applied (dense bean)" : "Not applied", "secondary"],
       ["Elevation", elevationBand === "unknown" ? "Not set" : elevationBand, "secondary"],
+      ["Method β (physics class)", `×${estimate.methodBeta.toFixed(3)} (${BREW_METHODS[brewMethod].physics})`, "secondary"],
       ["F constraint", "[0.008, 0.030]", "secondary"],
       ["Calibration α", estimate.calibrationAlpha.toFixed(3), "secondary"],
     ];
