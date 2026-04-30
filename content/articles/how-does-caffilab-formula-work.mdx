@@ -687,7 +687,14 @@ Beyond the global α, CaffiLab exposes a per-physics-class beta factor for finer
 E_adjusted = E × β_class
 ```
 
-Where `β_class` is independently computed for each physics class (pressure, percolation, immersion, cold immersion, cold percolation, hybrid) from measurements grouped by extraction mechanism. All betas are currently **1.0**.
+Where `β_class` is independently computed for each physics class (pressure, percolation, immersion, cold immersion, cold percolation, hybrid) from measurements grouped by extraction mechanism.
+
+Current β values:
+
+| Physics class | β | Samples | Sources |
+|---|---|---|---|
+| `cold_immersion` | **1.10** | 10 | Fuller &amp; Rao (2017) Table 2 HPLC; Stanek et al. (2021) Table 1 CB HPLC |
+| All others | 1.0 | — | Not yet anchored (< 5 samples per class) |
 
 **How to compute β_class (v3.3 protocol):**
 

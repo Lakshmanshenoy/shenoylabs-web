@@ -145,9 +145,9 @@ From v3.1, the bounds are **asymmetric**: the upper bound is 2 percentage points
 CaffiLab's output passes through two calibration layers before display:
 
 - **Global α** — a single scaling factor applied to the final estimate. Currently 1.0 (no adjustment). Computed using `median(measured / predicted)` across all samples — the median is used rather than the mean so that a single miscalibrated measurement cannot distort the factor.
-- **Per-method β** — a separate factor for each extraction physics class (pressure, percolation, immersion, cold brew, hybrid). Also 1.0 for all classes currently. Requires at least 5 samples per class before it is applied; clamped to [0.9, 1.1] to prevent overfitting.
+- **Per-method β** — a separate factor for each extraction physics class. The `cold_immersion` class (cold brew) now has **β = 1.10**, anchored from 10 direct-HPLC samples (Fuller &amp; Rao 2017; Stanek et al. 2021). All other classes remain at 1.0 pending sufficient data. Requires at least 5 samples per class before it is applied; clamped to [0.9, 1.1] to prevent overfitting.
 
-Both values are shown in the *Model factors* section of the printed PDF report. A value of 1.000 means the architecture is in place but the model has not yet been empirically anchored for that factor.
+Both values are shown in the *Model factors* section of the printed PDF report. A value of 1.000 means the architecture is in place but the model has not yet been empirically anchored for that class.
 
 **Dataset schema.** Each calibration sample records method, dose, volume, grind, brew time, temperature, roast, bean type, the model's prediction, and the measured caffeine value. The first available calibration pool is the Cotter / Ristenpart UC Davis drip-coffee dataset (3186 samples; doi:10.25338/B8993H), which covers the percolation physics class at three temperatures (87 / 90 / 93 °C) and three extraction levels.
 
