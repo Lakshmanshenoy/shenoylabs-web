@@ -163,7 +163,7 @@ const packageClueValues: PackageClue[] = [
   "south_indian_filter",
   "commercial_instant",
 ];
-const roastLevelValues: RoastLevel[] = ["light", "medium", "dark"];
+const roastLevelValues: RoastLevel[] = ["light", "medium", "dark", "very_dark"];
 const agitationValues: AgitationLevel[] = ["none", "gentle", "moderate", "high"];
 const waterMineralsValues: WaterMinerals[] = ["unknown", "soft", "balanced", "hard"];
 const freshnessValues: Freshness[] = ["unknown", "fresh", "rested", "stale"];
@@ -2377,6 +2377,7 @@ C(${crashEndHours.toFixed(1)}h) = ${remainingAfterCrash} mg</div>
                     <option value="light">Light</option>
                     <option value="medium">Medium</option>
                     <option value="dark">Dark</option>
+                    <option value="very_dark">Very Dark (French / Italian)</option>
                   </select>
                 </Field>
 

@@ -3,7 +3,7 @@ title: "How Does the CaffiLab Formula Work?"
 excerpt: "A deep dive into the extraction science behind CaffiLab's caffeine estimation model — the math, the physics classes, the Arrhenius cold-brew model, and the research that backs it."
 date: "2025-07-14"
 createdDate: "2026-04-18"
-lastUpdated: "2026-04-30"
+lastUpdated: "2026-05-01"
 category: "research"
 primaryCategory: "research"
 tags: ["caffilab", "caffeine", "extraction", "coffee-science", "research"]
@@ -12,6 +12,41 @@ depthLevel: "advanced"
 coverImage: "/images/caffilab/drip-brewing.jpg"
 coverAlt: "Coffee dripping into a glass vessel on a counter"
 ---
+
+## Changelog
+
+| Version | Key changes |
+|---------|-------------|
+| v3.0    | Origin / Region factor (F_region) introduced. Replaces neutral default for all known origins. |
+| v3.1    | Phase 3: Global calibration scalar α introduced. Phase 5: Elevation × Region interaction term (×0.95 discount). Phase 7: Asymmetric confidence interval (+2 pp upper bound). |
+| v3.2    | Phase 1: Region factor and chicory dilution applied to full [F_min, F_max] range before deriving F_mid. Phase 6: Elevation extraction micro-refinement (E × 0.98 for high-altitude beans). Per-class β correction formalised. Bean variability uncertainty computed from effective range. |
+| v3.3    | Calibration dataset schema formalised. `computeCalibrationAlpha()` and `computePerClassBeta()` documented. Median (not mean) used for α and β computation. `β_cold_immersion = 1.10` anchored to Fuller & Rao (2017) and Stanek et al. (2021). |
+| v3.4    | Non-linear roast mass-balance curve (4-level lookup replacing scalar 0.98). Very Dark roast level added. Cold-immersion β rationale and stability monitor added. |
+
+## Understanding your output range
+
+CaffiLab always returns three values: a central estimate and a lower and upper bound.
+
+**Why the range is not symmetric**
+
+The upper bound is always 2 percentage points wider than the lower bound. This is intentional. Under-extraction has a natural floor — you cannot extract caffeine that was never solubilised. Over-extraction, particularly in pressure methods, can push recovery higher than the baseline model predicts through channelling effects, fine grind migration, and extended contact. Real-world measurements skew slightly high more often than they skew low.
+
+Example at 15 % combined uncertainty:
+
+```text
+Lower bound uses: 15 %  →  estimate × 0.85
+Upper bound uses: 17 %  →  estimate × 1.17
+```
+
+**Why the two uncertainty sources are combined in quadrature**
+
+Bean variability (the caffeine range of your beans) and brewing uncertainty (how precisely your brew is modelled) are independent. Combining them by addition would overstate total uncertainty; combining them by maximum would understate it. Quadrature is the statistically correct combination for independent sources:
+
+```text
+total_uncertainty = sqrt(bean_uncertainty² + brewing_uncertainty²)
+```
+
+This means declaring more brewing inputs narrows the range, but it cannot eliminate the bean variability floor — that only narrows when species or bean detail is specified.
 
 ## The core model
 
@@ -205,6 +240,10 @@ In every class, three secondary variables — water mineralogy, pH, and bean fre
 ```text
 ΔMinor = clamp(ΔWater + ΔFreshness, −0.02, +0.02)
 ```
+
+The ±0.02 bound is empirically derived from the literature on secondary extraction variables. Individually, each factor has a measured maximum effect of 0.5–1.5% on caffeine recovery (Hendon et al., 2014 for water mineralogy; Ludwig et al., 2014 for bean freshness). Combined, these secondary factors rarely exceed 2% total recovery change in controlled experiments. The clamp prevents implausible compounding when all sub-adjustments push in the same direction simultaneously — a scenario unlikely in practice but expressible in the input space.
+
+This bound is deliberately conservative. If future calibration data shows secondary factors consistently reaching the 2% ceiling, the bound should be reviewed and the variables should be elevated to independent terms.
 
 Filter type contributes an independent small bounded adjustment (~±0.01):
 
@@ -773,12 +812,12 @@ For Arabica + Specialty grade, the base range is:
 - `F_min,base = 0.012`
 - `F_max,base = 0.016`
 
-Bean detail is Generic (no narrowing window). Medium roast mass-balance factor is `0.98`, so:
+Bean detail is Generic (no narrowing window). Medium roast mass-balance factor is `0.97` (v3.4 non-linear lookup — revised from 0.98), so:
 
 ```text
-F_min = 0.012 × 0.98 = 0.01176
-F_max = 0.016 × 0.98 = 0.01568
-F_mid = (0.01176 + 0.01568) / 2 = 0.01372
+F_min = 0.012 × 0.97 = 0.01164
+F_max = 0.016 × 0.97 = 0.01552
+F_mid = (0.01164 + 0.01552) / 2 = 0.01358
 ```
 
 ### Step 2: Recovery E for espresso (pressure class)
@@ -806,15 +845,15 @@ E = 0.67 × (1 + 0.006) = 0.67 × 1.006 ≈ 0.674
 
 ```text
 Estimate_mg = G × F_mid × E × 1000
-            = 20 × 0.01372 × 0.674 × 1000
-            ≈ 185 mg
+            = 20 × 0.01358 × 0.674 × 1000
+            ≈ 183 mg
 ```
 
 ### Step 4: Bean-driven lower and upper bounds
 
 ```text
-Lower = 20 × 0.01176 × 0.674 × 1000 ≈ 159 mg
-Upper = 20 × 0.01568 × 0.674 × 1000 ≈ 211 mg
+Lower = 20 × 0.01164 × 0.674 × 1000 ≈ 157 mg
+Upper = 20 × 0.01552 × 0.674 × 1000 ≈ 209 mg
 ```
 
 ### Step 5: Uncertainty
@@ -822,14 +861,14 @@ Upper = 20 × 0.01568 × 0.674 × 1000 ≈ 211 mg
 Bean variability uncertainty:
 
 ```text
-((0.01568 - 0.01176) / (2 × 0.01372)) × 100 ≈ 14.3 %
+((0.01552 - 0.01164) / (2 × 0.01358)) × 100 ≈ 14.3 %
 ```
 
 Brewing uncertainty at these defaults falls to its floor (5 %).
 
 Combined uncertainty (quadrature): `sqrt(14.3² + 5.0²) ≈ sqrt(204 + 25) ≈ 15.1 %`.
 
-This confirms the 161–214 mg bean-driven range as the practical output range.
+This gives an output range of approximately 157–209 mg.
 
 ---
 
@@ -848,7 +887,7 @@ This confirms the 161–214 mg bean-driven range as the practical output range.
 
 ```text
 F_min = 0.010, F_max = 0.016, F_mid = 0.013
-(medium roast mass-balance: 0.98 applied to both ends)
+(medium roast mass-balance: 0.97 applied to both ends — v3.4 non-linear lookup)
 ```
 
 ### Step 2: Arrhenius temperature scaling
@@ -888,13 +927,89 @@ This demonstrates why cold brew concentrate is not the same as "low caffeine" �
 
 ---
 
+## Worked example: AeroPress (standard recipe)
+
+### Inputs
+
+| Parameter     | Value                           |
+|---------------|---------------------------------|
+| Brew method   | AeroPress                       |
+| Coffee dose   | 15 g                            |
+| Brew water    | 200 ml                          |
+| Bean type     | Arabica, Medium roast           |
+| Grind size    | Medium-fine                     |
+| Brew time     | 1.5 min (90 s steep)            |
+| Temperature   | 88 °C                           |
+| Pressure      | Hand press (~0.5–1 bar)         |
+| Processing    | Unknown                         |
+
+### Step 1: Bean caffeine fraction
+
+Arabica, medium roast. Roast mass-balance factor = 0.97 (v3.4 non-linear lookup; light = 0.99, medium = 0.97, dark = 0.92, very dark = 0.88).
+
+```text
+F_min = 0.010 × 0.97 = 0.0097
+F_max = 0.016 × 0.97 = 0.01552
+F_mid = (0.0097 + 0.01552) / 2 = 0.01261
+```
+
+### Step 2: AeroPress extraction recovery (hybrid physics class)
+
+Default recovery E₀ = 0.76. AeroPress is detected as a short-immersion method (timeSensitivity = "high", defaultTimeMinutes = 2), so it uses an exponential saturation curve with τ = 2.5 min:
+
+```text
+eqTime    = 2.0 min  (AeroPress default)
+normalized = (1 − exp(−1.5 / 2.5)) / (1 − exp(−2.0 / 2.5))
+           = (1 − 0.549) / (1 − 0.449)
+           = 0.451 / 0.551 ≈ 0.819
+
+ΔTime = clamp((0.819 − 1) × 0.08, −0.12, +0.05)
+      = clamp(−0.0145, −0.12, +0.05)
+      = −0.015
+```
+
+At 1.5 min the brew is slightly under the 2.0 min reference time, so ΔTime is a small negative penalty. All other inputs at default → remaining deltas ≈ 0.
+
+```text
+totalDelta = −0.015
+E = clamp(0.76 × (1 + (−0.015)), 0.48, 0.88)
+  = clamp(0.76 × 0.985, 0.48, 0.88)
+  = clamp(0.749, 0.48, 0.88)
+  = 0.749
+```
+
+### Step 3: Caffeine estimate
+
+```text
+Estimate_mg = 15 × 0.01261 × 0.749 × 1000 ≈ 142 mg
+```
+
+### Step 4: Bean-driven bounds
+
+```text
+Lower = 15 × 0.0097  × 0.749 × 1000 ≈ 109 mg
+Upper = 15 × 0.01552 × 0.749 × 1000 ≈ 174 mg
+```
+
+### Step 5: Uncertainty
+
+```text
+Bean variability:  ((0.01552 − 0.0097) / (2 × 0.01261)) × 100 ≈ 23.1 %
+Brewing uncertainty: 36 % base + 5 % hybrid penalty − credits ≈ 28 %
+Combined (quadrature): sqrt(23.1² + 28²) ≈ 36.3 %
+```
+
+The hybrid +5 % penalty reflects AeroPress's high recipe variability — inverted vs. standard technique, hand-pressure variation, and plunge speed all affect extraction in ways the model cannot fully capture. Declaring brew time, temperature, and grind size would reduce brewing uncertainty meaningfully.
+
+---
+
 ## Limitations
 
 1. **Remaining variation:** Even with cultivar, grade, and elevation specified, individual lots still vary with processing method, harvest season, and storage. The practical range output reflects this residual uncertainty.
 
 2. **Brew geometry:** The shape and flow dynamics of a pour-over dripper or espresso basket affect extraction in ways the model doesn't capture.
 
-3. **Roasting loss:** Roasting converts a small fraction of caffeine to methyluric acids. This is accounted for qualitatively via the roast adjustment and mass-balance factor but not with precise reaction kinetics.
+3. **Roasting loss:** Roasting converts a fraction of caffeine to methyluric acids. From v3.4 this is modelled with a non-linear 4-level lookup (light 0.99 → very dark 0.88) based on Hečimović et al. (2011), but precise reaction kinetics (temperature profile, drum speed, roast time) are not captured.
 
 4. **No lab validation:** CaffiLab's estimates are calibrated against published research, not against HPLC measurements of its own output.
 

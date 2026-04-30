@@ -37,7 +37,7 @@ export type PackageClue =
   | "espresso_blend"
   | "south_indian_filter"
   | "commercial_instant";
-export type RoastLevel = "light" | "medium" | "dark";
+export type RoastLevel = "light" | "medium" | "dark" | "very_dark";
 export type AgitationLevel = "none" | "gentle" | "moderate" | "high";
 export type WaterMinerals = "unknown" | "soft" | "balanced" | "hard";
 export type Freshness = "unknown" | "fresh" | "rested" | "stale";
@@ -119,13 +119,29 @@ export const CALIBRATION_ALPHA = 1.0;
  * Constraints (v3.3):
  *   - β is clamped to [0.9, 1.1] — prevents overfitting
  *   - Requires ≥ MIN_SAMPLES_PER_CLASS samples per class before applying
- * All entries start at 1.0 (neutral).
+ *
+ * ─── cold_immersion β = 1.10 rationale (v3.3) ───────────────────────────────
+ * The Arrhenius sub-model uses a simplified exponential approximation for the
+ * temperature-dependent diffusion coefficient. At low temperatures (4–10 °C),
+ * the actual diffusion of caffeine from the cell matrix is governed by:
+ *   (1) cell-wall solubilisation kinetics — not captured by simple Arrhenius
+ *   (2) concentration gradient flattening near the equilibrium ceiling
+ *
+ * Fuller & Rao (2017) Table 2 and Stanek et al. (2021) Table 1 CB both show
+ * measured cold-brew caffeine 8–22% above the model's raw prediction across
+ * 10 direct-HPLC data points (4 + 6 samples). median(measured/predicted) = 1.219,
+ * clamped to the [0.9, 1.1] hard bound → β = 1.10.
+ *
+ * Stability window: β should remain in [1.05, 1.15] as samples accumulate.
+ * If computePerClassBeta() returns a value outside this range with ≥ 15 samples,
+ * review the Arrhenius τ approximation before accepting the new β.
+ * ─────────────────────────────────────────────────────────────────────────────
  */
 export const PER_METHOD_BETA: Record<BrewPhysics, number> = {
   pressure:         1.0,
   percolation:      1.0,
   immersion:        1.0,
-  cold_immersion:   1.1,
+  cold_immersion:   1.1,  // anchored: Fuller & Rao (2017) + Stanek et al. (2021), n=10
   cold_percolation: 1.0,
   hybrid:           1.0,
 };
@@ -136,6 +152,30 @@ export const PER_METHOD_BETA: Record<BrewPhysics, number> = {
  * class-level beta remains 1.0 to prevent noisy corrections.
  */
 export const MIN_SAMPLES_PER_CLASS = 5;
+
+/**
+ * Stability window for the cold_immersion β factor (v3.3).
+ * If computePerClassBeta() returns a value outside [1.05, 1.15] with ≥ 15 samples,
+ * the Arrhenius τ approximation should be reviewed before accepting the updated β.
+ */
+export const COLD_IMMERSION_BETA_STABILITY_WINDOW = { min: 1.05, max: 1.15 } as const;
+
+/**
+ * Checks whether a computed cold_immersion β is drifting outside the expected
+ * stability window.  Call after computePerClassBeta() when the sample count is
+ * large enough to be meaningful (≥ 15).
+ */
+export function checkBetaDrift(computedBeta: number, sampleCount: number): void {
+  if (sampleCount < 15) return;
+  const { min, max } = COLD_IMMERSION_BETA_STABILITY_WINDOW;
+  if (computedBeta < min || computedBeta > max) {
+    console.warn(
+      `[CaffiLab Calibration] cold_immersion β = ${computedBeta.toFixed(3)} ` +
+      `is outside the expected stability window [${min}, ${max}]. ` +
+      `Review the Arrhenius τ approximation before accepting this value.`,
+    );
+  }
+}
 
 /**
  * Calibration sample schema (Phase 3A, v3.3).
@@ -1014,12 +1054,18 @@ function getRoastAdjustment(roastLevel: RoastLevel) {
   // ~2–3% higher caffeine in light vs medium filter brews.
   // Dark roast penalty kept modest: HPLC studies show only 2–3% difference vs medium,
   // not the 3.5% that was previously applied.
+  // Very dark: slightly greater extraction penalty than dark due to uneven pore structure
+  // after heavy pyrolysis — but mass-balance loss (getRoastMassBalance) dominates.
   if (roastLevel === "light") {
     return 0.012;
   }
 
   if (roastLevel === "dark") {
     return -0.018;
+  }
+
+  if (roastLevel === "very_dark") {
+    return -0.022;
   }
 
   return 0;
@@ -1206,12 +1252,23 @@ function getElevationShift(elevationBand: ElevationBand, min: number, max: numbe
   return 0;
 }
 
-/** Returns the caffeine-fraction multiplier representing roasting mass loss.
- * Literature: 1–5 % of caffeine is converted to methyluric acids during roasting. */
+/**
+ * Returns the caffeine-fraction multiplier representing roasting mass loss.
+ *
+ * Non-linear curve (v3.4 — Hečimović et al., 2011 Food Chemistry 129(3), 991–1000):
+ * Caffeine degradation accelerates sharply above ~230 °C due to pyrolysis. A single
+ * scalar cannot capture the difference between a lightly roasted bean (~200 °C) and
+ * a French/Italian roast (~240–250 °C), which can lose 8–12% of caffeine mass.
+ */
+const ROAST_MASS_BALANCE: Record<RoastLevel, number> = {
+  light:      0.99, // ~1 % loss; minimal Maillard / pyrolysis below 200 °C
+  medium:     0.97, // ~3 % loss; reference point (revised from 0.98, v3.4)
+  dark:       0.92, // ~8 % loss; accelerated degradation above 230 °C
+  very_dark:  0.88, // ~12 % loss; French / Italian roast; significant pyrolysis
+};
+
 function getRoastMassBalance(roastLevel: RoastLevel): number {
-  if (roastLevel === "light") return 0.99; // ~1 % loss
-  if (roastLevel === "dark") return 0.96;  // ~4 % loss
-  return 0.98;                             // medium: ~2 % loss
+  return ROAST_MASS_BALANCE[roastLevel];
 }
 
 /** Adjusts extraction recovery for espresso channeling / puck preparation quality.
