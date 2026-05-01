@@ -395,6 +395,30 @@ Blade grinders produce a bimodal particle distribution (coarse boulders + fine p
 
 "Not set" (field left blank) produces zero adjustment for backward compatibility with saved configurations. "Unknown" (user explicitly selects "I don't know") applies a small penalty acknowledging uncharacterised grind distribution. Cold methods apply a ×0.3 damp because extended cold steeping times allow equilibration to partially compensate for particle-size unevenness.
 
+### Agitation adjustment
+
+Agitation describes how actively the brewer stirs or disturbs the slurry during extraction. It only applies to methods where the brewer has physical control over mixing: pour over, Chemex, French press, cold brew, AeroPress, siphon, Turkish, and generic immersion. Methods with automated or enclosed flow (espresso, Moka pot, drip machine, cold drip, Indian filter, percolator) do not support this input and produce ΔAgitation = 0 regardless of the field value.
+
+<table>
+  <thead>
+    <tr>
+      <th>Agitation level</th>
+      <th>ΔAgitation</th>
+      <th>Rationale</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>None</td><td>0.000</td><td>No deliberate mixing; conservative baseline</td></tr>
+    <tr><td>Gentle</td><td>+0.008</td><td>Light bloom stir or single swirl; promotes even wetting</td></tr>
+    <tr><td>Moderate</td><td>+0.018</td><td>Active stirring or staged pours; consistent extraction across the bed</td></tr>
+    <tr><td>High</td><td>+0.026</td><td>Vigorous turbulence (e.g., AeroPress inversion stir, extended swirl); maximises surface contact</td></tr>
+  </tbody>
+</table>
+
+For cold brew (cold immersion), ΔAgitation is scaled by ×0.5 rather than the ×0.3 applied to other cold-method adjustments (processing, grinder type). This reflects the fact that turbulence still meaningfully assists diffusion at low temperatures — just with reduced thermal driving force. Cold drip does not support agitation because the drip mechanism controls flow independently of the brewer.
+
+Declaring any non-None agitation level on a supported method reduces brewing uncertainty by 2 percentage points.
+
 ### v3.6 — Hardening and monitoring
 
 v3.6 focuses on safety and stability rather than changing any core formula. The release adds lightweight guards and monitoring so extreme or stacked secondary inputs cannot produce implausible outputs without a human-in-the-loop review.

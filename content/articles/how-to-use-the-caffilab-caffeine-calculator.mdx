@@ -44,7 +44,15 @@ Select your brewing method. This sets sensible defaults for grind size, brew tim
 
 Choose between Arabica, Robusta, Blend, or "Not sure." Robusta usually carries a meaningfully higher caffeine range than Arabica, so this choice has a large impact on the estimate.
 
-If you select "Not sure," CaffiLab will use package clues and price to infer a likely blend profile.
+If you select "Not sure," you can also provide a **Package clue** — what the bag or label says about the coffee — to help CaffiLab infer a likely arabica/robusta blend profile:
+
+- **Specialty single origin** — infers ~90 % Arabica, 10 % Robusta.
+- **Espresso blend** — infers 75 % Arabica, 25 % Robusta.
+- **South Indian filter blend** — infers 50 % Arabica, 50 % Robusta.
+- **Commercial / instant** — infers ~25 % Arabica, 75 % Robusta.
+- **None** (default) — no label clue; CaffiLab falls back to price-based inference if price is provided, otherwise uses the default 70/30 blend.
+
+Providing a package clue reduces brewing uncertainty by 5 percentage points — the single largest uncertainty reduction available for an unknown-species estimate.
 
 ### 3. Bean detail
 
@@ -105,6 +113,7 @@ Click **Advanced inputs** to reveal additional parameters:
 
 - **Grind size:** Finer grinds expose more surface area, increasing extraction.
 - **Grinder type (v3.5, updated v3.6):** Blade grinders produce an uneven bimodal particle distribution — coarse boulders and fine powder. The penalty now varies by brewing method: **−0.025** for percolation/pressure methods (boulders create flow channels), **−0.018** for hybrid methods (AeroPress, Moka), and **−0.010** for immersion methods (fines partially compensate for boulders). For cold methods this effect is damped by 70 %. Select **Burr** for zero penalty or **Unknown** for a conservative −0.008.
+- **Agitation / stirring:** For methods that support it (pour over, Chemex, French press, cold brew, AeroPress, siphon, Turkish, immersion), declare how vigorously you stir or agitate during brewing. **None** is the conservative default baseline. **Gentle** (+0.008) helps even wetting. **Moderate** (+0.018) promotes consistent extraction across the bed. **High** (+0.026) maximises surface contact. Declaring any non-None level reduces brewing uncertainty by 2 percentage points. Not applicable to espresso, Moka pot, drip machine, Indian filter, cold drip, or percolator — these methods are automated or enclosed and do not expose an agitation input.
 - **Roast level:** From v3.4, CaffiLab uses a non-linear roast mass-balance curve: light (×0.99), medium (×0.97), dark (×0.92), and very dark — French or Italian roast — (×0.88). Heavy roasting degrades significantly more caffeine than the model previously assumed. Select **Very Dark** for heavily charred or French / Italian roasts.
 - **Temperature:** Higher temperatures increase extraction rate significantly. For cold brew, entering your actual brew temperature (fridge vs room temp) changes the model's time constant.
 - **Bean detail / custom caffeine %:** Refines the bean caffeine range if you know more than the species label.
@@ -112,8 +121,18 @@ Click **Advanced inputs** to reveal additional parameters:
 - **Pressure:** Only for espresso — 9 bar is the reference point.
 - **Water hardness (ppm):** Enter the hardness of your brewing water in parts per million (ppm CaCO₃). Balanced water (50–150 ppm) is closest to specialty brewing standards and earns a small +0.005 extraction bonus. Very soft water (&lt;50 ppm) and very hard water (&gt;250 ppm) each apply a small −0.005 penalty. Leave blank for no adjustment.
 - **Water pH:** Enter your water pH if known. Near-neutral water (6.0–7.5) earns a +0.002 bonus. Acidic (&lt;6.0) or alkaline (&gt;7.5) water applies a small penalty. Leave blank for no adjustment. **Note (v3.6):** if both hardness > 250 ppm and pH > 7.5, an additional −0.007 high-buffer interaction penalty applies, capturing the synergistic carbonate resistance to extraction.
-- **Bean freshness:** Very fresh beans can resist even extraction; stale beans extract less predictably.
-- **Filter type:** Paper filters produce a slightly cleaner brew; metal filters retain more material.
+- **Bean freshness:** Four options shift the extraction recovery estimate:
+  - **Fresh** (roasted within ~2 weeks): −0.008 — CO₂ off-gassing from recently roasted beans can cause uneven wetting and channeling, counterintuitively reducing extraction efficiency.
+  - **Rested** (2–6 weeks off roast): no adjustment — the optimal window when CO₂ has dissipated but volatiles remain.
+  - **Stale** (6+ weeks): −0.010 — degraded aromatics reduce diffusion efficiency (caffeine content itself is thermally stable).
+  - **Unknown** (default): no adjustment.
+  Declaring any known freshness (other than Unknown) reduces brewing uncertainty by 3 percentage points.
+- **Filter type:** Four options affect extraction efficiency based on what the brew medium allows through:
+  - **Paper** (−0.004): filters out oils and fine particles, slightly lowering extraction recovery.
+  - **Metal** (+0.006): allows oils and more suspended solids, marginally boosting recovery.
+  - **Cloth** (no adjustment): neutral — used by default for siphon, cold brew, and cold drip.
+  - **None** (+0.006): no filtration medium — Turkish coffee brews directly in the cup; same effect as metal.
+  CaffiLab sets the default filter type automatically based on your brew method selection.
 - **Chicory:** For Indian filter coffee — chicory adds body but no caffeine.
 
 Each brewing input you declare can reduce brewing uncertainty. But if the bean itself still has a wide caffeine range, CaffiLab keeps that uncertainty visible instead of hiding it.
@@ -125,7 +144,12 @@ Each brewing input you declare can reduce brewing uncertainty. But if the bean i
 Click **Expert inputs** for three additional bean-quality parameters that further narrow the caffeine fraction range:
 
 - **Arabica grade:** Splits the arabica range into Specialty (1.2–1.6 % dry weight) and Commercial (1.0–1.2 %). Most specialty-roaster bags are Specialty grade.
-- **Growing elevation:** High-altitude farms (above ~1500 m) correlate with slightly elevated caffeine through UV exposure and pest pressure. Low-altitude farms sit toward the lower end.
+- **Growing elevation:** Four bands describe the farm altitude and shift the estimated caffeine fraction range:
+  - **Unknown** (default): no shift applied.
+  - **Low** (below ~800 m): shifts the fraction range downward by 15 % of its width — lower-altitude farms typically sit in the lower part of the species range.
+  - **Mid** (800–1500 m): reference band, no shift (same as Unknown in terms of fraction, but declaring it removes 2 pp of brewing uncertainty).
+  - **High** (above ~1500 m): shifts the fraction range upward by 15 % of its width. From v3.2, also applies a small extraction recovery correction (×0.98) when brew temperature is below 95 °C — denser cell walls at high altitude slightly impede solvent penetration.
+  When High elevation is set alongside **Origin / Region**, the ×0.95 interaction correction described in that section is applied automatically to avoid double-counting the terroir signal.
 - **Extraction quality (espresso only):** Accounts for channeling and puck preparation. A poorly tamped puck can meaningfully reduce caffeine extraction compared to a well-prepared shot.
 - **Cultivar:** Named arabica cultivar shifts the estimated bean caffeine fraction based on published measurements:
   - **Geisha** (~0.9–1.1 % dry weight) — distinctly lower than typical arabica.
