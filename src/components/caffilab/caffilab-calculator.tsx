@@ -1261,6 +1261,17 @@ export function CaffiLabCalculator() {
         size: auto;
         margin: 0;
       }
+      /* Inputs+Details page: tighter sizing so footer stays on the same page */
+      .inputs-page.page { padding: 8mm; }
+      .inputs-page h2 { font: 700 20px/1.15 var(--font); margin-bottom: 6px; }
+      .inputs-page h3 { font: 700 14px/1.2 var(--font); margin-bottom: 5px; }
+      .inputs-page .sub { font: 400 12px/1.4 var(--font); margin-bottom: 10px; }
+      .inputs-page .three-col { gap: 10px; }
+      .inputs-page .group { padding: 10px; }
+      .inputs-page .row { padding: 4px 0; }
+      .inputs-page .row span { font: 400 12px/1.4 var(--font); }
+      .inputs-page .row strong { font: 600 12px/1.4 var(--font); }
+      .inputs-page .footer-brand { margin-top: 12px; padding-top: 8px; }
     }
     .hero-top { margin-top: 8.55px; }
     .hero-pairs {
@@ -1390,7 +1401,7 @@ export function CaffiLabCalculator() {
       </div>
     </section>
 
-    <section class="page page-break">
+    <section class="page inputs-page page-break">
       <h2>Inputs + Details</h2>
       <p class="sub">All values below are from your exact selections in the calculator.</p>
 
