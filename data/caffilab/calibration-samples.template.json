@@ -1,0 +1,18 @@
+[
+  {
+    "id": "example-fuller-rao-medium-medium",
+    "source": "Fuller & Rao (2017) Table 2",
+    "physics": "cold_immersion",
+    "predictedMg": 383.9,
+    "measuredMg": 413,
+    "dataQuality": "direct_hplc"
+  },
+  {
+    "id": "example-cotter-2023-drip-row-1",
+    "source": "Dryad DOI:10.25338/B8993H",
+    "physics": "percolation",
+    "predictedMg": 142.2,
+    "measuredMg": 138.5,
+    "dataQuality": "tds_derived"
+  }
+]
