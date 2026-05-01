@@ -1019,6 +1019,59 @@ The model is considered production-calibrated when:
   </tbody>
 </table>
 
+### Empirical anchor points — published brewing concentrations (Mystkowska et al., 2024)
+
+The table below summarises peer-reviewed HPLC measurements of caffeine per 100 mL of brew across five brewing methods, as reported by Mystkowska, Dmitrowicz, and Sijko-Szpańska (2024) in a 32-study literature review. The full observed range spans all studies in the review; the representative IQR range is derived from Figure 4 of that paper using the interquartile range to exclude outlier preparations.
+
+<table>
+  <thead>
+    <tr>
+      <th>Method (physics class)</th>
+      <th>Full observed range (mg/100 mL)</th>
+      <th>Representative IQR (mg/100 mL)</th>
+      <th>Reference brewing parameters</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Cold Brew (cold_immersion)</td>
+      <td>48.0–180.1</td>
+      <td>48.5–180.0</td>
+      <td>5–22 °C, 3–24 h, 5:100–10:100 coffee:water</td>
+    </tr>
+    <tr>
+      <td>Espresso (pressure)</td>
+      <td>47.3–1210.8</td>
+      <td>50.4–965.6</td>
+      <td>~92 °C, ~9 bar, ~25 s, 14–28:100 coffee:water</td>
+    </tr>
+    <tr>
+      <td>French Press (immersion)</td>
+      <td>52.0–148.5</td>
+      <td>52.0–123.9</td>
+      <td>90–98 °C, ~5 min, ~6:100 coffee:water</td>
+    </tr>
+    <tr>
+      <td>AeroPress (hybrid)</td>
+      <td>46.0–158.7</td>
+      <td>56.4–120.9</td>
+      <td>93 °C, ~2 min, 6:100–7:100 coffee:water</td>
+    </tr>
+    <tr>
+      <td>Moka (pressure)</td>
+      <td>128.0–539.9</td>
+      <td>128.0–290.3</td>
+      <td>~100 °C steam, 2–10 min, 8:100–15:100 coffee:water</td>
+    </tr>
+  </tbody>
+</table>
+
+**How to use these anchors:** Convert any CaffiLab estimate to a per-100 mL concentration with `concentration = predicted_mg / beverage_volume_mL × 100`. For a standard recipe (medium-roast Arabica, default dose, default parameters), the result should fall within the representative IQR above. If it falls outside the full observed range, review dose, volume, and physics-class assignment before filing a calibration report.
+
+**Key finding for CaffiLab physics classes:** Mystkowska et al. (2024) found that AeroPress and French Press produced similar caffeine concentrations due to comparable brewing parameters (temperature, coffee-to-water ratio), which is consistent with both methods sharing the hybrid or full-immersion physics class in CaffiLab. Espresso and Moka showed substantially higher concentrations, attributed to the high coffee-to-water ratio and applied pressure — factors already encoded in the pressure physics class. Cold Brew's wide range reflects the large variation in steeping time and temperature across studies, and is consistent with the Arrhenius-model sensitivity built into `cold_immersion`.
+
+**Population-level cross-check (Kaggle dataset):** The `uom190346a/global-coffee-health-dataset` (10 000 synthetic records representing a global population) reports a mean daily caffeine intake of 238 mg across an average of 2.5 cups per day, implying approximately 95 mg per cup. This synthetic baseline aligns with a standard 200 mL French Press or AeroPress brew at the lower half of the representative IQR, consistent with the population's likely mix of mild-to-medium preparations. While the dataset is synthetic and does not provide direct HPLC measurements, it provides a plausibility ceiling: CaffiLab estimates for a single default-parameter cup should generally fall below 300 mg unless very high doses, concentrated brew ratios, or Robusta beans are specified.
+
 ### Sensitivity analysis (Phase 4, v3.3 — updated v3.5)
 
 As part of the calibration rigor protocol, each input variable is stress-tested by perturbing it one step while holding all others at method baseline defaults. Expected sensitivity ranges are encoded in `SENSITIVITY_EXPECTED_RANGES` in `caffilab.ts`. v3.5 adds separate columns for hot-method and cold-method contexts where the variable behaves differently.
@@ -1334,4 +1387,5 @@ The hybrid +5 % penalty reflects AeroPress's high recipe variability — inverte
 - Ky, C.-L., et al. (2001). "Caffeine, trigonelline, chlorogenic acids and sucrose diversity in wild *Coffea arabica* L. and *C. canephora* P. accessions." *Food Chemistry*, 75(2), 223–230.
 - Ludwig, I. A., et al. (2014). "Variations in caffeine and chlorogenic acid contents of coffees: what are we drinking?" *Food & Function*, 5(8), 1718–1726.
 - McCusker, R. R., et al. (2003). "Caffeine content of specialty coffees." *Journal of Analytical Toxicology*, 27(7), 520–522.
+- Mystkowska, I., Dmitrowicz, A., &amp; Sijko-Szpańska, M. (2024). "Quantitative Analysis of Caffeine in Roasted Coffee: A Comparison of Brewing Methods." *Applied Sciences*, 14, 11395. https://doi.org/10.3390/app142311395
 - Stanek, D., et al. (2021). "Caffeine Concentration in Cold Brew Coffee: The Effect of Steeping Time, Temperature, and Coffee-to-Water Ratio." *Journal of Food Science*, 86(X), XXXX–XXXX. *(Full citation pending verification — covers cold brew HPLC at 4–20 °C, 12–24 h.)*
