@@ -1741,6 +1741,10 @@ function getInputCountBuckets(input: CaffiLabInput) {
     { applicable: true, known: Boolean(input.filterType) },
     {
       applicable: true,
+      known: input.grinderType !== undefined && input.grinderType !== "unknown",
+    },
+    {
+      applicable: true,
       known: input.beanDetail !== undefined && input.beanDetail !== "generic",
     },
     {
@@ -1771,6 +1775,10 @@ function getInputCountBuckets(input: CaffiLabInput) {
         (input.beanType === "arabica" || input.beanType === "blend") &&
         input.cultivar !== undefined &&
         input.cultivar !== "unknown",
+    },
+    {
+      applicable: true,
+      known: input.originRegion !== undefined && input.originRegion !== "unknown",
     },
   ];
 }
