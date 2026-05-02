@@ -14,6 +14,7 @@
     "typecheck": "tsc --noEmit",
     "check": "bash ./scripts/checks.sh",
     "validate:featured": "node ./scripts/validate-featured.mjs",
+    "calibrate:caffilab": "node ./scripts/caffilab-calibration-report.mjs data/caffilab/calibration-samples.json",
     "pnpm:approve-builds": "pnpm approve-builds",
     "purge:consent": "node scripts/purge_old_consent.js"
   },
