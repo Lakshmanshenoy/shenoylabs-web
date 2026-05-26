@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRightIcon, BeakerIcon, WrenchIcon } from "lucide-react";
+import { ArrowRightIcon, WrenchIcon } from "lucide-react";
 
 import { SectionContainer } from "@/components/shared/section-container";
 import { SectionHeader } from "@/components/shared/section-header";
@@ -33,20 +33,7 @@ type Tool = {
   thumbnailAlt?: string;
 };
 
-const tools: Tool[] = [
-  {
-    slug: "caffilab",
-    href: "/caffilab",
-    title: "CaffiLab",
-    description:
-      "Scientific caffeine estimation for your exact brew. Enter your coffee dose, bean type, brew method, and extraction variables to get a calibrated caffeine estimate with confidence range.",
-    status: "live",
-    tags: ["caffeine", "coffee", "calculator", "science"],
-    icon: <BeakerIcon className="size-5" />,
-    thumbnail: "/images/caffilab/drip-brewing.jpg",
-    thumbnailAlt: "Coffee dripping into a glass vessel",
-  },
-];
+const tools: Tool[] = [];
 
 export default function ToolsPage() {
   return (
@@ -112,11 +99,11 @@ export default function ToolsPage() {
           ))}
         </div>
 
-        {tools.length === 1 && (
+        {tools.length === 0 && (
           <div className="rounded-xl border border-dashed border-border/60 bg-secondary/30 p-8 text-center">
             <WrenchIcon className="mx-auto mb-3 size-8 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">
-              More tools are on the way. Check back soon or{" "}
+              No tools are currently hosted in this section. Check back soon or{" "}
               <Link href="/contact" className="underline underline-offset-2 hover:text-foreground">
                 suggest a tool
               </Link>

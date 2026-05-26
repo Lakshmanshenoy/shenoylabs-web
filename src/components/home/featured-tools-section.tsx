@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRightIcon, BeakerIcon, WrenchIcon } from "lucide-react";
+import { WrenchIcon } from "lucide-react";
 
 import { SectionContainer } from "@/components/shared/section-container";
 import { SectionHeader } from "@/components/shared/section-header";
@@ -23,17 +23,7 @@ type FeaturedTool = {
   icon: React.ReactNode;
 };
 
-const featuredTools: FeaturedTool[] = [
-  {
-    slug: "caffilab",
-    href: "/caffilab",
-    title: "CaffiLab",
-    tagline:
-      "Scientific caffeine estimation for your exact brew — powered by extraction science, not static tables.",
-    tags: ["caffeine", "coffee", "calculator"],
-    icon: <BeakerIcon className="size-5" />,
-  },
-];
+const featuredTools: FeaturedTool[] = [];
 
 export function FeaturedToolsSection() {
   return (
@@ -57,45 +47,49 @@ export function FeaturedToolsSection() {
           </Link>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {featuredTools.map((tool) => (
-            <Link key={tool.slug} href={tool.href} className="scroll-reveal group block">
-              <Card className="h-full border border-border/80 bg-card/95 transition-colors group-hover:border-primary/30">
-                <CardHeader className="pb-2">
-                  <div className="mb-2 flex items-center gap-2">
-                    <span className="text-primary">{tool.icon}</span>
-                    <Badge variant="default" className="text-xs">
-                      Live
-                    </Badge>
-                  </div>
-                  <CardTitle className="text-base font-semibold transition-colors group-hover:text-primary">
-                    {tool.title}
-                  </CardTitle>
-                  <CardDescription className="leading-relaxed">
-                    {tool.tagline}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="mb-3 flex flex-wrap gap-1.5">
-                    {tool.tags.map((tag) => (
-                      <Badge
-                        key={tag}
-                        variant="secondary"
-                        className="text-xs font-normal"
-                      >
-                        {tag}
+        {featuredTools.length > 0 ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {featuredTools.map((tool) => (
+              <Link key={tool.slug} href={tool.href} className="scroll-reveal group block">
+                <Card className="h-full border border-border/80 bg-card/95 transition-colors group-hover:border-primary/30">
+                  <CardHeader className="pb-2">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="text-primary">{tool.icon}</span>
+                      <Badge variant="default" className="text-xs">
+                        Live
                       </Badge>
-                    ))}
-                  </div>
-                  <p className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-colors group-hover:text-primary/80">
-                    Open Tool
-                    <ArrowRightIcon className="size-3.5" />
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+                    </div>
+                    <CardTitle className="text-base font-semibold transition-colors group-hover:text-primary">
+                      {tool.title}
+                    </CardTitle>
+                    <CardDescription className="leading-relaxed">
+                      {tool.tagline}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="mb-3 flex flex-wrap gap-1.5">
+                      {tool.tags.map((tag) => (
+                        <Badge
+                          key={tag}
+                          variant="secondary"
+                          className="text-xs font-normal"
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <Card className="border border-dashed border-border/60 bg-secondary/30">
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+              No featured tools are currently listed.
+            </CardContent>
+          </Card>
+        )}
       </div>
     </SectionContainer>
   );

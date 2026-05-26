@@ -8,7 +8,6 @@ import { siteConfig } from "@/lib/site";
 // thinking every page changed on every deploy, which wastes crawl budget.
 const STATIC_DATES = {
   home:           new Date("2026-04-28"),
-  caffilab:       new Date("2026-04-28"),
   projects:       new Date("2026-04-28"),
   articles:       new Date("2026-04-28"),
   contact:        new Date("2026-04-28"),
@@ -21,12 +20,6 @@ const STATIC_DATES = {
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: siteConfig.url, lastModified: STATIC_DATES.home, changeFrequency: "weekly", priority: 1 },
-    {
-      url: `${siteConfig.url}/caffilab`,
-      lastModified: STATIC_DATES.caffilab,
-      changeFrequency: "monthly",
-      priority: 0.85,
-    },
     {
       url: `${siteConfig.url}/projects`,
       lastModified: STATIC_DATES.projects,
