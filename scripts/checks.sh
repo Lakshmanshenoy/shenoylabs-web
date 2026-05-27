@@ -106,6 +106,11 @@ if [ -f "scripts/validate-featured.mjs" ]; then
   run_cmd featured "$PKG_MANAGER" run validate:featured
 fi
 
+# Validate investigation stewardship thresholds (optional)
+if [ -f "scripts/validate-stewardship.mjs" ]; then
+  run_cmd stewardship node scripts/validate-stewardship.mjs
+fi
+
 # Check for hyphenated DOM/SVG attributes in MDX/JSX/TSX which React warns about
 # Looks for common problematic attributes: font-family, font-size, font-weight
 run_cmd hyphenated-dom-attrs bash -lc 'HYPN_PATTERN="font-family|font-size|font-weight"; \

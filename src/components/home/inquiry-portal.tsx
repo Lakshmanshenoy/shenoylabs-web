@@ -28,13 +28,13 @@ export function InquiryPortal() {
 
   const worlds = ecosystem.worlds.slice(0, 6);
   const pathways = ecosystem.pathways.slice(0, 3);
-  const concepts = ecosystem.concepts.slice(0, 6);
+  const concepts = ecosystem.concepts.slice(0, 4);
   const canon = getCanonResurfacing(3);
   const historicalThreads = getHistoricalThreads(3);
 
   const continuity = investigations
     .flatMap((item) => item.frontmatter.related_investigations)
-    .slice(0, 3);
+    .slice(0, 2);
 
   return (
     <>
@@ -194,7 +194,7 @@ export function InquiryPortal() {
       <SectionContainer className="below-fold bg-secondary/20 py-14">
         <div className="space-y-6">
           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Exploratory Continuity</p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             {continuity.map((slug) => (
               <Link
                 key={slug}
@@ -215,6 +215,9 @@ export function InquiryPortal() {
             {projects.length} project artifacts are connected; ecosystem overlap now spans
             {" "}{ecosystem.conceptCount} concepts and {ecosystem.worldCount} worlds.
           </div>
+          <p className="text-sm text-muted-foreground">
+            Not every connection is surfaced. Some relationships are intentionally left quiet for future rediscovery.
+          </p>
         </div>
       </SectionContainer>
 

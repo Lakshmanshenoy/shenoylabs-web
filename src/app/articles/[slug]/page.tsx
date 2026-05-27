@@ -388,13 +388,12 @@ export default async function ArticleDetailPage({
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {fm.concepts.map((concept) => (
-                <a
+                <span
                   key={concept}
-                  href={`#concept-${slugify(concept)}`}
-                  className="rounded-full border border-border/70 px-2.5 py-1 text-xs transition-colors hover:border-primary/35 hover:text-primary"
+                  className="rounded-full border border-border/70 px-2.5 py-1 text-xs text-muted-foreground"
                 >
                   {concept}
-                </a>
+                </span>
               ))}
             </div>
           </section>
@@ -416,8 +415,8 @@ export default async function ArticleDetailPage({
       <section className="space-y-3">
         <h2 className="font-heading text-xl font-semibold tracking-tight">Expansion layer</h2>
         {continuity.concepts.length > 0 && (
-          <div className="grid gap-3 md:grid-cols-3">
-            {continuity.concepts.map((concept) => (
+          <div className="grid gap-3 md:grid-cols-2">
+            {continuity.concepts.slice(0, 2).map((concept) => (
               <Link
                 key={concept.slug}
                 id={`concept-${concept.slug}`}
@@ -535,6 +534,9 @@ export default async function ArticleDetailPage({
             </Link>
           ))}
         </div>
+        <p className="text-sm text-muted-foreground">
+          Drift slowly. Return later with a different question and the same investigation may reveal a new structure.
+        </p>
       </section>
 
       <Separator className="my-10" />
@@ -577,13 +579,13 @@ export default async function ArticleDetailPage({
         </>
       ) : null}
 
-      {relatedProjects.length > 0 ? (
+      {relatedProjects.length > 0 && relatedArticles.length === 0 ? (
         <>
           <Separator className="my-10" />
           <section className="space-y-3">
             <h2 className="font-heading text-xl font-semibold tracking-tight">Connected projects</h2>
             <div className="grid gap-2">
-              {relatedProjects.map((project) => (
+              {relatedProjects.slice(0, 2).map((project) => (
                 <Link
                   key={project.slug}
                   href={`/projects/${project.slug}`}
