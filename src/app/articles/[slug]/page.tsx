@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { compileMDX } from "next-mdx-remote/rsc";
 import fs from "fs";
 import path from "path";
-import { Clock3Icon, Link2Icon, MessageCircleIcon, SendIcon, XIcon } from "lucide-react";
+import { CalendarDaysIcon, Clock3Icon, Link2Icon } from "lucide-react";
 
 import {
   ArticleReaderEnhancements,
@@ -14,6 +14,12 @@ import {
 } from "@/components/articles/article-reader-enhancements";
 import { InteractionCtaPanel } from "@/components/engagement/interaction-cta-panel";
 import { SectionContainer } from "@/components/shared/section-container";
+import {
+  LinkedInBrandIcon,
+  TelegramBrandIcon,
+  WhatsAppBrandIcon,
+  XBrandIcon,
+} from "@/components/shared/social-brand-icons";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getAllArticles, getArticle } from "@/lib/content";
@@ -64,6 +70,24 @@ function extractReadingMinutes(readingTime: string): number {
   const match = /(\d+)/.exec(readingTime);
   if (!match) return 6;
   return Math.max(1, Number.parseInt(match[1], 10));
+}
+
+function buildVersionSummary(createdDate: string, lastUpdated: string, customSummary?: string): string {
+  if (customSummary && customSummary.trim().length > 0) {
+    return customSummary.trim();
+  }
+
+  const created = new Date(createdDate);
+  const updated = new Date(lastUpdated);
+  const deltaDays = Math.max(0, Math.floor((updated.getTime() - created.getTime()) / 86400000));
+
+  if (deltaDays === 0) {
+    return "Initial publication version with baseline guidance and structure.";
+  }
+  if (deltaDays <= 14) {
+    return "Refreshed recently with updated details, tighter explanations, and quality-of-life edits.";
+  }
+  return "Maintained edition reflecting later updates in examples, wording, and implementation notes.";
 }
 
 // ─── Static generation ────────────────────────────────────────────────────────
@@ -137,6 +161,26 @@ export default async function ArticleDetailPage({
   const readingTimeMinutes = extractReadingMinutes(readingTime);
   const createdDate = fm.createdDate ?? fm.date;
   const lastUpdated = fm.lastUpdated ?? createdDate;
+  const createdDateLabel = new Date(createdDate).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+  const updatedDateLabel = new Date(lastUpdated).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+  const versionNumber = Math.max(
+    1,
+    Math.floor((new Date(lastUpdated).getTime() - new Date(createdDate).getTime()) / 86400000) + 1,
+  );
+  const versionLabel = `v${versionNumber}.0`;
+  const versionSummary = buildVersionSummary(
+    createdDate,
+    lastUpdated,
+    (fm as { updateSummary?: string }).updateSummary,
+  );
   const toc = buildTocFromSource(source);
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
     { name: "Home", path: "/" },
@@ -203,7 +247,14 @@ export default async function ArticleDetailPage({
   return (
     <SectionContainer className="py-6 lg:py-8">
       {/* Global reader enhancements: top progress bar, selection popover, long-session watcher */}
-      <ArticleReaderEnhancements toc={toc} readingTimeMinutes={readingTimeMinutes} />
+      <ArticleReaderEnhancements
+        toc={toc}
+        readingTimeMinutes={readingTimeMinutes}
+        createdDateLabel={createdDateLabel}
+        updatedDateLabel={updatedDateLabel}
+        versionLabel={versionLabel}
+        versionSummary={versionSummary}
+      />
 
       {/* JSON-LD */}
       <script
@@ -306,13 +357,12 @@ export default async function ArticleDetailPage({
                   {readingTime}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
+                  <CalendarDaysIcon className="size-3.5" />
+                  Created {createdDateLabel}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
                   <Link2Icon className="size-3.5" />
-                  Updated{" "}
-                  {new Date(lastUpdated).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
+                  Updated {updatedDateLabel}
                 </span>
               </div>
             </div>
@@ -347,37 +397,41 @@ export default async function ArticleDetailPage({
                   href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(`https://shenoylabs.com/articles/${slug}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  aria-label="Share on X"
+                  title="Share on X"
+                  className="inline-flex items-center rounded-md border border-border p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
-                  <XIcon className="size-3.5" />
-                  X
+                  <XBrandIcon className="size-4" />
                 </Link>
                 <Link
                   href={`https://wa.me/?text=${encodeURIComponent(`https://shenoylabs.com/articles/${slug}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  aria-label="Share on WhatsApp"
+                  title="Share on WhatsApp"
+                  className="inline-flex items-center rounded-md border border-border p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
-                  <MessageCircleIcon className="size-3.5" />
-                  WhatsApp
+                  <WhatsAppBrandIcon className="size-4" />
                 </Link>
                 <Link
                   href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://shenoylabs.com/articles/${slug}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  aria-label="Share on LinkedIn"
+                  title="Share on LinkedIn"
+                  className="inline-flex items-center rounded-md border border-border p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
-                  <Link2Icon className="size-3.5" />
-                  LinkedIn
+                  <LinkedInBrandIcon className="size-4" />
                 </Link>
                 <Link
                   href={`https://t.me/share/url?url=${encodeURIComponent(`https://shenoylabs.com/articles/${slug}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  aria-label="Share on Telegram"
+                  title="Share on Telegram"
+                  className="inline-flex items-center rounded-md border border-border p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
-                  <SendIcon className="size-3.5" />
-                  Telegram
+                  <TelegramBrandIcon className="size-4" />
                 </Link>
               </div>
             </div>

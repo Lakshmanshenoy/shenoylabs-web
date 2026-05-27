@@ -13,11 +13,10 @@ const CONTENT_DIR = path.join(process.cwd(), "content");
 export type ArticleFrontmatter = {
   title: string;
   excerpt: string;
-  summary?: string;
-  slug?: string;
   date: string;
   createdDate?: string;
   lastUpdated?: string;
+  updateSummary?: string;
   category: string;
   primaryCategory: PrimaryCategory;
   tags: string[];
@@ -29,29 +28,6 @@ export type ArticleFrontmatter = {
   problem?: string;
   whyItMatters?: string;
   coverAlt?: string;
-  research_worlds?: string[];
-  concepts?: string[];
-  pathways?: string[];
-  related_investigations?: string[];
-  related_projects?: string[];
-  published_at?: string;
-  reading_time?: string;
-  depth_mode?: "exploratory" | "technical" | "research" | "reflective";
-  reading_pacing?: "slow" | "moderate" | "dense";
-  investigation_type?:
-    | "guide"
-    | "systems-analysis"
-    | "integration-blueprint"
-    | "field-notes";
-  investigation_map?: Array<{
-    label: string;
-    mode?: "exploratory" | "technical" | "research" | "reflective";
-  }>;
-  continuity_notes?: string[];
-  unresolved_questions?: string[];
-  canon_stage?: "emerging" | "foundational" | "evolving";
-  temporal_context?: string;
-  re_readability_note?: string;
 };
 
 export type ProjectFrontmatter = {

@@ -350,6 +350,12 @@
 /* Baseline article prose — slightly more generous spacing than .prose-custom
    alone to aid sustained reading comfort */
 .article-prose {
+  overflow-wrap: anywhere;
+
+  & > * {
+    max-width: 100%;
+  }
+
   & p {
     line-height: 1.82;
     margin-bottom: 1.35rem;
@@ -379,6 +385,31 @@
     line-height: 1.8;
     margin-top: 1.75rem;
     margin-bottom: 1.75rem;
+  }
+
+  & pre,
+  & table,
+  & figure,
+  & .overflow-x-auto {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+  }
+
+  & img,
+  & svg,
+  & video,
+  & canvas,
+  & iframe {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  & table {
+    display: block;
+    width: max-content;
+    min-width: 100%;
   }
 }
 

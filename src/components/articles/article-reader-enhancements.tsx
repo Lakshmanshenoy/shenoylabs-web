@@ -5,12 +5,17 @@ import {
   Clock3,
   Copy,
   Gauge,
-  Link2,
   ListTree,
-  MessageCircle,
-  Send,
+  Pencil,
   X,
 } from "lucide-react";
+
+import {
+  LinkedInBrandIcon,
+  TelegramBrandIcon,
+  WhatsAppBrandIcon,
+  XBrandIcon,
+} from "@/components/shared/social-brand-icons";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -276,35 +281,35 @@ function QuoteSharePopover({
         </button>
         <button
           onClick={shareOnX}
-          className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          className="flex items-center rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           title="Share on X"
+          aria-label="Share on X"
         >
-          <X className="size-3" />
-          X
+          <XBrandIcon className="size-3.5" />
         </button>
         <button
           onClick={shareOnLinkedIn}
-          className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          className="flex items-center rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           title="Share on LinkedIn"
+          aria-label="Share on LinkedIn"
         >
-          <Link2 className="size-3" />
-          Ln
+          <LinkedInBrandIcon className="size-3.5" />
         </button>
         <button
           onClick={shareOnWhatsApp}
-          className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          className="flex items-center rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           title="Share on WhatsApp"
+          aria-label="Share on WhatsApp"
         >
-          <MessageCircle className="size-3" />
-          Wa
+          <WhatsAppBrandIcon className="size-3.5" />
         </button>
         <button
           onClick={shareOnTelegram}
-          className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          className="flex items-center rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           title="Share on Telegram"
+          aria-label="Share on Telegram"
         >
-          <Send className="size-3" />
-          Tg
+          <TelegramBrandIcon className="size-3.5" />
         </button>
         <button
           onClick={onClose}
@@ -331,9 +336,17 @@ function QuoteSharePopover({
 export function ArticleReaderEnhancements({
   toc,
   readingTimeMinutes,
+  createdDateLabel,
+  updatedDateLabel,
+  versionLabel,
+  versionSummary,
 }: {
   toc: ArticleTocItem[];
   readingTimeMinutes: number;
+  createdDateLabel: string;
+  updatedDateLabel: string;
+  versionLabel: string;
+  versionSummary: string;
 }) {
   const [progress, setProgress] = useState(0);
   const [quote, setQuote] = useState<QuoteState>(null);
@@ -460,6 +473,23 @@ export function ArticleReaderEnhancements({
               {currentSection.title}
             </p>
           ) : null}
+
+          <div className="mt-2 space-y-1 rounded-md border border-border/60 bg-secondary/35 px-2 py-2">
+            <p className="text-[9px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+              Version
+            </p>
+            <p className="font-mono text-[11px] text-foreground">{versionLabel}</p>
+            <p className="text-[10px] leading-relaxed text-muted-foreground">{versionSummary}</p>
+            <div className="pt-1 text-[10px] text-muted-foreground/80">
+              <p>Created: {createdDateLabel}</p>
+              <p>Updated: {updatedDateLabel}</p>
+            </div>
+          </div>
+
+          <p className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground/75">
+            <Pencil className="size-3" />
+            Content-aware article status
+          </p>
         </div>
       </aside>
 
