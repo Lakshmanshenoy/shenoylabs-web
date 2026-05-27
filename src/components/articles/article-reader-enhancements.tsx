@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Copy, Share2, X } from "lucide-react";
+import {
+  Clock3,
+  Copy,
+  Gauge,
+  Link2,
+  ListTree,
+  MessageCircle,
+  Send,
+  Share2,
+  X,
+} from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -60,19 +70,19 @@ export function ArticleTocSidebar({ toc }: { toc: ArticleTocItem[] }) {
 
   return (
     <aside className="hidden xl:block">
-      <div className="sticky top-24 flex flex-col overflow-hidden rounded-xl border border-border/60 bg-background/90 shadow-sm backdrop-blur-sm">
+      <div className="sticky top-24 flex w-fit min-w-[18rem] max-w-[30vw] flex-col overflow-hidden rounded-xl border border-border/60 bg-background/90 shadow-sm backdrop-blur-sm">
         {/* Panel header */}
         <div className="border-b border-border/50 px-4 pb-3 pt-4">
-          <p className="text-[10px] font-semibold tracking-[0.15em] text-muted-foreground/60 uppercase">
+          <p className="text-[11px] font-semibold tracking-[0.15em] text-muted-foreground/65 uppercase">
             Contents
           </p>
-          <p className="mt-0.5 font-mono text-[10px] text-muted-foreground/50">
+          <p className="mt-0.5 font-mono text-[11px] text-muted-foreground/55">
             Section {sectionLabel}
           </p>
         </div>
 
         {/* TOC nav — scrollable so very long articles don't overflow */}
-        <nav className="max-h-[52vh] overflow-y-auto py-2.5 px-2">
+        <nav className="max-h-[56vh] overflow-y-auto px-2 py-2.5">
           <ul className="space-y-0.5">
             {toc.map((item) => {
               const isActive = activeId === item.id;
@@ -82,7 +92,7 @@ export function ArticleTocSidebar({ toc }: { toc: ArticleTocItem[] }) {
                   <button
                     onClick={() => jumpTo(item.id)}
                     className={[
-                      "w-full rounded-lg py-1.5 text-left text-[11px] leading-[1.45] transition-all duration-200 ease-out",
+                      "w-full rounded-lg py-2 text-left text-[13px] leading-[1.52] transition-all duration-200 ease-out",
                       item.level === 3 ? "pl-6 pr-3" : "pl-3 pr-3",
                       isActive
                         ? "bg-primary/10 font-semibold text-primary"
@@ -108,10 +118,10 @@ export function ArticleTocSidebar({ toc }: { toc: ArticleTocItem[] }) {
         {/* Progress footer */}
         <div className="border-t border-border/50 px-4 py-3">
           <div className="mb-1.5 flex items-center justify-between">
-            <p className="text-[9px] font-semibold tracking-[0.14em] text-muted-foreground/50 uppercase">
+            <p className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground/55 uppercase">
               Progress
             </p>
-            <p className="font-mono text-[9px] text-muted-foreground/60">{progress}%</p>
+            <p className="font-mono text-[10px] text-muted-foreground/65">{progress}%</p>
           </div>
           {/* Minimal inline progress track */}
           <div className="h-[2px] w-full overflow-hidden rounded-full bg-border/60">
@@ -150,12 +160,44 @@ function QuoteSharePopover({
     onClose();
   };
 
-  const shareOnX = () => {
+  const shareText = () => {
     const snippet =
-      quote.text.length > 200 ? `${quote.text.slice(0, 200).trimEnd()}…` : quote.text;
-    const tweetText = `"${snippet}"\n\n${window.location.href}`;
+      quote.text.length > 220 ? `${quote.text.slice(0, 220).trimEnd()}...` : quote.text;
+    return `"${snippet}"\n\n${window.location.href}`;
+  };
+
+  const shareOnX = () => {
     window.open(
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`,
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText())}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+    onClose();
+  };
+
+  const shareOnLinkedIn = () => {
+    window.open(
+      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+    onClose();
+  };
+
+  const shareOnWhatsApp = () => {
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(shareText())}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+    onClose();
+  };
+
+  const shareOnTelegram = () => {
+    window.open(
+      `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(
+        quote.text,
+      )}`,
       "_blank",
       "noopener,noreferrer",
     );
@@ -185,8 +227,32 @@ function QuoteSharePopover({
           className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           title="Share on X"
         >
-          <Share2 className="size-3" />
-          Share
+          <X className="size-3" />
+          X
+        </button>
+        <button
+          onClick={shareOnLinkedIn}
+          className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          title="Share on LinkedIn"
+        >
+          <Link2 className="size-3" />
+          Ln
+        </button>
+        <button
+          onClick={shareOnWhatsApp}
+          className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          title="Share on WhatsApp"
+        >
+          <MessageCircle className="size-3" />
+          Wa
+        </button>
+        <button
+          onClick={shareOnTelegram}
+          className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          title="Share on Telegram"
+        >
+          <Send className="size-3" />
+          Tg
         </button>
         <button
           onClick={onClose}
@@ -210,9 +276,16 @@ function QuoteSharePopover({
 //   4. Long-session typography: after 90s, sets data-long-session on #article-body
 //      so CSS can gently increase line-height / paragraph spacing
 
-export function ArticleReaderEnhancements({ toc: _toc }: { toc: ArticleTocItem[] }) {
+export function ArticleReaderEnhancements({
+  toc,
+  readingTimeMinutes,
+}: {
+  toc: ArticleTocItem[];
+  readingTimeMinutes: number;
+}) {
   const [progress, setProgress] = useState(0);
   const [quote, setQuote] = useState<QuoteState>(null);
+  const [activeId, setActiveId] = useState<string | null>(toc[0]?.id ?? null);
   const dismissRef = useRef<EventListener | null>(null);
 
   // Track scroll progress
@@ -222,12 +295,20 @@ export function ArticleReaderEnhancements({ toc: _toc }: { toc: ArticleTocItem[]
       const pct = h > 0 ? Math.min(100, Math.round((window.scrollY / h) * 100)) : 0;
       setProgress(pct);
       const el = document.getElementById("reader-progress-text");
-      if (el) el.textContent = `${pct}% read`;
+      if (el) el.textContent = "Reading mode";
+
+      let current: string | null = null;
+      for (const item of toc) {
+        const section = document.getElementById(item.id);
+        if (!section) continue;
+        if (section.getBoundingClientRect().top < 150) current = item.id;
+      }
+      if (current) setActiveId(current);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [toc]);
 
   // Long-session optimization: loosen typography after 90 s of dwell
   useEffect(() => {
@@ -280,6 +361,10 @@ export function ArticleReaderEnhancements({ toc: _toc }: { toc: ArticleTocItem[]
     return () => document.removeEventListener("keydown", handler);
   }, [quote]);
 
+  const minutesLeft = Math.max(1, Math.ceil((readingTimeMinutes * (100 - progress)) / 100));
+  const currentSection = toc.find((item) => item.id === activeId);
+  const sectionIndex = activeId ? toc.findIndex((item) => item.id === activeId) + 1 : 0;
+
   return (
     <>
       {/* Thin top progress bar — minimal, no percentage text */}
@@ -289,6 +374,43 @@ export function ArticleReaderEnhancements({ toc: _toc }: { toc: ArticleTocItem[]
           style={{ width: `${progress}%` }}
         />
       </div>
+
+      {/* Floating reading HUD */}
+      <aside className="fixed bottom-5 right-5 z-40 hidden w-[16.5rem] rounded-xl border border-border/70 bg-background/95 p-3 shadow-lg backdrop-blur sm:block">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+            Reading status
+          </p>
+          <Gauge className="size-3.5 text-muted-foreground" />
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <Clock3 className="size-3.5" />
+              Minutes left
+            </span>
+            <span className="font-mono text-[12px] text-foreground">~{minutesLeft}m</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-muted-foreground">Read</span>
+            <span className="font-mono text-[12px] text-foreground">{progress}%</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <ListTree className="size-3.5" />
+              Section
+            </span>
+            <span className="font-mono text-[12px] text-foreground">
+              {sectionIndex > 0 ? `${sectionIndex}/${toc.length}` : `0/${toc.length}`}
+            </span>
+          </div>
+          {currentSection ? (
+            <p className="line-clamp-2 rounded-md bg-secondary/65 px-2 py-1.5 text-[10px] leading-relaxed text-foreground/80">
+              {currentSection.title}
+            </p>
+          ) : null}
+        </div>
+      </aside>
 
       {/* Passage share popover */}
       <QuoteSharePopover quote={quote} onClose={() => setQuote(null)} />

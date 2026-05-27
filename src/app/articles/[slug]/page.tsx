@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { compileMDX } from "next-mdx-remote/rsc";
 import fs from "fs";
 import path from "path";
-import { Clock3Icon, Link2Icon, Share2Icon } from "lucide-react";
+import { Clock3Icon, Link2Icon, MessageCircleIcon, SendIcon, XIcon } from "lucide-react";
 
 import {
   ArticleReaderEnhancements,
@@ -58,6 +58,12 @@ function buildTocFromSource(source: string): ArticleTocItem[] {
   }
 
   return toc;
+}
+
+function extractReadingMinutes(readingTime: string): number {
+  const match = /(\d+)/.exec(readingTime);
+  if (!match) return 6;
+  return Math.max(1, Number.parseInt(match[1], 10));
 }
 
 // ─── Static generation ────────────────────────────────────────────────────────
@@ -128,6 +134,7 @@ export default async function ArticleDetailPage({
   }
 
   const { frontmatter: fm, readingTime, source } = item;
+  const readingTimeMinutes = extractReadingMinutes(readingTime);
   const createdDate = fm.createdDate ?? fm.date;
   const lastUpdated = fm.lastUpdated ?? createdDate;
   const toc = buildTocFromSource(source);
@@ -194,9 +201,9 @@ export default async function ArticleDetailPage({
   };
 
   return (
-    <SectionContainer>
+    <SectionContainer className="py-6 lg:py-8">
       {/* Global reader enhancements: top progress bar, selection popover, long-session watcher */}
-      <ArticleReaderEnhancements toc={toc} />
+      <ArticleReaderEnhancements toc={toc} readingTimeMinutes={readingTimeMinutes} />
 
       {/* JSON-LD */}
       <script
@@ -213,7 +220,7 @@ export default async function ArticleDetailPage({
       />
 
       {/* Top reader bar — full width above the layout grid */}
-      <div className="mb-8 border-b border-border pb-3">
+      <div className="sticky top-0 z-20 mb-5 border-b border-border bg-background/95 py-3 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <Link
             href="/articles"
@@ -228,18 +235,19 @@ export default async function ArticleDetailPage({
             id="reader-progress-text"
             className="font-mono text-[11px] text-muted-foreground/60"
           >
-            0% read
+            Reading mode
           </p>
         </div>
       </div>
 
       {/* Two-column layout: sticky left TOC + content */}
-      <div className="xl:grid xl:grid-cols-[240px_1fr] xl:items-start xl:gap-10 2xl:grid-cols-[260px_1fr] 2xl:gap-14">
+      <div className="xl:h-[calc(100vh-11rem)] xl:overflow-hidden">
+        <div className="xl:grid xl:h-full xl:grid-cols-[minmax(18rem,max-content)_minmax(0,1fr)] xl:items-start xl:gap-8 2xl:gap-12">
         {/* Left TOC — visible at xl+ only, rendered by the ArticleTocSidebar client component */}
         <ArticleTocSidebar toc={toc} />
 
         {/* Primary content column */}
-        <div className="min-w-0">
+        <div className="min-w-0 xl:h-full xl:overflow-y-auto xl:pr-2">
           <header className="space-y-5">
             {fm.coverImage && (
               <div className="overflow-hidden rounded-xl border border-border/70">
@@ -341,8 +349,35 @@ export default async function ArticleDetailPage({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
-                  <Share2Icon className="size-3.5" />
-                  Share on X
+                  <XIcon className="size-3.5" />
+                  X
+                </Link>
+                <Link
+                  href={`https://wa.me/?text=${encodeURIComponent(`https://shenoylabs.com/articles/${slug}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                >
+                  <MessageCircleIcon className="size-3.5" />
+                  WhatsApp
+                </Link>
+                <Link
+                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://shenoylabs.com/articles/${slug}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                >
+                  <Link2Icon className="size-3.5" />
+                  LinkedIn
+                </Link>
+                <Link
+                  href={`https://t.me/share/url?url=${encodeURIComponent(`https://shenoylabs.com/articles/${slug}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                >
+                  <SendIcon className="size-3.5" />
+                  Telegram
                 </Link>
               </div>
             </div>
@@ -422,6 +457,7 @@ export default async function ArticleDetailPage({
             </div>
           </section>
         </div>
+      </div>
       </div>
     </SectionContainer>
   );
