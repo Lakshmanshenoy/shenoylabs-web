@@ -25,6 +25,9 @@ export type ArticleFrontmatter = {
   pathways: string[];
   related_investigations: string[];
   related_projects: string[];
+  temporal_callbacks: string[];
+  canonical_text?: boolean;
+  canon_weight?: number;
   featured?: boolean;
   featuredOrder?: number;
   depth_mode?: string;
@@ -139,6 +142,11 @@ function normalizeArticleFrontmatter(
     pathways,
     related_investigations: toArray(raw.related_investigations),
     related_projects: toArray(raw.related_projects),
+    temporal_callbacks: toArray(raw.temporal_callbacks),
+    canonical_text:
+      typeof raw.canonical_text === "boolean" ? raw.canonical_text : undefined,
+    canon_weight:
+      typeof raw.canon_weight === "number" ? raw.canon_weight : undefined,
     featured: typeof raw.featured === "boolean" ? raw.featured : undefined,
     featuredOrder:
       typeof raw.featuredOrder === "number" ? raw.featuredOrder : undefined,

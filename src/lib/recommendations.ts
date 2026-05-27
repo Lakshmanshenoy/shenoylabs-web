@@ -51,6 +51,7 @@ export function getRelatedArticles(currentSlug: string, limit = 3) {
   const current = getArticle(currentSlug);
   const candidates = getAllArticles().filter((a) => a.slug !== currentSlug);
   const explicit = new Set(current.frontmatter.related_investigations);
+  const temporal = new Set(current.frontmatter.temporal_callbacks);
   const currentTerms = semanticTerms(current.frontmatter);
 
   return candidates
@@ -62,7 +63,15 @@ export function getRelatedArticles(currentSlug: string, limit = 3) {
           : 0;
       const tagScore = overlapScore(currentTerms, semanticTerms(candidate.frontmatter));
       const explicitBoost = explicit.has(candidate.slug) ? 5 : 0;
-      return { candidate, score: explicitBoost + categoryBoost + tagScore * 2 };
+      const temporalBoost =
+        temporal.has(candidate.slug) ||
+        candidate.frontmatter.temporal_callbacks.includes(currentSlug)
+          ? 4
+          : 0;
+      return {
+        candidate,
+        score: explicitBoost + temporalBoost + categoryBoost + tagScore * 2,
+      };
     })
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score)

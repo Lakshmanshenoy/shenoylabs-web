@@ -10,6 +10,7 @@ import { SectionContainer } from "@/components/shared/section-container";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { getTemporalContinuity } from "@/lib/canon";
 import { getAllArticles, getArticle } from "@/lib/content";
 import { getInvestigationContinuity } from "@/lib/ecosystem";
 import { getMDXComponents } from "@/lib/mdx-components";
@@ -177,6 +178,7 @@ export default async function ArticleDetailPage({
   const relatedProjects = getRelatedProjectsForArticle(slug, 3);
   const headings = parseHeadings(source);
   const continuity = getInvestigationContinuity(slug);
+  const temporal = getTemporalContinuity(slug);
 
   const { content } = await compileMDX({
     source,
@@ -276,6 +278,7 @@ export default async function ArticleDetailPage({
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:text-sm">
           <Badge variant="outline">{fm.primaryCategory}</Badge>
           {fm.investigation_type ? <Badge variant="secondary">{fm.investigation_type}</Badge> : null}
+          {fm.canonical_text ? <Badge variant="secondary">Canonical text</Badge> : null}
           <span>{fm.reading_time ?? readingTime}</span>
           <span aria-hidden>·</span>
           <time dateTime={createdDate}>
@@ -434,6 +437,64 @@ export default async function ArticleDetailPage({
             </ul>
           </div>
         ) : null}
+      </section>
+
+      <Separator className="my-10" />
+
+      <section className="space-y-3">
+        <h2 className="font-heading text-xl font-semibold tracking-tight">Temporal depth</h2>
+        <p className="text-sm text-muted-foreground">
+          This investigation sits inside an evolving timeline. Revisit earlier foundations and later extensions.
+        </p>
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="rounded-xl border border-border/70 bg-card/70 p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Earlier echoes</p>
+            <div className="mt-2 grid gap-2">
+              {temporal.earlier.length > 0 ? (
+                temporal.earlier.map((item) => (
+                  <Link
+                    key={item.slug}
+                    href={`/articles/${item.slug}`}
+                    className="rounded-lg border border-border/70 px-3 py-2 text-sm transition-colors hover:border-primary/35 hover:text-primary"
+                  >
+                    {item.frontmatter.title}
+                  </Link>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">Foundational echoes are still emerging.</p>
+              )}
+            </div>
+          </div>
+          <div className="rounded-xl border border-border/70 bg-card/70 p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Later extensions</p>
+            <div className="mt-2 grid gap-2">
+              {temporal.later.length > 0 ? (
+                temporal.later.map((item) => (
+                  <Link
+                    key={item.slug}
+                    href={`/articles/${item.slug}`}
+                    className="rounded-lg border border-border/70 px-3 py-2 text-sm transition-colors hover:border-primary/35 hover:text-primary"
+                  >
+                    {item.frontmatter.title}
+                  </Link>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">Future layers will continue this line of inquiry.</p>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {temporal.recurringThemes.map((theme) => (
+            <Link
+              key={theme}
+              href={`/search?q=${encodeURIComponent(theme)}`}
+              className="rounded-full border border-border/70 px-2.5 py-1 text-xs transition-colors hover:border-primary/35 hover:text-primary"
+            >
+              {theme}
+            </Link>
+          ))}
+        </div>
       </section>
 
       <Separator className="my-10" />

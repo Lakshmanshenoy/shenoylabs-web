@@ -155,7 +155,7 @@
 @keyframes enter-up {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -164,7 +164,7 @@
 }
 
 .page-enter {
-  animation: enter-up 420ms ease-out both;
+  animation: enter-up 340ms ease-out both;
 }
 
 .soft-lift {
@@ -181,14 +181,14 @@
 /* Lightweight CSS-only entry animation. Avoids client-side class mutations
    that were causing hydration mismatches in development. */
 .reveal {
-  animation: enter-up 520ms ease-out both;
+  animation: enter-up 360ms ease-out both;
 }
 
 /* Stagger children inside a .reveal-group */
 .reveal-group > * {
   opacity: 0;
-  transform: translateY(14px);
-  animation: enter-up 480ms ease-out forwards;
+  transform: translateY(6px);
+  animation: enter-up 340ms ease-out forwards;
 }
 
 .reveal-group > *:nth-child(1) { animation-delay: 0ms; }
@@ -201,8 +201,8 @@
 /* Hero right panel — enters after the headline stagger settles */
 .reveal-delayed {
   opacity: 0;
-  transform: translateY(12px);
-  animation: enter-up 560ms ease-out 280ms both;
+  transform: translateY(6px);
+  animation: enter-up 380ms ease-out 180ms both;
 }
 
 /* Render optimization for below-the-fold sections to improve first paint.
@@ -234,11 +234,11 @@
 }
 
 .blob-drift {
-  animation: blob-drift 28s ease-in-out infinite;
+  animation: blob-drift 56s ease-in-out infinite;
 }
 
 .blob-drift-2 {
-  animation: blob-drift-2 36s ease-in-out infinite;
+  animation: blob-drift-2 72s ease-in-out infinite;
 }
 
 /* ── CSS scroll-driven reveals ────────────────────────────────────────────── */
@@ -247,8 +247,8 @@
 @supports (animation-timeline: view()) {
   .scroll-reveal {
     opacity: 0;
-    transform: translateY(20px);
-    animation: enter-up 0.7s ease-out both;
+    transform: translateY(8px);
+    animation: enter-up 0.45s ease-out both;
     animation-timeline: view();
     animation-range: entry 0% entry 28%;
   }

@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getAllArticles, getAllProjects } from "@/lib/content";
+import { getCanonInvestigations } from "@/lib/canon";
 import { getEcosystemSnapshot } from "@/lib/ecosystem";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +29,7 @@ export function InquiryPortal() {
   const worlds = ecosystem.worlds.slice(0, 6);
   const pathways = ecosystem.pathways.slice(0, 3);
   const concepts = ecosystem.concepts.slice(0, 8);
+  const canon = getCanonInvestigations(3);
 
   const continuity = investigations
     .flatMap((item) => item.frontmatter.related_investigations)
@@ -197,6 +199,29 @@ export function InquiryPortal() {
             {projects.length} project artifacts are connected; ecosystem overlap now spans
             {" "}{ecosystem.conceptCount} concepts and {ecosystem.worldCount} worlds.
           </div>
+        </div>
+      </SectionContainer>
+
+      <SectionContainer className="below-fold py-14">
+        <div className="space-y-6 rounded-2xl border border-border/70 bg-card/70 p-6 sm:p-8">
+          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Foundational Canon</p>
+          <div className="grid gap-3 md:grid-cols-3">
+            {canon.map((investigation) => (
+              <Link
+                key={investigation.slug}
+                href={`/articles/${investigation.slug}`}
+                className="rounded-xl border border-border/70 bg-background/70 p-4 transition-colors hover:border-primary/35"
+              >
+                <p className="font-heading text-lg leading-snug">{investigation.frontmatter.title}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Canon text · {investigation.frontmatter.reading_time ?? investigation.readingTime}
+                </p>
+              </Link>
+            ))}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Canon texts are investigations that recur across pathways, concepts, and later inquiry.
+          </p>
         </div>
       </SectionContainer>
     </>
