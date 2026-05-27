@@ -49,68 +49,63 @@
 }
 
 :root {
-  --font-sans:
-    "Segoe UI", Roboto, Helvetica, Arial, system-ui, -apple-system, sans-serif;
-  --font-heading:
-    "Segoe UI", Roboto, Helvetica, Arial, system-ui, -apple-system, sans-serif;
-  --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
-  /* Brand palette: Deep Navy #0B0F1A | Primary Blue #3B82F6 | Light Blue #60A5FA | Light Gray #E5E7EB */
-  --background: #ffffff;
-  --foreground: #0b0f1a;
-  --card: #ffffff;
-  --card-foreground: #0b0f1a;
-  --popover: #ffffff;
-  --popover-foreground: #0b0f1a;
-  --primary: #3b82f6;
+  --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
+  --font-heading: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  --background: #f5f1eb;
+  --foreground: #18160f;
+  --card: #f5f1eb;
+  --card-foreground: #18160f;
+  --popover: #f5f1eb;
+  --popover-foreground: #18160f;
+  --primary: #b84a0c;
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0b0f1a;
-  --muted: #f1f5f9;
-  --muted-foreground: #475569;
-  --accent: #dbeafe;
-  --accent-foreground: #0b0f1a;
-  --destructive: #ef4444;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #3b82f6;
-  --chart-1: #3b82f6;
-  --chart-2: #60a5fa;
-  --chart-3: #93c5fd;
-  --chart-4: #bfdbfe;
-  --chart-5: #dbeafe;
+  --secondary: #ede7dc;
+  --secondary-foreground: #18160f;
+  --muted: #ede7dc;
+  --muted-foreground: #4b4540;
+  --accent: #fae8da;
+  --accent-foreground: #18160f;
+  --destructive: #b91c1c;
+  --border: rgba(24, 22, 15, 0.14);
+  --input: rgba(24, 22, 15, 0.2);
+  --ring: #b84a0c;
+  --chart-1: #b84a0c;
+  --chart-2: #d4682f;
+  --chart-3: #e38d60;
+  --chart-4: #f2b99c;
+  --chart-5: #fae8da;
   --radius: 0.85rem;
-  --sidebar: #f8fafc;
-  --sidebar-foreground: #0b0f1a;
-  --sidebar-primary: #3b82f6;
+  --sidebar: #ede7dc;
+  --sidebar-foreground: #18160f;
+  --sidebar-primary: #b84a0c;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #dbeafe;
-  --sidebar-accent-foreground: #0b0f1a;
-  --sidebar-border: #e2e8f0;
-  --sidebar-ring: #3b82f6;
+  --sidebar-accent: #fae8da;
+  --sidebar-accent-foreground: #18160f;
+  --sidebar-border: rgba(24, 22, 15, 0.2);
+  --sidebar-ring: #b84a0c;
 }
 
 .dark {
-  /* Brand palette: Deep Navy #0B0F1A | Light Blue #60A5FA | Light Gray #E5E7EB */
-  --background: #0b0f1a;
-  --foreground: #e5e7eb;
-  --card: #0e1525;
-  --card-foreground: #e5e7eb;
-  --popover: #0e1525;
-  --popover-foreground: #e5e7eb;
-  --primary: #60a5fa;
-  --primary-foreground: #0b0f1a;
-  --secondary: #131b2e;
-  --secondary-foreground: #e5e7eb;
-  --muted: #131b2e;
-  --muted-foreground: #9ca3af;
-  --accent: #1a2744;
-  --accent-foreground: #e5e7eb;
-  --destructive: #f87171;
-  --border: #1e2d47;
-  --input: #1e2d47;
-  --ring: #60a5fa;
+  --background: #110f0c;
+  --foreground: #ede7dc;
+  --card: #1c1916;
+  --card-foreground: #ede7dc;
+  --popover: #1c1916;
+  --popover-foreground: #ede7dc;
+  --primary: #e8712a;
+  --primary-foreground: #110f0c;
+  --secondary: #252118;
+  --secondary-foreground: #ede7dc;
+  --muted: #252118;
+  --muted-foreground: #a09890;
+  --accent: #271806;
+  --accent-foreground: #ede7dc;
+  --destructive: #fb7185;
+  --border: rgba(237, 231, 220, 0.16);
+  --input: rgba(237, 231, 220, 0.24);
+  --ring: #e8712a;
 }
 
 @layer base {
@@ -128,12 +123,10 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-size: 1.0625rem;
-    line-height: 1.72;
+    font-size: 1rem;
+    line-height: 1.65;
     font-weight: 400;
-    background-image:
-      radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--primary) 12%, transparent), transparent 38%),
-      radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 40%);
+    background-image: radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--secondary) 65%, transparent), transparent 42%);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -143,8 +136,8 @@
   h3,
   h4 {
     @apply font-heading text-foreground;
-    letter-spacing: -0.02em;
-    font-weight: 650;
+    letter-spacing: -0.03em;
+    font-weight: 700;
   }
   p,
   li {

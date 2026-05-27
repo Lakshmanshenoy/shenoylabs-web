@@ -63,7 +63,7 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="footer-reveal border-t border-border/80 bg-background/85 backdrop-blur-md dark:bg-[#000515]">
+    <footer className="footer-reveal border-t border-border bg-background/95">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -86,12 +86,12 @@ export function Footer() {
               style={{ height: "auto" }}
             />
           </div>
-          <p className="self-end text-right text-sm text-muted-foreground sm:self-auto">
-            Think. <span className="text-blue-500">Learn.</span> Solve.
+          <p className="self-end text-right text-xs tracking-[0.14em] text-muted-foreground uppercase sm:self-auto">
+            Think · <span className="text-primary">Learn</span> · Solve
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+        <div className="flex flex-wrap gap-4 text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -104,7 +104,7 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+          <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
             {legalLinks.map((link) => (
               <Link
                 key={link.href}
