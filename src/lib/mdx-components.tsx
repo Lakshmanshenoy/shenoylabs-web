@@ -13,6 +13,110 @@ import { cn } from "@/lib/utils";
  */
 export function getMDXComponents(overrides?: MDXComponents): MDXComponents {
   return {
+    ConceptReference: ({
+      title,
+      concepts,
+      children,
+    }: {
+      title: string;
+      concepts?: string[];
+      children?: React.ReactNode;
+    }) => (
+      <aside className="my-8 rounded-xl border border-border/70 bg-secondary/55 p-5">
+        <p className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+          Concept Reference
+        </p>
+        <h3 className="font-heading mt-1 text-xl font-semibold tracking-tight">
+          {title}
+        </h3>
+        {children ? <div className="mt-3 text-sm text-foreground/85">{children}</div> : null}
+        {concepts?.length ? (
+          <ul className="mt-3 flex list-none flex-wrap gap-2 pl-0">
+            {concepts.map((concept) => (
+              <li
+                key={concept}
+                className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs text-muted-foreground"
+              >
+                {concept}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </aside>
+    ),
+    TechnicalDepth: ({
+      title,
+      children,
+    }: {
+      title: string;
+      children?: React.ReactNode;
+    }) => (
+      <section className="my-8 rounded-xl border border-border/70 bg-background p-5 shadow-sm">
+        <p className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+          Technical Depth
+        </p>
+        <h3 className="font-heading mt-1 text-xl font-semibold tracking-tight">
+          {title}
+        </h3>
+        <div className="mt-3 text-sm text-foreground/85">{children}</div>
+      </section>
+    ),
+    ExplorationBridge: ({
+      title,
+      href,
+      children,
+    }: {
+      title: string;
+      href?: string;
+      children?: React.ReactNode;
+    }) => (
+      <div className="my-8 rounded-xl border border-primary/25 bg-primary/5 p-5">
+        <p className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+          Exploration Bridge
+        </p>
+        <h3 className="font-heading mt-1 text-xl font-semibold tracking-tight">
+          {href ? (
+            <Link href={href} className="text-primary underline-offset-4 hover:underline">
+              {title}
+            </Link>
+          ) : (
+            title
+          )}
+        </h3>
+        {children ? <div className="mt-2 text-sm text-foreground/85">{children}</div> : null}
+      </div>
+    ),
+    ResearchCallout: ({
+      title,
+      children,
+    }: {
+      title: string;
+      children?: React.ReactNode;
+    }) => (
+      <div className="my-8 border-l-4 border-primary/70 bg-secondary/35 p-5">
+        <p className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+          Research Callout
+        </p>
+        <h3 className="font-heading mt-1 text-lg font-semibold tracking-tight">
+          {title}
+        </h3>
+        <div className="mt-2 text-sm text-foreground/85">{children}</div>
+      </div>
+    ),
+    ReflectionBreak: ({
+      prompt,
+    }: {
+      prompt: string;
+    }) => (
+      <div className="my-10 rounded-xl border border-border/70 bg-accent/40 px-5 py-6 text-center">
+        <p className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+          Reflection Break
+        </p>
+        <p className="font-heading mx-auto mt-2 max-w-2xl text-xl leading-relaxed text-foreground/90">
+          {prompt}
+        </p>
+      </div>
+    ),
     h1: ({ className, ...props }) => (
       <h1
         className={cn(

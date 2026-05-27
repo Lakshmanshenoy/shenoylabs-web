@@ -244,6 +244,78 @@ export default async function ArticleDetailPage({
 
       <Separator className="my-8" />
 
+      {(fm.investigation_map?.length || fm.research_worlds?.length || fm.pathways?.length || fm.concepts?.length) && (
+        <section className="space-y-6 rounded-2xl border border-border/70 bg-secondary/40 p-6">
+          <div>
+            <p className="text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+              Cognitive Orientation
+            </p>
+            <h2 className="font-heading mt-1 text-2xl font-semibold tracking-tight">
+              Investigation map
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {fm.summary ?? fm.excerpt}
+            </p>
+          </div>
+
+          {fm.investigation_map?.length ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {fm.investigation_map.map((node) => (
+                <div key={node.label} className="rounded-lg border border-border/70 bg-background px-4 py-3">
+                  <p className="text-sm font-medium text-foreground">{node.label}</p>
+                  {node.mode ? (
+                    <p className="mt-1 text-xs text-muted-foreground capitalize">{node.mode} mode</p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="grid gap-3 md:grid-cols-3">
+            {fm.research_worlds?.length ? (
+              <div>
+                <p className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+                  Research Worlds
+                </p>
+                <ul className="mt-2 space-y-1 text-sm text-foreground/85">
+                  {fm.research_worlds.map((world) => (
+                    <li key={world}>{world}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {fm.pathways?.length ? (
+              <div>
+                <p className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+                  Pathways
+                </p>
+                <ul className="mt-2 space-y-1 text-sm text-foreground/85">
+                  {fm.pathways.map((pathway) => (
+                    <li key={pathway}>{pathway}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {fm.concepts?.length ? (
+              <div>
+                <p className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+                  Concepts
+                </p>
+                <ul className="mt-2 space-y-1 text-sm text-foreground/85">
+                  {fm.concepts.map((concept) => (
+                    <li key={concept}>{concept}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      )}
+
+      <Separator className="my-8" />
+
       {/* MDX content */}
       <article className="prose-custom">{content}</article>
 
@@ -275,6 +347,46 @@ export default async function ArticleDetailPage({
           </time>
         </p>
       </footer>
+
+      <Separator className="my-8" />
+
+      {(fm.temporal_context || fm.re_readability_note || fm.unresolved_questions?.length || fm.continuity_notes?.length) && (
+        <section className="space-y-4 rounded-2xl border border-border/70 bg-accent/35 p-6">
+          <h2 className="font-heading text-xl font-semibold tracking-tight">
+            Reflective expansion
+          </h2>
+          {fm.temporal_context ? (
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">Temporal context:</span> {fm.temporal_context}
+            </p>
+          ) : null}
+          {fm.re_readability_note ? (
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">Re-readability:</span> {fm.re_readability_note}
+            </p>
+          ) : null}
+          {fm.continuity_notes?.length ? (
+            <div>
+              <p className="text-sm font-medium text-foreground">Continuity notes</p>
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                {fm.continuity_notes.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {fm.unresolved_questions?.length ? (
+            <div>
+              <p className="text-sm font-medium text-foreground">Open questions</p>
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                {fm.unresolved_questions.map((question) => (
+                  <li key={question}>{question}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </section>
+      )}
 
       <Separator className="my-8" />
 
