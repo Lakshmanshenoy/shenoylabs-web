@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Clock3,
   Copy,
@@ -9,7 +9,6 @@ import {
   ListTree,
   MessageCircle,
   Send,
-  Share2,
   X,
 } from "lucide-react";
 
@@ -20,6 +19,60 @@ export type ArticleTocItem = {
   title: string;
   level: 2 | 3;
 };
+
+const SCROLL_PANE_ID = "reader-scroll-pane";
+
+type ScrollState = {
+  progress: number;
+  thresholdCurrent: number;
+  thresholdUpcoming: number;
+};
+
+function getScrollPane(): HTMLElement | null {
+  return document.getElementById(SCROLL_PANE_ID);
+}
+
+function isPaneScrollable(pane: HTMLElement | null): pane is HTMLElement {
+  return Boolean(pane && pane.scrollHeight - pane.clientHeight > 4);
+}
+
+function getScrollState(): ScrollState {
+  const pane = getScrollPane();
+  if (isPaneScrollable(pane)) {
+    const max = pane.scrollHeight - pane.clientHeight;
+    const progress = max > 0 ? Math.min(100, Math.round((pane.scrollTop / max) * 100)) : 0;
+    const paneTop = pane.getBoundingClientRect().top;
+    return {
+      progress,
+      thresholdCurrent: paneTop + 120,
+      thresholdUpcoming: paneTop + 320,
+    };
+  }
+
+  const max = document.documentElement.scrollHeight - window.innerHeight;
+  const progress = max > 0 ? Math.min(100, Math.round((window.scrollY / max) * 100)) : 0;
+  return {
+    progress,
+    thresholdCurrent: 120,
+    thresholdUpcoming: 320,
+  };
+}
+
+function bindScrollListeners(onScroll: () => void) {
+  const pane = getScrollPane();
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
+  if (pane) {
+    pane.addEventListener("scroll", onScroll, { passive: true });
+  }
+  return () => {
+    window.removeEventListener("scroll", onScroll);
+    window.removeEventListener("resize", onScroll);
+    if (pane) {
+      pane.removeEventListener("scroll", onScroll);
+    }
+  };
+}
 
 // ─── Left TOC Sidebar ─────────────────────────────────────────────────────────
 // Sticky left column navigation. Tracks active section on scroll and shows
@@ -32,8 +85,8 @@ export function ArticleTocSidebar({ toc }: { toc: ArticleTocItem[] }) {
 
   useEffect(() => {
     const onScroll = () => {
-      const h = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(h > 0 ? Math.min(100, Math.round((window.scrollY / h) * 100)) : 0);
+      const { progress, thresholdCurrent, thresholdUpcoming } = getScrollState();
+      setProgress(progress);
 
       let current: string | null = null;
       let next: string | null = null;
@@ -42,9 +95,9 @@ export function ArticleTocSidebar({ toc }: { toc: ArticleTocItem[] }) {
         const el = document.getElementById(toc[i].id);
         if (!el) continue;
         const top = el.getBoundingClientRect().top;
-        if (top < 150) {
+        if (top < thresholdCurrent) {
           current = toc[i].id;
-        } else if (!next && top < 320) {
+        } else if (!next && top < thresholdUpcoming) {
           next = toc[i].id;
         }
       }
@@ -53,9 +106,8 @@ export function ArticleTocSidebar({ toc }: { toc: ArticleTocItem[] }) {
       setApproaching(next);
     };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
+    return bindScrollListeners(onScroll);
   }, [toc]);
 
   const jumpTo = (id: string) => {
@@ -286,29 +338,29 @@ export function ArticleReaderEnhancements({
   const [progress, setProgress] = useState(0);
   const [quote, setQuote] = useState<QuoteState>(null);
   const [activeId, setActiveId] = useState<string | null>(toc[0]?.id ?? null);
-  const dismissRef = useRef<EventListener | null>(null);
 
   // Track scroll progress
   useEffect(() => {
     const onScroll = () => {
-      const h = document.documentElement.scrollHeight - window.innerHeight;
-      const pct = h > 0 ? Math.min(100, Math.round((window.scrollY / h) * 100)) : 0;
+      const { progress: pct, thresholdCurrent } = getScrollState();
       setProgress(pct);
+
+      const minutesLeft = Math.max(1, Math.ceil((readingTimeMinutes * (100 - pct)) / 100));
       const el = document.getElementById("reader-progress-text");
-      if (el) el.textContent = "Reading mode";
+      if (el) el.textContent = `${pct}% · ${minutesLeft}m left`;
 
       let current: string | null = null;
       for (const item of toc) {
         const section = document.getElementById(item.id);
         if (!section) continue;
-        if (section.getBoundingClientRect().top < 150) current = item.id;
+        if (section.getBoundingClientRect().top < thresholdCurrent) current = item.id;
       }
       if (current) setActiveId(current);
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
+
     onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [toc]);
+    return bindScrollListeners(onScroll);
+  }, [toc, readingTimeMinutes]);
 
   // Long-session optimization: loosen typography after 90 s of dwell
   useEffect(() => {
@@ -353,12 +405,11 @@ export function ArticleReaderEnhancements({
   // Dismiss popover on Escape or outside click
   useEffect(() => {
     if (!quote) return;
-    const handler: EventListener = (e) => {
-      if ((e as KeyboardEvent).key === "Escape") setQuote(null);
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setQuote(null);
     };
-    document.addEventListener("keydown", handler);
-    dismissRef.current = handler;
-    return () => document.removeEventListener("keydown", handler);
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
   }, [quote]);
 
   const minutesLeft = Math.max(1, Math.ceil((readingTimeMinutes * (100 - progress)) / 100));

@@ -247,7 +247,7 @@ export default async function ArticleDetailPage({
         <ArticleTocSidebar toc={toc} />
 
         {/* Primary content column */}
-        <div className="min-w-0 xl:h-full xl:overflow-y-auto xl:pr-2">
+        <div id="reader-scroll-pane" className="min-w-0 xl:h-full xl:overflow-y-auto xl:pr-2">
           <header className="space-y-5">
             {fm.coverImage && (
               <div className="overflow-hidden rounded-xl border border-border/70">
