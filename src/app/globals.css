@@ -50,7 +50,7 @@
 
 :root {
   --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
-  --font-heading: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-heading: "DM Sans", system-ui, -apple-system, sans-serif;
   --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
   --background: #f5f1eb;
@@ -336,5 +336,67 @@
   }
   & strong {
     @apply font-semibold text-foreground;
+  }
+}
+
+/* ── Article prose reading enhancements ──────────────────────────────────── */
+
+/* Warm brand-tinted text selection inside articles */
+#article-body ::selection {
+  background-color: color-mix(in srgb, var(--primary) 18%, transparent);
+  color: inherit;
+}
+
+/* Baseline article prose — slightly more generous spacing than .prose-custom
+   alone to aid sustained reading comfort */
+.article-prose {
+  & p {
+    line-height: 1.82;
+    margin-bottom: 1.35rem;
+    transition: line-height 1.2s ease, margin-bottom 1.2s ease;
+  }
+  & h2 {
+    margin-top: 2.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    transition: margin-top 1.2s ease;
+  }
+  & h3 {
+    margin-top: 2rem;
+    margin-bottom: 0.6rem;
+    transition: margin-top 1.2s ease;
+  }
+  & li {
+    line-height: 1.75;
+    margin-bottom: 0.3rem;
+    transition: line-height 1.2s ease;
+  }
+  & blockquote {
+    border-left-width: 3px;
+    padding-left: 1.25rem;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    margin-top: 1.75rem;
+    margin-bottom: 1.75rem;
+  }
+}
+
+/* Long-session mode — engaged after 90 s on the page via JS.
+   Typography breathes more to ease eye strain. Transition is slow and calm. */
+#article-body[data-long-session="true"].article-prose {
+  & p {
+    line-height: 1.92;
+    margin-bottom: 1.6rem;
+  }
+  & h2 {
+    margin-top: 3.25rem;
+  }
+  & h3 {
+    margin-top: 2.4rem;
+  }
+  & li {
+    line-height: 1.85;
+    margin-bottom: 0.45rem;
   }
 }

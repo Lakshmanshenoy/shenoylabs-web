@@ -7,7 +7,11 @@ import fs from "fs";
 import path from "path";
 import { Clock3Icon, Link2Icon, Share2Icon } from "lucide-react";
 
-import { ArticleReaderEnhancements, type ArticleTocItem } from "@/components/articles/article-reader-enhancements";
+import {
+  ArticleReaderEnhancements,
+  ArticleTocSidebar,
+  type ArticleTocItem,
+} from "@/components/articles/article-reader-enhancements";
 import { InteractionCtaPanel } from "@/components/engagement/interaction-cta-panel";
 import { SectionContainer } from "@/components/shared/section-container";
 import { buttonVariants } from "@/components/ui/button";
@@ -191,6 +195,7 @@ export default async function ArticleDetailPage({
 
   return (
     <SectionContainer>
+      {/* Global reader enhancements: top progress bar, selection popover, long-session watcher */}
       <ArticleReaderEnhancements toc={toc} />
 
       {/* JSON-LD */}
@@ -207,8 +212,9 @@ export default async function ArticleDetailPage({
         }}
       />
 
-      <div className="mb-10 border-b border-border py-2">
-        <div className="mx-auto flex w-full max-w-3xl items-center justify-between">
+      {/* Top reader bar — full width above the layout grid */}
+      <div className="mb-8 border-b border-border pb-3">
+        <div className="flex items-center justify-between">
           <Link
             href="/articles"
             className={cn(
@@ -218,157 +224,205 @@ export default async function ArticleDetailPage({
           >
             ← All Articles
           </Link>
-          <p id="reader-progress-text" className="text-[11px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">
+          <p
+            id="reader-progress-text"
+            className="font-mono text-[11px] text-muted-foreground/60"
+          >
             0% read
           </p>
         </div>
       </div>
 
-      <header className="mx-auto w-full max-w-3xl space-y-5">
-        {fm.coverImage && (
-          <div className="overflow-hidden rounded-xl border border-border/70">
-            {svgCoverHtml ? (
-              <div className="w-full" dangerouslySetInnerHTML={{ __html: svgCoverHtml }} />
-            ) : fm.coverImage.endsWith?.(".svg") ? (
-              // Use a plain <img> for SVGs to avoid the Next Image optimizer issues
-              // with SVG content.
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={fm.coverImage}
-                alt={fm.coverAlt ?? `${fm.title} cover image`}
-                className="h-auto w-full"
-              />
-            ) : (
-              <Image
-                src={fm.coverImage}
-                alt={fm.coverAlt ?? `${fm.title} cover image`}
-                width={1200}
-                height={675}
-                className="h-auto w-full"
-                priority
-              />
+      {/* Two-column layout: sticky left TOC + content */}
+      <div className="xl:grid xl:grid-cols-[240px_1fr] xl:items-start xl:gap-10 2xl:grid-cols-[260px_1fr] 2xl:gap-14">
+        {/* Left TOC — visible at xl+ only, rendered by the ArticleTocSidebar client component */}
+        <ArticleTocSidebar toc={toc} />
+
+        {/* Primary content column */}
+        <div className="min-w-0">
+          <header className="space-y-5">
+            {fm.coverImage && (
+              <div className="overflow-hidden rounded-xl border border-border/70">
+                {svgCoverHtml ? (
+                  <div className="w-full" dangerouslySetInnerHTML={{ __html: svgCoverHtml }} />
+                ) : fm.coverImage.endsWith?.(".svg") ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={fm.coverImage}
+                    alt={fm.coverAlt ?? `${fm.title} cover image`}
+                    className="h-auto w-full"
+                  />
+                ) : (
+                  <Image
+                    src={fm.coverImage}
+                    alt={fm.coverAlt ?? `${fm.title} cover image`}
+                    width={1200}
+                    height={675}
+                    className="h-auto w-full"
+                    priority
+                  />
+                )}
+              </div>
             )}
-          </div>
-        )}
-        <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.08em] text-primary uppercase">
-          <span className="inline-block size-1.5 rounded-full bg-primary" />
-          {fm.primaryCategory}
-        </p>
-        <h1 className="font-heading text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl">
-          {fm.title}
-        </h1>
-        <p className="border-l-4 border-primary pl-5 text-xl leading-relaxed text-muted-foreground italic">
-          {fm.excerpt}
-        </p>
-        <div className="flex items-center gap-3 border-y border-border py-4">
-          <div className="inline-flex size-10 items-center justify-center rounded-full bg-primary/10 font-heading text-sm font-bold text-primary">
-            LS
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-foreground">Lakshman Shenoy</p>
-            <p className="text-xs text-muted-foreground">{new Date(createdDate).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}</p>
-          </div>
-          <div className="ml-auto flex flex-wrap items-center gap-4 text-[11px] font-semibold tracking-[0.05em] text-muted-foreground uppercase">
-            <span className="inline-flex items-center gap-1.5"><Clock3Icon className="size-3.5" />{readingTime}</span>
-            <span className="inline-flex items-center gap-1.5"><Link2Icon className="size-3.5" />Updated {new Date(lastUpdated).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}</span>
-          </div>
-        </div>
-      </header>
 
-      <div className="mx-auto mt-10 w-full max-w-3xl">
-        <article className="prose-custom article-prose">{content}</article>
+            <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.08em] text-primary uppercase">
+              <span className="inline-block size-1.5 rounded-full bg-primary" />
+              {fm.primaryCategory}
+            </p>
+
+            <h1 className="font-heading text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl">
+              {fm.title}
+            </h1>
+
+            <p className="border-l-4 border-primary pl-5 text-xl leading-relaxed text-muted-foreground italic">
+              {fm.excerpt}
+            </p>
+
+            <div className="flex items-center gap-3 border-y border-border py-4">
+              <div className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 font-heading text-sm font-bold text-primary">
+                LS
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Lakshman Shenoy</p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(createdDate).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
+              <div className="ml-auto flex flex-wrap items-center gap-4 text-[11px] font-semibold tracking-[0.05em] text-muted-foreground uppercase">
+                <span className="inline-flex items-center gap-1.5">
+                  <Clock3Icon className="size-3.5" />
+                  {readingTime}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Link2Icon className="size-3.5" />
+                  Updated{" "}
+                  {new Date(lastUpdated).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
+            </div>
+          </header>
+
+          {/* Article body — id used by selection tracking and long-session opt */}
+          <article id="article-body" className="prose-custom article-prose mt-10">
+            {content}
+          </article>
+
+          {/* Post-article sections */}
+          <section className="mt-14 space-y-8">
+            <div className="h-[3px] w-16 rounded-full bg-foreground/20" />
+
+            {/* Share */}
+            <div className="rounded-xl border border-border bg-secondary/30 p-6">
+              <h2 className="font-heading text-xl font-semibold tracking-tight">
+                Share this article
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Select any passage while reading to share a specific quote.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href="/articles"
+                  className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                >
+                  <Link2Icon className="size-3.5" />
+                  Explore More
+                </Link>
+                <Link
+                  href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(`https://shenoylabs.com/articles/${slug}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                >
+                  <Share2Icon className="size-3.5" />
+                  Share on X
+                </Link>
+              </div>
+            </div>
+
+            {/* Continue reading */}
+            {recommendedReads.length > 0 && (
+              <div className="space-y-3">
+                <h2 className="font-heading text-2xl font-semibold tracking-tight">
+                  Continue Reading
+                </h2>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {recommendedReads.map((article) => (
+                    <Link
+                      key={article.slug}
+                      href={`/articles/${article.slug}`}
+                      className="group rounded-xl border border-border px-4 py-3.5 transition-all hover:border-primary/40 hover:bg-accent/30"
+                    >
+                      <p className="text-[10px] font-semibold tracking-[0.1em] text-primary uppercase">
+                        {article.frontmatter.primaryCategory}
+                      </p>
+                      <p className="mt-1.5 font-heading text-sm font-semibold leading-snug text-foreground transition-colors group-hover:text-primary">
+                        {article.frontmatter.title}
+                      </p>
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        {article.readingTime}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Separator />
+
+            {/* Related articles */}
+            {relatedArticles.length > 0 && (
+              <section className="space-y-3">
+                <h3 className="font-heading text-lg font-semibold tracking-tight">
+                  Related articles
+                </h3>
+                <div className="grid gap-2">
+                  {relatedArticles.map((article) => (
+                    <Link
+                      key={article.slug}
+                      href={`/articles/${article.slug}`}
+                      className="rounded-lg border border-border/70 px-3 py-2 text-sm transition-colors hover:border-primary/30 hover:text-primary"
+                    >
+                      {article.frontmatter.title}
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Related projects */}
+            {relatedProjects.length > 0 && (
+              <section className="space-y-3">
+                <h3 className="font-heading text-lg font-semibold tracking-tight">
+                  Related projects
+                </h3>
+                <div className="grid gap-2">
+                  {relatedProjects.map((project) => (
+                    <Link
+                      key={project.slug}
+                      href={`/projects/${project.slug}`}
+                      className="rounded-lg border border-border/70 px-3 py-2 text-sm transition-colors hover:border-primary/30 hover:text-primary"
+                    >
+                      {project.frontmatter.title}
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <div>
+              <InteractionCtaPanel />
+            </div>
+          </section>
+        </div>
       </div>
-
-      <section className="mx-auto mt-14 w-full max-w-3xl space-y-5">
-        <div className="h-[3px] w-20 bg-foreground" />
-
-        <div className="rounded-lg border border-border bg-secondary/35 p-6">
-          <h2 className="font-heading text-2xl font-semibold tracking-tight">Share this article</h2>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Link
-              href="/articles"
-              className="inline-flex items-center gap-2 rounded-sm border border-border px-3 py-2 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase transition-colors hover:bg-secondary"
-            >
-              <Link2Icon className="size-3.5" />
-              Explore More
-            </Link>
-            <Link
-              href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(`https://shenoylabs.com/articles/${slug}`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-sm border border-border px-3 py-2 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase transition-colors hover:bg-secondary"
-            >
-              <Share2Icon className="size-3.5" />
-              Share on X
-            </Link>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <h2 className="font-heading text-2xl font-semibold tracking-tight">Continue Reading</h2>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {recommendedReads.map((article) => (
-              <Link
-                key={article.slug}
-                href={`/articles/${article.slug}`}
-                className="rounded-md border border-border px-4 py-3 transition-colors hover:border-primary hover:bg-accent/40"
-              >
-                <p className="text-[10px] font-semibold tracking-[0.1em] text-primary uppercase">
-                  {article.frontmatter.primaryCategory}
-                </p>
-                <p className="mt-1 font-heading text-base leading-tight text-foreground">
-                  {article.frontmatter.title}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">{article.readingTime}</p>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <Separator className="my-6" />
-
-        <section className="space-y-3">
-          <h3 className="font-heading text-xl font-semibold tracking-tight">Related articles</h3>
-          <div className="grid gap-2">
-            {relatedArticles.map((article) => (
-              <Link
-                key={article.slug}
-                href={`/articles/${article.slug}`}
-                className="rounded-lg border border-border/70 px-3 py-2 text-sm transition-colors hover:border-primary/30 hover:text-primary"
-              >
-                {article.frontmatter.title}
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="space-y-3">
-          <h3 className="font-heading text-xl font-semibold tracking-tight">Related projects</h3>
-          <div className="grid gap-2">
-            {relatedProjects.map((project) => (
-              <Link
-                key={project.slug}
-                href={`/projects/${project.slug}`}
-                className="rounded-lg border border-border/70 px-3 py-2 text-sm transition-colors hover:border-primary/30 hover:text-primary"
-              >
-                {project.frontmatter.title}
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <div className="mx-auto max-w-2xl">
-          <InteractionCtaPanel />
-        </div>
-      </section>
     </SectionContainer>
   );
 }
