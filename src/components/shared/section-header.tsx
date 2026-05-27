@@ -17,13 +17,13 @@ export function SectionHeader({
   className,
 }: SectionHeaderProps) {
   return (
-    <div className={cn("space-y-3", className)}>
-      {badge ? <Badge variant="outline">{badge}</Badge> : null}
-      <h2 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
+    <div className={cn("space-y-4", className)}>
+      {badge ? <Badge variant="outline" className="text-[10px] tracking-[0.16em] uppercase">{badge}</Badge> : null}
+      <h2 className="font-heading text-3xl font-medium tracking-tight sm:text-4xl">
         {title}
       </h2>
       {description ? (
-        <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
+        <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">
           {description}
         </p>
       ) : null}

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Source_Serif_4, Public_Sans } from "next/font/google";
 import Script from "next/script";
 
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
@@ -9,13 +9,13 @@ import { siteConfig } from "@/lib/site";
 
 import "./globals.css";
 
-const inter = Inter({
+const publicSans = Public_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
 });
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const sourceSerif4 = Source_Serif_4({
   subsets: ["latin"],
   variable: "--font-heading",
   display: "swap",
@@ -70,7 +70,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`h-full antialiased ${inter.variable} ${plusJakartaSans.variable}`}
+      className={`h-full antialiased ${publicSans.variable} ${sourceSerif4.variable}`}
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >

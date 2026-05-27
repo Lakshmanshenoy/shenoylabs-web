@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 
 import { SectionContainer } from "@/components/shared/section-container";
 import { SectionHeader } from "@/components/shared/section-header";
@@ -65,15 +64,15 @@ export default function ProjectsPage() {
 
       <SectionHeader
         badge="Projects"
-        title="Inquiry manifestations"
-        description="Projects as technical investigations emerging from worlds, concepts, and long-form inquiry."
+        title="Technical Artifacts"
+        description="Projects framed as artifacts of inquiry: systems explored, decisions tested, and ideas made concrete."
       />
 
       <div className="mt-6 rounded-xl border border-border/70 bg-card/70 p-4 text-sm text-muted-foreground">
         {projects.length} projects currently connect to {concepts.length} ecosystem concepts.
       </div>
 
-      <div className="reveal-group mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="reveal-group mt-10 grid gap-4">
         {projects.map((project) => {
           const status =
             statusConfig[project.frontmatter.status] ??
@@ -84,21 +83,7 @@ export default function ProjectsPage() {
               href={`/projects/${project.slug}`}
               className="group block"
             >
-              <Card className="soft-lift h-full border border-border/80 bg-card/95 transition-colors group-hover:border-primary/30">
-                {project.frontmatter.coverImage && (
-                  <div className="overflow-hidden rounded-t-xl border-b border-border/70">
-                    <Image
-                      src={project.frontmatter.coverImage}
-                      alt={
-                        project.frontmatter.coverAlt ??
-                        `${project.frontmatter.title} thumbnail`
-                      }
-                      width={1200}
-                      height={675}
-                      className="h-auto w-full"
-                    />
-                  </div>
-                )}
+              <Card className="soft-lift h-full border border-border/65 bg-card/75 transition-colors group-hover:border-primary/25">
                 <CardHeader className="pb-2">
                   <div className="mb-2 flex items-center gap-2">
                     <span

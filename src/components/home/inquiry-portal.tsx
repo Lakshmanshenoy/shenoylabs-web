@@ -38,7 +38,7 @@ export function InquiryPortal() {
 
   return (
     <>
-      <section className="relative overflow-hidden border-b border-border/60">
+      <section className="relative overflow-hidden border-b border-border/50">
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
           <div className="blob-drift absolute -left-16 top-12 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
           <div className="blob-drift-2 absolute -right-12 top-28 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
@@ -46,14 +46,14 @@ export function InquiryPortal() {
         <SectionContainer className="py-24 sm:py-30">
           <div className="reveal-group mx-auto max-w-4xl space-y-8 text-center">
             <Badge variant="outline" className="mx-auto border-border/80 bg-card/70">
-              Intellectual Portal
+              Intellectual Environment
             </Badge>
-            <h1 className="font-heading text-4xl leading-tight tracking-tight sm:text-6xl">
-              Inquiry-first publishing for systems, infrastructure, and technical depth.
+            <h1 className="font-heading text-4xl leading-[1.18] tracking-tight sm:text-6xl">
+              A calm environment for inquiry, reflection, and long-form systems thinking.
             </h1>
             <p className="mx-auto max-w-3xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-              Shenoy Labs is evolving into an interconnected research environment: investigations,
-              conceptual pathways, and technical artifacts composed for calm reading and deep exploration.
+              Shenoy Labs organizes investigations, concepts, pathways, and technical artifacts
+              into a semantically connected landscape designed for deep reading rather than rapid consumption.
             </p>
             <p className="mx-auto max-w-2xl text-sm leading-relaxed text-muted-foreground">
               {ecosystem.investigationCount} investigations, {ecosystem.worldCount} research worlds,
@@ -80,7 +80,7 @@ export function InquiryPortal() {
           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Research Worlds</p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {worlds.map((world) => (
-              <Card key={world.slug} className="scroll-reveal border-border/70 bg-card/85">
+              <Card key={world.slug} className="scroll-reveal border-border/60 bg-card/70">
                 <CardHeader>
                   <CardTitle className="text-lg">{world.label}</CardTitle>
                   <CardDescription>
@@ -105,11 +105,11 @@ export function InquiryPortal() {
 
       <SectionContainer className="below-fold bg-secondary/30 py-14">
         <div className="space-y-6">
-          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Curated Investigations</p>
-          <div className="grid gap-4 lg:grid-cols-3">
+          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Featured Investigations</p>
+          <div className="grid gap-4 lg:grid-cols-2">
             {fallbackFeatured.map((investigation) => (
               <Link key={investigation.slug} href={`/articles/${investigation.slug}`} className="group block">
-                <Card className="soft-lift h-full border-border/70 bg-card/90 transition-colors group-hover:border-primary/30">
+                <Card className="soft-lift h-full border-border/60 bg-card/75 transition-colors group-hover:border-primary/25">
                   <CardHeader>
                     <CardTitle className="text-lg">{investigation.frontmatter.title}</CardTitle>
                     <CardDescription className="line-clamp-3">
@@ -135,7 +135,7 @@ export function InquiryPortal() {
       <SectionContainer className="below-fold py-14">
         <div className="space-y-6 rounded-2xl border border-border/70 bg-card/70 p-6 sm:p-8">
           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Guided Pathways</p>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             {pathways.map((pathway) => (
               <div key={pathway.slug} className="rounded-xl border border-border/70 bg-background/70 p-4">
                 <h3 className="font-heading text-lg">{pathway.label}</h3>
@@ -159,12 +159,12 @@ export function InquiryPortal() {
       <SectionContainer className="below-fold py-14">
         <div className="space-y-6">
           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Concept Continuity</p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             {concepts.map((concept) => (
               <Link
                 key={concept.slug}
                 href={`/search?q=${encodeURIComponent(concept.label)}`}
-                className="rounded-xl border border-border/70 bg-card/85 p-4 transition-colors hover:border-primary/40"
+                className="rounded-xl border border-border/60 bg-card/70 p-4 transition-colors hover:border-primary/30"
               >
                 <p className="font-heading text-base">{concept.label}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
