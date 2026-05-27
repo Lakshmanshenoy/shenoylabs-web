@@ -41,6 +41,84 @@ export function getCanonInvestigations(limit = 3) {
     .map((item) => item.investigation);
 }
 
+export function getCanonResurfacing(limit = 4) {
+  const canon = getCanonInvestigations(Math.max(limit * 2, 6));
+  const investigations = getAllArticles();
+
+  return canon
+    .map((investigation) => {
+      const inboundReferences = investigations.filter((candidate) =>
+        [
+          ...candidate.frontmatter.related_investigations,
+          ...candidate.frontmatter.temporal_callbacks,
+        ].includes(investigation.slug),
+      ).length;
+
+      const recurringConcepts = Array.from(
+        new Set(investigation.frontmatter.concepts),
+      ).slice(0, 3);
+
+      return {
+        investigation,
+        inboundReferences,
+        recurringConcepts,
+      };
+    })
+    .sort((a, b) => b.inboundReferences - a.inboundReferences)
+    .slice(0, limit);
+}
+
+export function getHistoricalThreads(limit = 4) {
+  const investigations = getAllArticles();
+  const threadMap = new Map<
+    string,
+    {
+      label: string;
+      investigations: string[];
+      firstSeen: string;
+      lastSeen: string;
+    }
+  >();
+
+  for (const investigation of investigations) {
+    const date = investigation.frontmatter.published_at ?? investigation.frontmatter.date;
+    for (const concept of investigation.frontmatter.concepts) {
+      const key = concept.toLowerCase();
+      const existing = threadMap.get(key);
+
+      if (!existing) {
+        threadMap.set(key, {
+          label: concept,
+          investigations: [investigation.slug],
+          firstSeen: date,
+          lastSeen: date,
+        });
+        continue;
+      }
+
+      existing.investigations.push(investigation.slug);
+      if (new Date(date).getTime() < new Date(existing.firstSeen).getTime()) {
+        existing.firstSeen = date;
+      }
+      if (new Date(date).getTime() > new Date(existing.lastSeen).getTime()) {
+        existing.lastSeen = date;
+      }
+    }
+  }
+
+  return Array.from(threadMap.values())
+    .filter((thread) => new Set(thread.investigations).size > 1)
+    .sort(
+      (a, b) =>
+        new Set(b.investigations).size - new Set(a.investigations).size,
+    )
+    .slice(0, limit)
+    .map((thread) => ({
+      ...thread,
+      investigations: Array.from(new Set(thread.investigations)),
+    }));
+}
+
 export function getTemporalContinuity(slug: string) {
   const investigations = getAllArticles();
   const current = investigations.find((item) => item.slug === slug);

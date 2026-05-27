@@ -42,6 +42,7 @@ export function getRecommendedNextReads(currentSlug: string, limit = 3) {
         score: explicitBoost + pathwayBoost * 3 + semanticBoost * 2,
       };
     })
+    .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((item) => item.candidate);
@@ -73,7 +74,7 @@ export function getRelatedArticles(currentSlug: string, limit = 3) {
         score: explicitBoost + temporalBoost + categoryBoost + tagScore * 2,
       };
     })
-    .filter((item) => item.score > 0)
+    .filter((item) => item.score > 1)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((item) => item.candidate);
@@ -91,7 +92,7 @@ export function getRelatedProjectsForArticle(articleSlug: string, limit = 3) {
         overlapScore(terms, project.frontmatter.tags) +
         (explicit.has(project.slug) ? 4 : 0),
     }))
-    .filter((item) => item.score > 0)
+    .filter((item) => item.score > 1)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((item) => item.project);

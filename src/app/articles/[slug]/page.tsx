@@ -10,7 +10,11 @@ import { SectionContainer } from "@/components/shared/section-container";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { getTemporalContinuity } from "@/lib/canon";
+import {
+  getCanonResurfacing,
+  getHistoricalThreads,
+  getTemporalContinuity,
+} from "@/lib/canon";
 import { getAllArticles, getArticle } from "@/lib/content";
 import { getInvestigationContinuity } from "@/lib/ecosystem";
 import { getMDXComponents } from "@/lib/mdx-components";
@@ -179,6 +183,8 @@ export default async function ArticleDetailPage({
   const headings = parseHeadings(source);
   const continuity = getInvestigationContinuity(slug);
   const temporal = getTemporalContinuity(slug);
+  const canon = getCanonResurfacing(3);
+  const historicalThreads = getHistoricalThreads(4);
 
   const { content } = await compileMDX({
     source,
@@ -409,21 +415,23 @@ export default async function ArticleDetailPage({
 
       <section className="space-y-3">
         <h2 className="font-heading text-xl font-semibold tracking-tight">Expansion layer</h2>
-        <div className="grid gap-3 md:grid-cols-3">
-          {continuity.concepts.map((concept) => (
-            <Link
-              key={concept.slug}
-              id={`concept-${concept.slug}`}
-              href={`/search?q=${encodeURIComponent(concept.label)}`}
-              className="rounded-xl border border-border/70 bg-card/75 p-4 transition-colors hover:border-primary/35"
-            >
-              <p className="font-heading text-base">{concept.label}</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {concept.investigations.length} investigations · {concept.projects.length} projects
-              </p>
-            </Link>
-          ))}
-        </div>
+        {continuity.concepts.length > 0 && (
+          <div className="grid gap-3 md:grid-cols-3">
+            {continuity.concepts.map((concept) => (
+              <Link
+                key={concept.slug}
+                id={`concept-${concept.slug}`}
+                href={`/search?q=${encodeURIComponent(concept.label)}`}
+                className="rounded-xl border border-border/70 bg-card/75 p-4 transition-colors hover:border-primary/35"
+              >
+                <p className="font-heading text-base">{concept.label}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {concept.investigations.length} investigations · {concept.projects.length} projects
+                </p>
+              </Link>
+            ))}
+          </div>
+        )}
         {continuity.adjacentWorlds.length > 0 ? (
           <div className="rounded-xl border border-border/70 bg-card/65 p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Unresolved tensions</p>
@@ -495,6 +503,21 @@ export default async function ArticleDetailPage({
             </Link>
           ))}
         </div>
+        {historicalThreads.length > 0 && (
+          <div className="rounded-xl border border-border/70 bg-card/70 p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Ecosystem memory</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              {historicalThreads.slice(0, 4).map((thread) => (
+                <div key={thread.label} className="rounded-lg border border-border/60 bg-background/60 px-3 py-2">
+                  <p className="text-sm font-medium">{thread.label}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {thread.firstSeen.slice(0, 4)} → {thread.lastSeen.slice(0, 4)} · {thread.investigations.length} investigations
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       <Separator className="my-10" />
@@ -511,6 +534,26 @@ export default async function ArticleDetailPage({
               {article.frontmatter.title}
             </Link>
           ))}
+        </div>
+      </section>
+
+      <Separator className="my-10" />
+
+      <section className="space-y-3">
+        <h2 className="font-heading text-xl font-semibold tracking-tight">Canon preservation</h2>
+        <div className="grid gap-2">
+          {canon
+            .filter((entry) => entry.investigation.slug !== slug)
+            .slice(0, 3)
+            .map((entry) => (
+              <Link
+                key={entry.investigation.slug}
+                href={`/articles/${entry.investigation.slug}`}
+                className="rounded-lg border border-border/70 px-3 py-2 text-sm transition-colors hover:border-primary/30 hover:text-primary"
+              >
+                {entry.investigation.frontmatter.title}
+              </Link>
+            ))}
         </div>
       </section>
 

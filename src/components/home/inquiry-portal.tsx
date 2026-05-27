@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getAllArticles, getAllProjects } from "@/lib/content";
-import { getCanonInvestigations } from "@/lib/canon";
+import { getCanonResurfacing, getHistoricalThreads } from "@/lib/canon";
 import { getEcosystemSnapshot } from "@/lib/ecosystem";
 import { cn } from "@/lib/utils";
 
@@ -28,8 +28,9 @@ export function InquiryPortal() {
 
   const worlds = ecosystem.worlds.slice(0, 6);
   const pathways = ecosystem.pathways.slice(0, 3);
-  const concepts = ecosystem.concepts.slice(0, 8);
-  const canon = getCanonInvestigations(3);
+  const concepts = ecosystem.concepts.slice(0, 6);
+  const canon = getCanonResurfacing(3);
+  const historicalThreads = getHistoricalThreads(3);
 
   const continuity = investigations
     .flatMap((item) => item.frontmatter.related_investigations)
@@ -158,7 +159,7 @@ export function InquiryPortal() {
       <SectionContainer className="below-fold py-14">
         <div className="space-y-6">
           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Concept Continuity</p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {concepts.map((concept) => (
               <Link
                 key={concept.slug}
@@ -172,6 +173,21 @@ export function InquiryPortal() {
               </Link>
             ))}
           </div>
+          {historicalThreads.length > 0 && (
+            <div className="rounded-xl border border-border/70 bg-card/75 p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Historical Threads</p>
+              <div className="mt-2 grid gap-2 md:grid-cols-3">
+                {historicalThreads.map((thread) => (
+                  <div key={thread.label} className="rounded-lg border border-border/60 bg-background/60 p-3">
+                    <p className="font-heading text-sm">{thread.label}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {thread.firstSeen.slice(0, 4)} → {thread.lastSeen.slice(0, 4)} · {thread.investigations.length} investigations
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </SectionContainer>
 
@@ -206,21 +222,24 @@ export function InquiryPortal() {
         <div className="space-y-6 rounded-2xl border border-border/70 bg-card/70 p-6 sm:p-8">
           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Foundational Canon</p>
           <div className="grid gap-3 md:grid-cols-3">
-            {canon.map((investigation) => (
+            {canon.map((entry) => (
               <Link
-                key={investigation.slug}
-                href={`/articles/${investigation.slug}`}
+                key={entry.investigation.slug}
+                href={`/articles/${entry.investigation.slug}`}
                 className="rounded-xl border border-border/70 bg-background/70 p-4 transition-colors hover:border-primary/35"
               >
-                <p className="font-heading text-lg leading-snug">{investigation.frontmatter.title}</p>
+                <p className="font-heading text-lg leading-snug">{entry.investigation.frontmatter.title}</p>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Canon text · {investigation.frontmatter.reading_time ?? investigation.readingTime}
+                  Canon text · {entry.inboundReferences} ecosystem callbacks
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {entry.recurringConcepts.join(" · ")}
                 </p>
               </Link>
             ))}
           </div>
           <p className="text-sm text-muted-foreground">
-            Canon texts are investigations that recur across pathways, concepts, and later inquiry.
+            Canon texts are stewarded references that hold conceptual continuity over time.
           </p>
         </div>
       </SectionContainer>
