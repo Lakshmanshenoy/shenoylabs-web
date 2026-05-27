@@ -8,17 +8,17 @@ lastUpdated: "2026-04-10"
 category: Technical Investigations
 primaryCategory: Technical Investigations
 research_worlds:
-	- Engineering Systems
+  - Engineering Systems
 concepts:
-	- operational hardening
-	- external integrations
-	- secret management
+  - operational hardening
+  - external integrations
+  - secret management
 pathways:
-	- Systems & Thinking
+  - Systems & Thinking
 related_investigations:
-	- how-to-build-a-website-with-almost-no-cost
+  - how-to-build-a-website-with-almost-no-cost
 related_projects:
-	- shenoy-labs-project
+  - shenoy-labs-project
 featured: true
 reading_time: 10 min read
 depth_mode: technical
@@ -34,10 +34,25 @@ coverImage: "/images/articles/website-blueprint-integrations-hero.svg"
 
 This article documents the major third-party integrations used by shenoylabs-web, where they are wired in the codebase, required environment variables (server vs public), common failure modes, and recommended security and operational practices.
 
+<ResearchCallout title="Investigation scope">
+	This document is a systems map for service boundaries, secret handling, and operational failure modes. Read it as an architecture brief, not a feature checklist.
+</ResearchCallout>
+
+<TechnicalDepth title="How to use this investigation">
+	<ul>
+		<li>Identify the integration you plan to modify.</li>
+		<li>Verify required environment variables and scope boundaries.</li>
+		<li>Review failure modes before rollout.</li>
+		<li>Apply least-privilege and monitoring recommendations.</li>
+	</ul>
+</TechnicalDepth>
+
 ## Overview
 
 Request flow patterns:
 Client -> Next.js (App Router + Route Handlers) -> External services (Upstash, Resend, GitHub, Vercel, Turnstile). Some components run at the Edge (middleware) while API route handlers use Node-capable runtimes; see the Architecture section for runtime details.
+
+<ReflectionBreak prompt="As you read each integration, ask which secrets are truly required at runtime and which could be removed entirely." />
 
 ## Per-integration summary
 
@@ -54,6 +69,12 @@ Client -> Next.js (App Router + Route Handlers) -> External services (Upstash, R
 - Env: `KV_REST_API_URL`, `KV_REST_API_TOKEN` (write), `KV_REST_API_READ_ONLY_TOKEN`.
 - Failure modes: auth failures, high latencies, throttling causing API timeouts.
 - Recommendation: use separate read/write tokens, monitor latency/error metrics, set TTLs for ephemeral keys, rotate tokens regularly.
+
+<ConceptReference
+	concept="Operational hardening"
+	preview="Hardening is mostly about constrained blast radius: token separation, explicit TTLs, and alertable failure signals."
+	investigations={["how-to-build-a-website-with-almost-no-cost"]}
+/>
 
 ### Cloudflare Turnstile
 - Purpose: bot protection on contact form.

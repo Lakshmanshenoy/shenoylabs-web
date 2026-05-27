@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getAllProjects, getProject } from "@/lib/content";
+import { getConceptProfiles } from "@/lib/ecosystem";
 import { getMDXComponents } from "@/lib/mdx-components";
 import {
   getRelatedArticlesForProject,
@@ -94,6 +95,9 @@ export default async function ProjectDetailPage({
   ]);
   const relatedProjects = getRelatedProjects(slug, 3);
   const relatedArticles = getRelatedArticlesForProject(slug, 3);
+  const relatedConcepts = getConceptProfiles()
+    .filter((concept) => concept.projects.includes(slug))
+    .slice(0, 6);
 
   const { content } = await compileMDX({
     source,
@@ -183,6 +187,13 @@ export default async function ProjectDetailPage({
         <p className="text-lg leading-relaxed text-muted-foreground">
           {fm.description}
         </p>
+        {(fm.problem ?? fm.whyItMatters) && (
+          <div className="rounded-xl border border-border/70 bg-card/70 p-4 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">Inquiry framing</p>
+            {fm.problem ? <p className="mt-1">Problem explored: {fm.problem}</p> : null}
+            {fm.whyItMatters ? <p className="mt-1">Why this exists: {fm.whyItMatters}</p> : null}
+          </div>
+        )}
         <div className="flex flex-wrap gap-1.5">
           {fm.tags.map((tag) => (
             <Badge key={tag} variant="secondary" className="text-xs font-normal">
@@ -190,6 +201,19 @@ export default async function ProjectDetailPage({
             </Badge>
           ))}
         </div>
+        {relatedConcepts.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {relatedConcepts.map((concept) => (
+              <Link
+                key={concept.slug}
+                href={`/search?q=${encodeURIComponent(concept.label)}`}
+                className="rounded-full border border-border/70 px-2.5 py-1 text-xs transition-colors hover:border-primary/35 hover:text-primary"
+              >
+                {concept.label}
+              </Link>
+            ))}
+          </div>
+        )}
 
         {/* External links */}
         {(fm.githubUrl ?? fm.liveUrl) && (
@@ -253,7 +277,7 @@ export default async function ProjectDetailPage({
           <Separator className="my-8" />
           <section className="space-y-3">
             <h2 className="font-heading text-xl font-semibold tracking-tight">
-              Related articles
+              Investigation continuity
             </h2>
             <div className="grid gap-2">
               {relatedArticles.map((article) => (

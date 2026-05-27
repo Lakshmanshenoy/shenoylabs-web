@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getAllProjects } from "@/lib/content";
+import { getConceptProfiles } from "@/lib/ecosystem";
 import { buildBreadcrumbJsonLd } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +48,7 @@ const statusConfig = {
 
 export default function ProjectsPage() {
   const projects = getAllProjects();
+  const concepts = getConceptProfiles();
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
     { name: "Home", path: "/" },
     { name: "Projects", path: "/projects" },
@@ -63,9 +65,13 @@ export default function ProjectsPage() {
 
       <SectionHeader
         badge="Projects"
-        title="All work"
-        description="Shipped products, active builds, and future plans — all in one place."
+        title="Inquiry manifestations"
+        description="Projects as technical investigations emerging from worlds, concepts, and long-form inquiry."
       />
+
+      <div className="mt-6 rounded-xl border border-border/70 bg-card/70 p-4 text-sm text-muted-foreground">
+        {projects.length} projects currently connect to {concepts.length} ecosystem concepts.
+      </div>
 
       <div className="reveal-group mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {projects.map((project) => {
@@ -114,7 +120,7 @@ export default function ProjectsPage() {
                 </CardHeader>
                 <CardContent className="pt-0">
                   <p className="text-sm leading-relaxed text-muted-foreground">
-                    {project.frontmatter.description}
+                    {project.frontmatter.whyItMatters ?? project.frontmatter.description}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {project.frontmatter.tags.map((tag) => (
@@ -127,6 +133,9 @@ export default function ProjectsPage() {
                       </Badge>
                     ))}
                   </div>
+                  <p className="mt-3 text-xs text-muted-foreground/80">
+                    Inquiry status: {status.label.toLowerCase()} manifestation.
+                  </p>
                 </CardContent>
               </Card>
             </Link>

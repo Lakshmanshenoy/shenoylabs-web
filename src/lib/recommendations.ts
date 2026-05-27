@@ -23,9 +23,28 @@ function semanticTerms(frontmatter: ArticleFrontmatter): string[] {
 }
 
 export function getRecommendedNextReads(currentSlug: string, limit = 3) {
+  const current = getArticle(currentSlug);
+  const currentTerms = semanticTerms(current.frontmatter);
+
   return getAllArticles()
     .filter((a) => a.slug !== currentSlug)
-    .slice(0, limit);
+    .map((candidate) => {
+      const pathwayBoost = overlapScore(
+        current.frontmatter.pathways,
+        candidate.frontmatter.pathways,
+      );
+      const semanticBoost = overlapScore(currentTerms, semanticTerms(candidate.frontmatter));
+      const explicitBoost = current.frontmatter.related_investigations.includes(candidate.slug)
+        ? 4
+        : 0;
+      return {
+        candidate,
+        score: explicitBoost + pathwayBoost * 3 + semanticBoost * 2,
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((item) => item.candidate);
 }
 
 export function getRelatedArticles(currentSlug: string, limit = 3) {

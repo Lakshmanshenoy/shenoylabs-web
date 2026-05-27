@@ -43,6 +43,16 @@ The only recurring cost you'll likely have is a domain (paid yearly). Hosting, C
 
 This article shows how we built this site, which services we used, a simple cost breakdown, and practical tips on usability, security, and maintenance. Plain language, no fluff.
 
+<ResearchCallout title="Reading intent">
+  This investigation maps a low-cost web stack from first deployment to operational discipline, with emphasis on practical trade-offs rather than tooling hype.
+</ResearchCallout>
+
+<ConceptReference
+  concept="Static-first publishing"
+  preview="Build as much as possible at compile time, keep runtime paths minimal, and let infrastructure stay simple until demand proves otherwise."
+  investigations={["website-blueprint-integrations"]}
+/>
+
 ## What you'll need
 
 - Domain name (Namecheap, Google Domains, or your preferred registrar).
@@ -54,6 +64,8 @@ This article shows how we built this site, which services we used, a simple cost
 - Local dev: Node.js and pnpm (or npm/yarn).
 
 Tip: See the full integration details in the [Website Blueprint: Integrations & Environment Variables](/articles/website-blueprint-integrations).
+
+<ReflectionBreak prompt="Before moving to setup steps, decide your threshold: what level of complexity are you willing to carry every month?" />
 
 ## Quickstart — get a site live in ~10 minutes
 
@@ -74,6 +86,12 @@ Tip: See the full integration details in the [Website Blueprint: Integrations & 
 - Email: Resend / SendGrid / Mailgun (free tiers).
 
 In short: MDX content in a GitHub repo, auto-deploys to Vercel, and a few free services. No server ops required — just a domain.
+
+<ExplorationBridge
+  href="/articles/website-blueprint-integrations"
+  label="Go deeper into integrations and env design"
+  context="When you need operational detail beyond the quickstart, continue into the full integration blueprint."
+/>
 
 ## What services we use (and the real cost)
 

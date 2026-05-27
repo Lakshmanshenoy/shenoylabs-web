@@ -6,12 +6,12 @@ import { compileMDX } from "next-mdx-remote/rsc";
 import fs from "fs";
 import path from "path";
 
-import { InteractionCtaPanel } from "@/components/engagement/interaction-cta-panel";
 import { SectionContainer } from "@/components/shared/section-container";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getAllArticles, getArticle } from "@/lib/content";
+import { getInvestigationContinuity } from "@/lib/ecosystem";
 import { getMDXComponents } from "@/lib/mdx-components";
 import {
   getRecommendedNextReads,
@@ -21,7 +21,14 @@ import {
 import { buildBreadcrumbJsonLd } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
-// ─── Static generation ────────────────────────────────────────────────────────
+type HeadingMode = "exploratory" | "technical" | "research" | "transitional";
+
+type InvestigationHeading = {
+  id: string;
+  title: string;
+  level: 2 | 3;
+  mode: HeadingMode;
+};
 
 export async function generateStaticParams() {
   const articles = getAllArticles();
@@ -30,7 +37,78 @@ export async function generateStaticParams() {
 
 export const dynamicParams = false;
 
-// ─── Metadata ─────────────────────────────────────────────────────────────────
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
+function stripFrontmatter(source: string): string {
+  return source.replace(/^---\n[\s\S]*?\n---\n?/, "");
+}
+
+function inferMode(title: string): HeadingMode {
+  if (/(overview|why|introduction|context|explore|question|philosophy)/i.test(title)) {
+    return "exploratory";
+  }
+  if (/(technical|architecture|implementation|code|api|config|build|integration|runtime)/i.test(title)) {
+    return "technical";
+  }
+  if (/(research|evidence|analysis|reference|framework|benchmark|data|study)/i.test(title)) {
+    return "research";
+  }
+  return "transitional";
+}
+
+function parseHeadings(source: string): InvestigationHeading[] {
+  const text = stripFrontmatter(source);
+  const regex = /^(##|###)\s+(.+)$/gm;
+  const seen = new Map<string, number>();
+  const headings: InvestigationHeading[] = [];
+
+  for (const match of text.matchAll(regex)) {
+    const depth = match[1].length;
+    const raw = match[2]
+      .replace(/\[(.*?)\]\(.*?\)/g, "$1")
+      .replace(/[*_`~<>#]/g, "")
+      .trim();
+
+    if (!raw) {
+      continue;
+    }
+
+    const baseId = slugify(raw);
+    const duplicateCount = seen.get(baseId) ?? 0;
+    seen.set(baseId, duplicateCount + 1);
+    const id = duplicateCount === 0 ? baseId : `${baseId}-${duplicateCount + 1}`;
+
+    headings.push({
+      id,
+      title: raw,
+      level: depth === 2 ? 2 : 3,
+      mode: inferMode(raw),
+    });
+  }
+
+  return headings;
+}
+
+const modeLabel: Record<HeadingMode, string> = {
+  exploratory: "Exploratory",
+  technical: "Technical",
+  research: "Research",
+  transitional: "Transition",
+};
+
+const modeClass: Record<HeadingMode, string> = {
+  exploratory: "border-sky-300/70 bg-sky-50/40 text-sky-700 dark:text-sky-200",
+  technical: "border-amber-300/70 bg-amber-50/40 text-amber-700 dark:text-amber-200",
+  research: "border-emerald-300/70 bg-emerald-50/40 text-emerald-700 dark:text-emerald-200",
+  transitional: "border-slate-300/70 bg-slate-50/40 text-slate-700 dark:text-slate-200",
+};
 
 export async function generateMetadata({
   params,
@@ -72,8 +150,6 @@ export async function generateMetadata({
   }
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 export default async function ArticleDetailPage({
   params,
 }: {
@@ -99,6 +175,8 @@ export default async function ArticleDetailPage({
   const recommendedReads = getRecommendedNextReads(slug, 3);
   const relatedArticles = getRelatedArticles(slug, 3);
   const relatedProjects = getRelatedProjectsForArticle(slug, 3);
+  const headings = parseHeadings(source);
+  const continuity = getInvestigationContinuity(slug);
 
   const { content } = await compileMDX({
     source,
@@ -106,34 +184,26 @@ export default async function ArticleDetailPage({
     options: { parseFrontmatter: true },
   });
 
-  // If the cover is an SVG in /public, inline it server-side so it always
-  // renders reliably on the client. We also strip fixed width/height so the
-  // SVG scales responsively and namespace a11y ids to avoid duplicates.
   let svgCoverHtml: string | null = null;
-  if (fm.coverImage && fm.coverImage.endsWith?.(".svg")) {
+  if (fm.coverImage && fm.coverImage.endsWith(".svg")) {
     try {
       const rel = fm.coverImage.replace(/^\//, "");
       const coverPath = path.join(process.cwd(), "public", rel);
       if (fs.existsSync(coverPath)) {
         let rawSvg = fs.readFileSync(coverPath, "utf8");
-        // remove fixed width/height to allow responsive scaling, then ensure
-        // the svg root scales to the container via an inline style
         rawSvg = rawSvg.replace(/width="[^"]*"/g, "").replace(/height="[^"]*"/g, "");
         rawSvg = rawSvg.replace(/<svg([^>]*)>/, '<svg$1 style="width:100%;height:auto;display:block">');
-        // namespace common ids used for accessibility
         rawSvg = rawSvg
           .replace(/id="title"/g, `id="title-${slug}"`)
           .replace(/id="desc"/g, `id="desc-${slug}"`)
           .replace(/aria-labelledby="title desc"/g, `aria-labelledby="title-${slug} desc-${slug}"`);
         svgCoverHtml = rawSvg;
       }
-    } catch (e) {
-      // fall back to normal <img> if anything goes wrong
+    } catch {
       svgCoverHtml = null;
     }
   }
 
-  // JSON-LD (Article schema)
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -155,7 +225,6 @@ export default async function ArticleDetailPage({
 
   return (
     <SectionContainer>
-      {/* JSON-LD */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -169,7 +238,6 @@ export default async function ArticleDetailPage({
         }}
       />
 
-      {/* Back link */}
       <Link
         href="/articles"
         className={cn(
@@ -177,17 +245,15 @@ export default async function ArticleDetailPage({
           "-ml-2 mb-8 gap-1.5 text-muted-foreground",
         )}
       >
-        ← All articles
+        ← All investigations
       </Link>
-      {/* Article header */}
-      <header className="space-y-4">
-        {fm.coverImage && (
-          <div className="overflow-hidden rounded-xl border border-border/70">
+
+      <header className="space-y-5">
+        {fm.coverImage ? (
+          <div className="overflow-hidden rounded-2xl border border-border/70">
             {svgCoverHtml ? (
               <div className="w-full" dangerouslySetInnerHTML={{ __html: svgCoverHtml }} />
-            ) : fm.coverImage.endsWith?.(".svg") ? (
-              // Use a plain <img> for SVGs to avoid the Next Image optimizer issues
-              // with SVG content.
+            ) : fm.coverImage.endsWith(".svg") ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={fm.coverImage}
@@ -205,111 +271,13 @@ export default async function ArticleDetailPage({
               />
             )}
           </div>
-        )}
-        <div className="flex flex-wrap items-center gap-2">
+        ) : null}
+
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground sm:text-sm">
           <Badge variant="outline">{fm.primaryCategory}</Badge>
-          {fm.investigation_type ? (
-            <Badge variant="secondary">{fm.investigation_type}</Badge>
-          ) : null}
-          <span className="text-sm text-muted-foreground">
-            {readingTime} · Created{" "}
-            <time dateTime={createdDate}>
-              {new Date(createdDate).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </time>
-            {" "}· Updated{" "}
-            <time dateTime={lastUpdated}>
-              {new Date(lastUpdated).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </time>
-          </span>
-        </div>
-        <h1 className="font-heading text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-          {fm.title}
-        </h1>
-        <p className="text-lg leading-relaxed text-muted-foreground">
-          {fm.summary ?? fm.excerpt}
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          {fm.tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="text-xs font-normal">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      </header>
-
-      <section className="mt-8 grid gap-4 rounded-2xl border border-border/70 bg-card/70 p-5 sm:grid-cols-3">
-        <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Research World
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {fm.research_worlds.length > 0 ? (
-              fm.research_worlds.map((world) => (
-                <Badge key={world} variant="outline" className="text-xs">
-                  {world}
-                </Badge>
-              ))
-            ) : (
-              <span className="text-sm text-muted-foreground">Evolving</span>
-            )}
-          </div>
-        </div>
-        <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Concepts
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {fm.concepts.length > 0 ? (
-              fm.concepts.map((concept) => (
-                <Badge key={concept} variant="secondary" className="text-xs">
-                  {concept}
-                </Badge>
-              ))
-            ) : (
-              <span className="text-sm text-muted-foreground">To be expanded</span>
-            )}
-          </div>
-        </div>
-        <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Pathways
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {fm.pathways.length > 0 ? (
-              fm.pathways.map((pathway) => (
-                <Badge key={pathway} variant="outline" className="text-xs">
-                  {pathway}
-                </Badge>
-              ))
-            ) : (
-              <span className="text-sm text-muted-foreground">Context building</span>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <Separator className="my-8" />
-
-      {/* MDX content */}
-      <article className="prose-custom">{content}</article>
-
-      <Separator className="my-8" />
-
-      {/* Author footer */}
-      <footer className="flex flex-col gap-1 text-sm text-muted-foreground">
-        <p>
-          Written by <span className="font-medium text-foreground">{fm.author}</span>
-        </p>
-        <p>
-          Created{" "}
+          {fm.investigation_type ? <Badge variant="secondary">{fm.investigation_type}</Badge> : null}
+          <span>{fm.reading_time ?? readingTime}</span>
+          <span aria-hidden>·</span>
           <time dateTime={createdDate}>
             {new Date(createdDate).toLocaleDateString("en-US", {
               year: "numeric",
@@ -317,37 +285,161 @@ export default async function ArticleDetailPage({
               day: "numeric",
             })}
           </time>
-        </p>
-        <p>
-          Last updated{" "}
+          <span aria-hidden>·</span>
           <time dateTime={lastUpdated}>
-            {new Date(lastUpdated).toLocaleDateString("en-US", {
+            updated {new Date(lastUpdated).toLocaleDateString("en-US", {
               year: "numeric",
-              month: "long",
+              month: "short",
               day: "numeric",
             })}
           </time>
+        </div>
+
+        <h1 className="font-heading max-w-4xl text-4xl font-semibold leading-[1.14] tracking-tight sm:text-5xl">
+          {fm.title}
+        </h1>
+
+        <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+          {fm.summary ?? fm.excerpt}
         </p>
-      </footer>
+      </header>
 
-      <Separator className="my-8" />
+      <section className="mt-9 space-y-4 rounded-2xl border border-border/70 bg-card/75 p-5 sm:p-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Investigation map</p>
+          <span className="text-xs text-muted-foreground">{headings.length} inquiry sections</span>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {headings.slice(0, 8).map((heading) => (
+            <a
+              key={heading.id}
+              href={`#${heading.id}`}
+              className="rounded-xl border border-border/70 bg-background/70 px-3 py-2 text-sm transition-colors hover:border-primary/35 hover:text-primary"
+            >
+              <span className={cn("mr-2 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.12em]", modeClass[heading.mode])}>
+                {modeLabel[heading.mode]}
+              </span>
+              {heading.title}
+            </a>
+          ))}
+        </div>
+      </section>
 
-      <section className="rounded-2xl border border-border/70 bg-card/70 p-5">
-        <h2 className="font-heading text-xl font-semibold tracking-tight">
-          Reflective expansion
-        </h2>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Use this investigation as a node, not an endpoint. Continue through adjacent investigations,
-          projects, and pathways to deepen the conceptual map.
+      <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
+        <main>
+          <article className="prose-custom investigation-reading">{content}</article>
+        </main>
+
+        <aside className="space-y-4 lg:sticky lg:top-24">
+          <section className="rounded-xl border border-border/70 bg-card/75 p-4">
+            <h2 className="font-heading text-base font-semibold tracking-tight">Conceptual orientation</h2>
+            <div className="mt-3 space-y-2 text-sm">
+              {headings.slice(0, 10).map((heading) => (
+                <a
+                  key={heading.id}
+                  href={`#${heading.id}`}
+                  className={cn(
+                    "block rounded-lg px-2 py-1.5 text-muted-foreground transition-colors hover:bg-secondary/50 hover:text-foreground",
+                    heading.level === 3 ? "ml-3" : "",
+                  )}
+                >
+                  {heading.title}
+                </a>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-border/70 bg-card/75 p-4">
+            <h2 className="font-heading text-base font-semibold tracking-tight">Connected worlds</h2>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {fm.research_worlds.length > 0 ? (
+                fm.research_worlds.map((world) => (
+                  <Link
+                    key={world}
+                    href={`/search?q=${encodeURIComponent(world)}`}
+                    className="rounded-full border border-border/70 px-2.5 py-1 text-xs transition-colors hover:border-primary/35 hover:text-primary"
+                  >
+                    {world}
+                  </Link>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">World links evolve as investigations grow.</p>
+              )}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {fm.pathways.map((pathway) => (
+                <Link
+                  key={pathway}
+                  href={`/search?q=${encodeURIComponent(pathway)}`}
+                  className="rounded-full border border-border/70 px-2.5 py-1 text-xs transition-colors hover:border-primary/35 hover:text-primary"
+                >
+                  {pathway}
+                </Link>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {fm.concepts.map((concept) => (
+                <a
+                  key={concept}
+                  href={`#concept-${slugify(concept)}`}
+                  className="rounded-full border border-border/70 px-2.5 py-1 text-xs transition-colors hover:border-primary/35 hover:text-primary"
+                >
+                  {concept}
+                </a>
+              ))}
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      <Separator className="my-10" />
+
+      <section className="rounded-2xl border border-border/70 bg-card/75 p-5 sm:p-6">
+        <h2 className="font-heading text-xl font-semibold tracking-tight">Reflection layer</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          This investigation is one layer in a broader inquiry system. Continue through adjacent
+          investigations, projects, and pathways to reconstruct the full intellectual terrain.
         </p>
       </section>
 
-      <Separator className="my-8" />
+      <Separator className="my-10" />
 
       <section className="space-y-3">
-        <h2 className="font-heading text-xl font-semibold tracking-tight">
-          Recommended next reads
-        </h2>
+        <h2 className="font-heading text-xl font-semibold tracking-tight">Expansion layer</h2>
+        <div className="grid gap-3 md:grid-cols-3">
+          {continuity.concepts.map((concept) => (
+            <Link
+              key={concept.slug}
+              id={`concept-${concept.slug}`}
+              href={`/search?q=${encodeURIComponent(concept.label)}`}
+              className="rounded-xl border border-border/70 bg-card/75 p-4 transition-colors hover:border-primary/35"
+            >
+              <p className="font-heading text-base">{concept.label}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {concept.investigations.length} investigations · {concept.projects.length} projects
+              </p>
+            </Link>
+          ))}
+        </div>
+        {continuity.adjacentWorlds.length > 0 ? (
+          <div className="rounded-xl border border-border/70 bg-card/65 p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Unresolved tensions</p>
+            <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+              {continuity.adjacentWorlds
+                .flatMap((world) => world.unresolvedQuestions)
+                .slice(0, 3)
+                .map((question) => (
+                  <li key={question}>• {question}</li>
+                ))}
+            </ul>
+          </div>
+        ) : null}
+      </section>
+
+      <Separator className="my-10" />
+
+      <section className="space-y-3">
+        <h2 className="font-heading text-xl font-semibold tracking-tight">Drift layer</h2>
         <div className="grid gap-2">
           {recommendedReads.map((article) => (
             <Link
@@ -361,13 +453,11 @@ export default async function ArticleDetailPage({
         </div>
       </section>
 
-      {relatedArticles.length > 0 && (
+      {relatedArticles.length > 0 ? (
         <>
-          <Separator className="my-8" />
+          <Separator className="my-10" />
           <section className="space-y-3">
-            <h2 className="font-heading text-xl font-semibold tracking-tight">
-              Related articles
-            </h2>
+            <h2 className="font-heading text-xl font-semibold tracking-tight">Adjacent investigations</h2>
             <div className="grid gap-2">
               {relatedArticles.map((article) => (
                 <Link
@@ -381,15 +471,13 @@ export default async function ArticleDetailPage({
             </div>
           </section>
         </>
-      )}
+      ) : null}
 
-      {relatedProjects.length > 0 && (
+      {relatedProjects.length > 0 ? (
         <>
-          <Separator className="my-8" />
+          <Separator className="my-10" />
           <section className="space-y-3">
-            <h2 className="font-heading text-xl font-semibold tracking-tight">
-              Related projects
-            </h2>
+            <h2 className="font-heading text-xl font-semibold tracking-tight">Connected projects</h2>
             <div className="grid gap-2">
               {relatedProjects.map((project) => (
                 <Link
@@ -403,12 +491,12 @@ export default async function ArticleDetailPage({
             </div>
           </section>
         </>
-      )}
+      ) : null}
 
-      <Separator className="my-8" />
-      <div className="mx-auto max-w-2xl">
-        <InteractionCtaPanel />
-      </div>
+      <Separator className="my-10" />
+      <p className="text-center text-sm text-muted-foreground">
+        End this reading slowly. Re-enter through a concept, world, or pathway when you revisit.
+      </p>
     </SectionContainer>
   );
 }

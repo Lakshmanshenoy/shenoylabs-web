@@ -11,15 +11,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getAllArticles, getAllProjects } from "@/lib/content";
+import { getEcosystemSnapshot } from "@/lib/ecosystem";
 import { cn } from "@/lib/utils";
-
-function unique(values: string[]) {
-  return Array.from(new Set(values.filter(Boolean)));
-}
 
 export function InquiryPortal() {
   const investigations = getAllArticles();
   const projects = getAllProjects();
+  const ecosystem = getEcosystemSnapshot();
 
   const featured = investigations
     .filter((item) => item.frontmatter.featured)
@@ -27,13 +25,9 @@ export function InquiryPortal() {
 
   const fallbackFeatured = featured.length > 0 ? featured : investigations.slice(0, 3);
 
-  const worlds = unique(
-    investigations.flatMap((item) => item.frontmatter.research_worlds),
-  ).slice(0, 6);
-
-  const pathways = unique(
-    investigations.flatMap((item) => item.frontmatter.pathways),
-  ).slice(0, 3);
+  const worlds = ecosystem.worlds.slice(0, 6);
+  const pathways = ecosystem.pathways.slice(0, 3);
+  const concepts = ecosystem.concepts.slice(0, 8);
 
   const continuity = investigations
     .flatMap((item) => item.frontmatter.related_investigations)
@@ -58,6 +52,11 @@ export function InquiryPortal() {
               Shenoy Labs is evolving into an interconnected research environment: investigations,
               conceptual pathways, and technical artifacts composed for calm reading and deep exploration.
             </p>
+            <p className="mx-auto max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              {ecosystem.investigationCount} investigations, {ecosystem.worldCount} research worlds,
+              {" "}{ecosystem.pathwayCount} pathways, and {ecosystem.conceptCount} recurring concepts are
+              currently shaping the ecosystem.
+            </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Link href="/articles" className={cn(buttonVariants({ size: "lg" }), "h-12 px-7")}>
                 Enter Investigations
@@ -78,13 +77,23 @@ export function InquiryPortal() {
           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Research Worlds</p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {worlds.map((world) => (
-              <Card key={world} className="scroll-reveal border-border/70 bg-card/85">
+              <Card key={world.slug} className="scroll-reveal border-border/70 bg-card/85">
                 <CardHeader>
-                  <CardTitle className="text-lg">{world}</CardTitle>
+                  <CardTitle className="text-lg">{world.label}</CardTitle>
                   <CardDescription>
-                    A conceptual territory in active development through linked investigations.
+                    {world.investigations.length} investigations, {world.concepts.length} concepts, and
+                    {" "}{world.pathways.length} pathways currently converge in this world.
                   </CardDescription>
                 </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="flex flex-wrap gap-1.5">
+                    {world.concepts.slice(0, 3).map((concept) => (
+                      <Badge key={concept} variant="outline" className="text-[10px]">
+                        {concept}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
               </Card>
             ))}
           </div>
@@ -125,12 +134,40 @@ export function InquiryPortal() {
           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Guided Pathways</p>
           <div className="grid gap-4 md:grid-cols-3">
             {pathways.map((pathway) => (
-              <div key={pathway} className="rounded-xl border border-border/70 bg-background/70 p-4">
-                <h3 className="font-heading text-lg">{pathway}</h3>
+              <div key={pathway.slug} className="rounded-xl border border-border/70 bg-background/70 p-4">
+                <h3 className="font-heading text-lg">{pathway.label}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  A curated trajectory for moving from foundational ideas to technical implementation.
+                  {pathway.depthStages.join(" → ")} through {pathway.investigations.length} linked
+                  investigations.
                 </p>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {pathway.concepts.slice(0, 3).map((concept) => (
+                    <Badge key={concept} variant="secondary" className="text-[10px]">
+                      {concept}
+                    </Badge>
+                  ))}
+                </div>
               </div>
+            ))}
+          </div>
+        </div>
+      </SectionContainer>
+
+      <SectionContainer className="below-fold py-14">
+        <div className="space-y-6">
+          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Concept Continuity</p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {concepts.map((concept) => (
+              <Link
+                key={concept.slug}
+                href={`/search?q=${encodeURIComponent(concept.label)}`}
+                className="rounded-xl border border-border/70 bg-card/85 p-4 transition-colors hover:border-primary/40"
+              >
+                <p className="font-heading text-base">{concept.label}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {concept.investigations.length} investigations · {concept.projects.length} projects
+                </p>
+              </Link>
             ))}
           </div>
         </div>
@@ -157,7 +194,8 @@ export function InquiryPortal() {
           </div>
 
           <div className="rounded-xl border border-border/70 bg-card/85 p-4 text-sm text-muted-foreground">
-            {projects.length} project artifacts are currently connected to this inquiry ecosystem.
+            {projects.length} project artifacts are connected; ecosystem overlap now spans
+            {" "}{ecosystem.conceptCount} concepts and {ecosystem.worldCount} worlds.
           </div>
         </div>
       </SectionContainer>
