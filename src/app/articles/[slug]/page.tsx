@@ -45,13 +45,13 @@ export async function generateMetadata({
 
     return {
       title: `${fm.title} — Shenoy Labs`,
-      description: fm.excerpt,
+      description: fm.summary ?? fm.excerpt,
       alternates: {
         canonical: `/articles/${slug}`,
       },
       openGraph: {
         title: fm.title,
-        description: fm.excerpt,
+        description: fm.summary ?? fm.excerpt,
         type: "article",
         url: `/articles/${slug}`,
         publishedTime: createdDate,
@@ -63,7 +63,7 @@ export async function generateMetadata({
       twitter: {
         card: "summary_large_image",
         title: fm.title,
-        description: fm.excerpt,
+        description: fm.summary ?? fm.excerpt,
         images: [`/api/og?title=${encodeURIComponent(fm.title)}&type=article`],
       },
     };
@@ -138,7 +138,7 @@ export default async function ArticleDetailPage({
     "@context": "https://schema.org",
     "@type": "Article",
     headline: fm.title,
-    description: fm.excerpt,
+    description: fm.summary ?? fm.excerpt,
     datePublished: createdDate,
     dateModified: lastUpdated,
     author: {
@@ -208,6 +208,9 @@ export default async function ArticleDetailPage({
         )}
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline">{fm.primaryCategory}</Badge>
+          {fm.investigation_type ? (
+            <Badge variant="secondary">{fm.investigation_type}</Badge>
+          ) : null}
           <span className="text-sm text-muted-foreground">
             {readingTime} · Created{" "}
             <time dateTime={createdDate}>
@@ -231,7 +234,7 @@ export default async function ArticleDetailPage({
           {fm.title}
         </h1>
         <p className="text-lg leading-relaxed text-muted-foreground">
-          {fm.excerpt}
+          {fm.summary ?? fm.excerpt}
         </p>
         <div className="flex flex-wrap gap-1.5">
           {fm.tags.map((tag) => (
@@ -241,6 +244,57 @@ export default async function ArticleDetailPage({
           ))}
         </div>
       </header>
+
+      <section className="mt-8 grid gap-4 rounded-2xl border border-border/70 bg-card/70 p-5 sm:grid-cols-3">
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Research World
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {fm.research_worlds.length > 0 ? (
+              fm.research_worlds.map((world) => (
+                <Badge key={world} variant="outline" className="text-xs">
+                  {world}
+                </Badge>
+              ))
+            ) : (
+              <span className="text-sm text-muted-foreground">Evolving</span>
+            )}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Concepts
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {fm.concepts.length > 0 ? (
+              fm.concepts.map((concept) => (
+                <Badge key={concept} variant="secondary" className="text-xs">
+                  {concept}
+                </Badge>
+              ))
+            ) : (
+              <span className="text-sm text-muted-foreground">To be expanded</span>
+            )}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Pathways
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {fm.pathways.length > 0 ? (
+              fm.pathways.map((pathway) => (
+                <Badge key={pathway} variant="outline" className="text-xs">
+                  {pathway}
+                </Badge>
+              ))
+            ) : (
+              <span className="text-sm text-muted-foreground">Context building</span>
+            )}
+          </div>
+        </div>
+      </section>
 
       <Separator className="my-8" />
 
@@ -275,6 +329,18 @@ export default async function ArticleDetailPage({
           </time>
         </p>
       </footer>
+
+      <Separator className="my-8" />
+
+      <section className="rounded-2xl border border-border/70 bg-card/70 p-5">
+        <h2 className="font-heading text-xl font-semibold tracking-tight">
+          Reflective expansion
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Use this investigation as a node, not an endpoint. Continue through adjacent investigations,
+          projects, and pathways to deepen the conceptual map.
+        </p>
+      </section>
 
       <Separator className="my-8" />
 

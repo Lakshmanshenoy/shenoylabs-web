@@ -10,14 +10,14 @@ import { buildBreadcrumbJsonLd } from "@/lib/seo";
 export const metadata: Metadata = {
   title: "Articles — Shenoy Labs",
   description:
-    "In-depth articles on product, engineering, and founder strategy by Lakshman Shenoy.",
+    "Investigation-led writing across systems, infrastructure, engineering, and long-form inquiry.",
   alternates: {
     canonical: "/articles",
   },
   openGraph: {
     title: "Articles — Shenoy Labs",
     description:
-      "In-depth articles on product, engineering, and founder strategy by Lakshman Shenoy.",
+      "Investigation-led writing across systems, infrastructure, engineering, and long-form inquiry.",
     type: "website",
     url: "/articles",
     images: ["/api/og?title=Articles"],
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Articles — Shenoy Labs",
     description:
-      "In-depth articles on product, engineering, and founder strategy by Lakshman Shenoy.",
+      "Investigation-led writing across systems, infrastructure, engineering, and long-form inquiry.",
     images: ["/api/og?title=Articles"],
   },
 };
@@ -48,9 +48,9 @@ export default function ArticlesPage() {
       />
 
       <SectionHeader
-        badge="Articles"
-        title="Research & writing"
-        description="In-depth explorations of product thinking, engineering patterns, and founder strategy."
+        badge="Investigations"
+        title="Inquiry-driven long-form"
+        description="Structured investigations designed for deep reading, conceptual continuity, and practical technical insight."
       />
 
       <div className="mt-10">
