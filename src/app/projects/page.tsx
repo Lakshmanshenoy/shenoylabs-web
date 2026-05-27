@@ -1,19 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import Image from "next/image";
 
+import { ProjectsFilteredGrid } from "@/components/projects/projects-filtered-grid";
 import { SectionContainer } from "@/components/shared/section-container";
-import { SectionHeader } from "@/components/shared/section-header";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { getAllProjects } from "@/lib/content";
 import { buildBreadcrumbJsonLd } from "@/lib/seo";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Projects — Shenoy Labs",
@@ -39,12 +29,6 @@ export const metadata: Metadata = {
   },
 };
 
-const statusConfig = {
-  shipped: { color: "bg-emerald-400", label: "Shipped" },
-  "in-progress": { color: "bg-amber-400", label: "In Progress" },
-  planning: { color: "bg-sky-400", label: "Planning" },
-};
-
 export default function ProjectsPage() {
   const projects = getAllProjects();
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
@@ -61,78 +45,7 @@ export default function ProjectsPage() {
         }}
       />
 
-      <SectionHeader
-        badge="Projects"
-        title="All work"
-        description="Shipped products, active builds, and future plans — all in one place."
-      />
-
-      <div className="reveal-group mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {projects.map((project) => {
-          const status =
-            statusConfig[project.frontmatter.status] ??
-            statusConfig["planning"];
-          return (
-            <Link
-              key={project.slug}
-              href={`/projects/${project.slug}`}
-              className="group block"
-            >
-              <Card className="soft-lift h-full border border-border/80 bg-card/95 transition-colors group-hover:border-primary/30">
-                {project.frontmatter.coverImage && (
-                  <div className="overflow-hidden rounded-t-xl border-b border-border/70">
-                    <Image
-                      src={project.frontmatter.coverImage}
-                      alt={
-                        project.frontmatter.coverAlt ??
-                        `${project.frontmatter.title} thumbnail`
-                      }
-                      width={1200}
-                      height={675}
-                      className="h-auto w-full"
-                    />
-                  </div>
-                )}
-                <CardHeader className="pb-2">
-                  <div className="mb-2 flex items-center gap-2">
-                    <span
-                      className={cn(
-                        "inline-block size-2 rounded-full",
-                        status.color,
-                      )}
-                    />
-                    <span className="text-xs text-muted-foreground">
-                      {status.label}
-                    </span>
-                    <Badge variant="outline" className="text-[10px]">
-                      {project.frontmatter.primaryCategory}
-                    </Badge>
-                  </div>
-                  <CardTitle className="text-base font-semibold leading-snug transition-colors group-hover:text-primary">
-                    {project.frontmatter.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {project.frontmatter.description}
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {project.frontmatter.tags.map((tag) => (
-                      <Badge
-                        key={tag}
-                        variant="secondary"
-                        className="text-xs font-normal"
-                      >
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
+      <ProjectsFilteredGrid projects={projects} />
     </SectionContainer>
   );
 }
