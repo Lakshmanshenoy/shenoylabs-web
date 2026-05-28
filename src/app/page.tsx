@@ -1,19 +1,47 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { SupportCardCta } from "@/components/shared/support-card-cta";
 import { getAllArticles, getAllProjects } from "@/lib/content";
+import { getGitHubProjectsData } from "@/lib/github-projects";
+import { getSupportCopyContent } from "@/lib/homepage-content";
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Home — Shenoy Labs",
-  description: "Research, tools, and projects built in public by Lakshman Shenoy.",
+  description: "Research and projects built in public by Lakshman Shenoy.",
   alternates: {
     canonical: "/",
   },
 };
 
-export default function Home() {
+type RecentProjectCard = {
+  title: string;
+  description: string;
+  href: string;
+  status: string;
+  primaryCategory: string;
+};
+
+export default async function Home() {
   const allArticles = getAllArticles();
   const allProjects = getAllProjects();
+  const supportCopy = getSupportCopyContent();
+  let githubProjectCards: RecentProjectCard[] = [];
+
+  try {
+    const githubData = await getGitHubProjectsData();
+    githubProjectCards = githubData.repos.slice(0, 2).map((repo) => ({
+      title: repo.name,
+      description: repo.description,
+      href: repo.htmlUrl,
+      status: repo.archived ? "Archived" : repo.pushedAt ? "Active" : "Updated",
+      primaryCategory: repo.language ?? "GitHub",
+    }));
+  } catch {
+    githubProjectCards = [];
+  }
 
   const featuredArticle =
     allArticles.find((article) => article.frontmatter.featured) ?? allArticles[0];
@@ -29,7 +57,33 @@ export default function Home() {
   const topics = Object.entries(topicCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6);
-  const recentProjects = allProjects.slice(0, 2);
+  const recentProjects: RecentProjectCard[] =
+    allProjects.length >= 2
+      ? allProjects.slice(0, 2).map((project) => ({
+          title: project.frontmatter.title,
+          description: project.frontmatter.description,
+          href: `/projects/${project.slug}`,
+          status: project.frontmatter.status,
+          primaryCategory: project.frontmatter.primaryCategory,
+        }))
+      : githubProjectCards.length >= 2
+        ? githubProjectCards
+        : [
+            {
+              title: "Shenoy Labs Website",
+              description: "The research and publishing site itself, built as a public-facing platform.",
+              href: "/projects",
+              status: "Active",
+              primaryCategory: "Platform",
+            },
+            {
+              title: "Open Research Notes",
+              description: "A living collection of long-form articles, experiments, and systems thinking.",
+              href: "/articles",
+              status: "Active",
+              primaryCategory: "Research",
+            },
+          ];
 
   const todayLabel = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -48,7 +102,7 @@ export default function Home() {
           <h1 className="mt-4 text-6xl leading-[0.93] sm:text-7xl md:text-8xl lg:text-9xl">
             Shenoy<span className="text-primary">.</span>Labs
           </h1>
-          <p className="mt-3 text-sm tracking-[0.18em] text-muted-foreground uppercase">
+          <p className="mt-6 text-sm tracking-[0.18em] text-muted-foreground uppercase sm:mt-7 lg:mt-8">
             Think · Learn · Solve
           </p>
           <div className="mt-8 flex flex-wrap justify-center border-y border-border">
@@ -163,28 +217,6 @@ export default function Home() {
         </aside>
       </section>
 
-      <section className="border-y border-border bg-secondary/60 py-14">
-        <div className="mx-auto w-full max-w-2xl px-4 text-center sm:px-6 lg:px-8">
-          <h2 className="text-4xl">Research in your inbox.</h2>
-          <p className="mt-3 text-base text-muted-foreground">
-            Deeply researched essays on technology, science, finance, and society.
-          </p>
-          <div className="mx-auto mt-5 flex max-w-xl flex-col gap-2 sm:flex-row">
-            <input
-              type="email"
-              placeholder="your@email.com"
-              className="h-11 flex-1 rounded-sm border border-input bg-background px-4 text-sm outline-none ring-0 transition-colors focus:border-primary"
-            />
-            <Link
-              href="/support"
-              className="inline-flex h-11 items-center justify-center rounded-sm bg-primary px-6 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-            >
-              Subscribe
-            </Link>
-          </div>
-        </div>
-      </section>
-
       <section className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="mb-6 flex items-center justify-between">
           <p className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
@@ -197,17 +229,29 @@ export default function Home() {
         <div className="grid gap-px rounded-md border border-border bg-border md:grid-cols-2">
           {recentProjects.map((project) => (
             <Link
-              key={project.slug}
-              href={`/projects/${project.slug}`}
+              key={`${project.title}-${project.href}`}
+              href={project.href}
               className="group bg-background p-7 transition-colors hover:bg-secondary"
             >
-              <p className="font-heading text-2xl leading-tight">{project.frontmatter.title}</p>
-              <p className="mt-2 text-sm text-muted-foreground">{project.frontmatter.description}</p>
+              <p className="font-heading text-2xl leading-tight">{project.title}</p>
+              <p className="mt-2 text-sm text-muted-foreground">{project.description}</p>
               <p className="mt-4 text-xs tracking-[0.08em] text-muted-foreground uppercase">
-                {project.frontmatter.status} · {project.frontmatter.primaryCategory}
+                {project.status} · {project.primaryCategory}
               </p>
             </Link>
           ))}
+        </div>
+      </section>
+
+      <section className="mx-auto w-full max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl">
+          <SupportCardCta
+            title={supportCopy.heading}
+            body={supportCopy.body}
+            primaryCtaLabel={supportCopy.primaryCtaLabel}
+            primaryCtaHref={supportCopy.primaryCtaHref}
+            footnote={supportCopy.footnote}
+          />
         </div>
       </section>
     </>
