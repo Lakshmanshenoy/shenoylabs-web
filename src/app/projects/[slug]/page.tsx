@@ -37,6 +37,10 @@ export async function generateMetadata({
   const { slug } = await params;
   try {
     const { frontmatter: fm } = getProject(slug);
+    const socialImage = fm.coverImage
+      ? [fm.coverImage]
+      : [`/api/og?title=${encodeURIComponent(fm.title)}&type=project`];
+
     return {
       title: `${fm.title} — Shenoy Labs`,
       description: fm.description,
@@ -48,13 +52,13 @@ export async function generateMetadata({
         description: fm.description,
         type: "website",
         url: `/projects/${slug}`,
-        images: [`/api/og?title=${encodeURIComponent(fm.title)}&type=project`],
+        images: socialImage,
       },
       twitter: {
         card: "summary_large_image",
         title: fm.title,
         description: fm.description,
-        images: [`/api/og?title=${encodeURIComponent(fm.title)}&type=project`],
+        images: socialImage,
       },
     };
   } catch {

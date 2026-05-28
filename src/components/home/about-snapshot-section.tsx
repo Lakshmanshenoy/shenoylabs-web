@@ -14,7 +14,7 @@ export function AboutSnapshotSection() {
         <SectionHeader
           badge="About"
           title="A curious, research-first builder"
-          description="I explore automation, finance, science, technology, health, systems thinking, travel, cuisine, and selective media — then turn insights into practical tools and writing."
+          description="I explore automation, finance, science, technology, health, systems thinking, travel, cuisine, and selective media — then turn insights into practical systems and writing."
         />
 
         <Card className="reveal border border-border/80 bg-card/95">

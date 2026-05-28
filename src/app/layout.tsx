@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { DM_Mono, DM_Sans, Lora, Playfair_Display } from "next/font/google";
 import Script from "next/script";
 
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
@@ -9,16 +9,31 @@ import { siteConfig } from "@/lib/site";
 
 import "./globals.css";
 
-const inter = Inter({
+const dmSans = DM_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
 });
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const dmMono = DM_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+  weight: ["400"],
+});
+
+const lora = Lora({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+  weight: ["400", "500"],
+});
+
+const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-heading",
   display: "swap",
+  weight: ["700", "800", "900"],
 });
 
 export const metadata: Metadata = {
@@ -70,7 +85,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`h-full antialiased ${inter.variable} ${plusJakartaSans.variable}`}
+      className={`h-full antialiased ${dmSans.variable} ${dmMono.variable} ${lora.variable} ${playfairDisplay.variable}`}
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >

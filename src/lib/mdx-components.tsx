@@ -6,6 +6,28 @@ type MDXComponents = Record<string, React.ElementType<any>>;
 
 import { cn } from "@/lib/utils";
 
+function textFromChildren(children: React.ReactNode): string {
+  if (typeof children === "string") return children;
+  if (Array.isArray(children)) {
+    return children.map((child) => textFromChildren(child)).join(" ");
+  }
+  if (children && typeof children === "object" && "props" in children) {
+    const props = (children as { props?: { children?: React.ReactNode } }).props;
+    return textFromChildren(props?.children);
+  }
+  return "";
+}
+
+function slugifyHeading(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/<[^>]+>/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
 /**
  * Custom MDX component map.
  * Passed to compileMDX({ components }) on every detail page.
@@ -22,23 +44,29 @@ export function getMDXComponents(overrides?: MDXComponents): MDXComponents {
         {...props}
       />
     ),
-    h2: ({ className, ...props }) => (
+    h2: ({ className, id, children, ...props }) => (
       <h2
         className={cn(
           "font-heading mt-10 mb-4 text-2xl font-semibold tracking-tight",
           className,
         )}
+        id={id ?? slugifyHeading(textFromChildren(children))}
         {...props}
-      />
+      >
+        {children}
+      </h2>
     ),
-    h3: ({ className, ...props }) => (
+    h3: ({ className, id, children, ...props }) => (
       <h3
         className={cn(
           "font-heading mt-8 mb-3 text-xl font-semibold",
           className,
         )}
+        id={id ?? slugifyHeading(textFromChildren(children))}
         {...props}
-      />
+      >
+        {children}
+      </h3>
     ),
     p: ({ className, ...props }) => (
       <p

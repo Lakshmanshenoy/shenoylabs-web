@@ -14,6 +14,7 @@ jobs:
   playwright:
     name: Playwright tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -40,13 +41,42 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: npx pnpm@10 install --frozen-lockfile
+        id: install_deps
+        run: |
+          start=$(date +%s)
+          pnpm install --frozen-lockfile
+          end=$(date +%s)
+          echo "seconds=$((end - start))" >> "$GITHUB_OUTPUT"
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+      - name: Verify Chrome availability
+        id: verify_chrome
+        run: |
+          start=$(date +%s)
+          google-chrome --version
+          end=$(date +%s)
+          echo "seconds=$((end - start))" >> "$GITHUB_OUTPUT"
 
       - name: Run Playwright tests
-        run: npx playwright test --project=chromium --reporter=html
+        id: run_tests
+        run: |
+          start=$(date +%s)
+          pnpm exec playwright test --project=chromium --reporter=html
+          end=$(date +%s)
+          echo "seconds=$((end - start))" >> "$GITHUB_OUTPUT"
+
+      - name: Timing summary
+        if: always()
+        run: |
+          deps="${{ steps.install_deps.outputs.seconds || 'n/a' }}"
+          browsers="${{ steps.verify_chrome.outputs.seconds || 'n/a' }}"
+          tests="${{ steps.run_tests.outputs.seconds || 'n/a' }}"
+          {
+            echo "## Playwright timing summary"
+            echo ""
+            echo "- Install dependencies: ${deps}s"
+            echo "- Verify Chrome availability: ${browsers}s"
+            echo "- Run tests: ${tests}s"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload Playwright HTML report
         if: always()

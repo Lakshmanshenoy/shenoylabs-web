@@ -74,16 +74,16 @@ jobs:
 
 
       - name: Install dependencies
-        run: npx pnpm@10 install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Typecheck (capture report)
-        run: npx pnpm@10 exec tsc --noEmit
+        run: pnpm exec tsc --noEmit
 
       - name: Run ESLint (fail on error)
-        run: npx pnpm@10 exec eslint --ext .js,.jsx,.ts,.tsx .
+        run: pnpm exec eslint --ext .js,.jsx,.ts,.tsx .
 
       - name: Run tests
-        run: npx pnpm@10 test -- --run
+        run: pnpm test -- --run
         env:
           CI: true
 
@@ -101,12 +101,12 @@ jobs:
           node-version: '24'
 
       - name: Enable Corepack + prepare pnpm
-        run: corepack enable && corepack prepare pnpm@9 --activate
+        run: corepack enable && corepack prepare pnpm@10 --activate
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 9
+          version: 10
 
       - name: Cache pnpm store
         uses: actions/cache@v4
@@ -122,10 +122,10 @@ jobs:
 
 
       - name: Install dependencies
-        run: npx pnpm@10 install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Typecheck (capture report)
-        run: npx pnpm@10 exec tsc --noEmit 2>&1 | tee tsc-report.txt || true
+        run: pnpm exec tsc --noEmit 2>&1 | tee tsc-report.txt || true
         continue-on-error: true
 
       - name: Upload TypeScript report
@@ -135,7 +135,7 @@ jobs:
           path: tsc-report.txt
 
       - name: Run ESLint (JSON report)
-        run: npx pnpm@10 exec eslint --ext .js,.jsx,.ts,.tsx . -f json -o eslint-report.json || true
+        run: pnpm exec eslint --ext .js,.jsx,.ts,.tsx . -f json -o eslint-report.json || true
         continue-on-error: true
 
       - name: Upload ESLint report

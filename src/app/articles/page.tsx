@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 
-import { InteractionCtaPanel } from "@/components/engagement/interaction-cta-panel";
 import { ArticlesFilteredGrid } from "@/components/articles/articles-filtered-grid";
 import { SectionContainer } from "@/components/shared/section-container";
-import { SectionHeader } from "@/components/shared/section-header";
 import { getAllArticles } from "@/lib/content";
 import { buildBreadcrumbJsonLd } from "@/lib/seo";
 
@@ -47,19 +45,7 @@ export default function ArticlesPage() {
         }}
       />
 
-      <SectionHeader
-        badge="Articles"
-        title="Research & writing"
-        description="In-depth explorations of product thinking, engineering patterns, and founder strategy."
-      />
-
-      <div className="mt-10">
-        <ArticlesFilteredGrid articles={articles} />
-      </div>
-
-      <div className="mx-auto mt-12 max-w-2xl">
-        <InteractionCtaPanel />
-      </div>
+      <ArticlesFilteredGrid articles={articles} />
     </SectionContainer>
   );
 }
