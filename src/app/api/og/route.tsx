@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
 
   const title =
-    searchParams.get("title") ?? "Research, tools, and projects built in public.";
+    searchParams.get("title") ?? "Research and projects built in public.";
   const type = searchParams.get("type") ?? "site";
 
   const badgeLabel =
@@ -26,9 +26,7 @@ export async function GET(request: NextRequest) {
       ? "Article"
       : type === "project"
         ? "Project"
-        : type === "tool"
-          ? "Tool"
-          : "Shenoy Labs";
+        : "Shenoy Labs";
 
   return new ImageResponse(
     (

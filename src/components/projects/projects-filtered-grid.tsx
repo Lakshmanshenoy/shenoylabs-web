@@ -8,7 +8,6 @@ import {
   CircleDotIcon,
   ExternalLinkIcon,
   SearchIcon,
-  WrenchIcon,
 } from "lucide-react";
 
 import { GitHubBrandIcon } from "@/components/shared/social-brand-icons";
@@ -72,12 +71,39 @@ const knownLanguages = [
   "Dart",
 ] as const;
 
-function inferLanguage(project: ContentItem<ProjectFrontmatter>): string {
+function normalizeLanguage(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const direct = knownLanguages.find((lang) => lang.toLowerCase() === trimmed.toLowerCase());
+  if (direct) return direct;
+
+  if (trimmed.toLowerCase() === "c++") return "C++";
+  if (trimmed.toLowerCase() === "c#") return "C#";
+
+  return trimmed;
+}
+
+function inferLanguage(
+  project: ContentItem<ProjectFrontmatter>,
+  githubRepos: GitHubRepoSummary[],
+): string {
   const tags = project.frontmatter.tags ?? [];
   const found = tags.find((tag) =>
     knownLanguages.some((lang) => lang.toLowerCase() === tag.toLowerCase()),
   );
-  return found ?? tags[0] ?? "Other";
+
+  if (found) return found;
+
+  const githubUrl = project.frontmatter.githubUrl?.toLowerCase();
+  if (githubUrl) {
+    const matchedRepo = githubRepos.find((repo) => repo.htmlUrl.toLowerCase() === githubUrl);
+    const repoLanguage = normalizeLanguage(matchedRepo?.language);
+    if (repoLanguage) return repoLanguage;
+  }
+
+  return normalizeLanguage(tags[0]) ?? "Other";
 }
 
 function inferType(project: ContentItem<ProjectFrontmatter>): "Tool" | "Library" | "Research" | "Experiment" {
@@ -184,18 +210,31 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
     () =>
       projects.map((project) => ({
         ...project,
-        inferredLanguage: inferLanguage(project),
+        inferredLanguage: inferLanguage(project, githubRepos),
         inferredType: inferType(project),
       })),
-    [projects],
+    [projects, githubRepos],
   );
 
+  const localUrls = new Set(
+    projects
+      .map((project) => project.frontmatter.githubUrl?.toLowerCase())
+      .filter(Boolean) as string[],
+  );
+  const autoRepos = githubRepos.filter((repo) => !localUrls.has(repo.htmlUrl.toLowerCase()));
+
   const languageOptions = useMemo(
-    () => [
-      "All",
-      ...Array.from(new Set(enriched.map((project) => project.inferredLanguage))).sort(),
-    ],
-    [enriched],
+    () => {
+      const localLanguages = enriched.map((project) => project.inferredLanguage);
+      const githubLanguages = autoRepos
+        .map((repo) => normalizeLanguage(repo.language) ?? "Other");
+
+      return [
+        "All",
+        ...Array.from(new Set([...localLanguages, ...githubLanguages])).sort(),
+      ];
+    },
+    [enriched, autoRepos],
   );
 
   const filtered = useMemo(() => {
@@ -245,14 +284,6 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
   const totalForks = githubStats?.forks ?? 0;
   const activeCount = projects.filter((project) => project.frontmatter.status === "shipped").length;
   const languageCount = githubStats?.languageCount ?? new Set(enriched.map((project) => project.inferredLanguage)).size;
-  const autoRepos = useMemo(() => {
-    const localUrls = new Set(
-      projects
-        .map((project) => project.frontmatter.githubUrl?.toLowerCase())
-        .filter(Boolean) as string[],
-    );
-    return githubRepos.filter((repo) => !localUrls.has(repo.htmlUrl.toLowerCase()));
-  }, [projects, githubRepos]);
 
   const filteredAutoRepos = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -374,7 +405,6 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
           </div>
 
           <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-            {filtered.length} result{filtered.length === 1 ? "" : "s"}
             <button
               onClick={() => {
                 setQuery("");
@@ -620,6 +650,10 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
 
                     <div className="mt-5 flex items-center justify-between border-t border-border pt-3 text-xs text-muted-foreground">
                       <div className="flex items-center gap-3">
+                        <span className="inline-flex items-center gap-1">
+                          <CircleDotIcon className="size-3" />
+                          {normalizeLanguage(repo.language) ?? "Other"}
+                        </span>
                         <span className="inline-flex items-center gap-1">★ {repo.stars}</span>
                         <span className="inline-flex items-center gap-1">Forks {repo.forks}</span>
                         <span className="inline-flex items-center gap-1">
@@ -650,61 +684,6 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
             </p>
           )}
         </div>
-      </section>
-
-      <section className="space-y-4 border-t border-border pt-10">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
-              <span className="mr-2 inline-block h-0.5 w-6 bg-primary align-middle" />
-              All Projects
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">Compact index of all repositories</p>
-          </div>
-        </div>
-
-        {filtered.length > 0 ? (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((project) => {
-              const meta = statusMeta[project.frontmatter.status] ?? statusMeta.planning;
-              return (
-                <Link
-                  key={project.slug}
-                  href={`/projects/${project.slug}`}
-                  className="group rounded-lg border border-border bg-card/90 p-4 transition-colors hover:border-primary/35 hover:bg-secondary/30"
-                >
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-                      <span className={cn("inline-block size-2 rounded-full", meta.dotClassName)} />
-                      {meta.label}
-                    </span>
-                    <span className="text-[10px] font-mono text-muted-foreground">{project.inferredLanguage}</span>
-                  </div>
-
-                  <p className="line-clamp-2 text-lg font-semibold leading-tight transition-colors group-hover:text-primary">
-                    {project.frontmatter.title}
-                  </p>
-                  <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
-                    {project.frontmatter.description}
-                  </p>
-
-                  <div className="mt-3 flex flex-wrap gap-1">
-                    {(project.frontmatter.tags ?? []).slice(0, 4).map((tag) => (
-                      <span key={tag} className="rounded-sm bg-secondary px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="rounded-lg border border-border px-8 py-14 text-center">
-            <WrenchIcon className="mx-auto size-6 text-muted-foreground/60" />
-            <p className="mt-3 text-sm text-muted-foreground">No projects match this filter combination.</p>
-          </div>
-        )}
       </section>
 
       {filteredAutoRepos.length > 0 ? (

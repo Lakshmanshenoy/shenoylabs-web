@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 const navLinks = [
@@ -67,24 +66,11 @@ export function Footer() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            {/* Light mode primary logo */}
-            <Image
-              src="/brand/Primary_logo_light.png"
-              alt="Shenoy Labs"
-              width={220}
-              height={110}
-              className="block dark:hidden"
-              style={{ height: "auto" }}
-            />
-            {/* Dark mode primary logo */}
-            <Image
-              src="/brand/Primary_logo_dark.png"
-              alt="Shenoy Labs"
-              width={220}
-              height={110}
-              className="hidden dark:block"
-              style={{ height: "auto" }}
-            />
+            <Link href="/" className="inline-flex items-center" aria-label="Shenoy Labs home">
+              <span className="font-heading text-2xl leading-none tracking-tight">
+                Shenoy<span className="text-primary">Labs</span>
+              </span>
+            </Link>
           </div>
           <p className="self-end text-right text-xs tracking-[0.14em] text-muted-foreground uppercase sm:self-auto">
             Think · <span className="text-primary">Learn</span> · Solve

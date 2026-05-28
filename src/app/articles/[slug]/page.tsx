@@ -111,6 +111,9 @@ export async function generateMetadata({
     const { frontmatter: fm } = getArticle(slug);
     const createdDate = fm.createdDate ?? fm.date;
     const lastUpdated = fm.lastUpdated ?? createdDate;
+    const socialImage = fm.coverImage
+      ? [fm.coverImage]
+      : [`/api/og?title=${encodeURIComponent(fm.title)}&type=article`];
 
     return {
       title: `${fm.title} — Shenoy Labs`,
@@ -127,13 +130,13 @@ export async function generateMetadata({
         modifiedTime: lastUpdated,
         authors: [fm.author],
         tags: fm.tags,
-        images: [`/api/og?title=${encodeURIComponent(fm.title)}&type=article`],
+        images: socialImage,
       },
       twitter: {
         card: "summary_large_image",
         title: fm.title,
         description: fm.excerpt,
-        images: [`/api/og?title=${encodeURIComponent(fm.title)}&type=article`],
+        images: socialImage,
       },
     };
   } catch {

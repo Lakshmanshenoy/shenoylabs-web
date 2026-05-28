@@ -26,7 +26,7 @@ export function FeaturedProjectsSection({ content }: Props) {
           <SectionHeader
             badge="Projects"
             title="Featured Projects"
-            description="Proof of work through practical systems, research-led builds, and useful tools."
+            description="Proof of work through practical systems and research-led builds."
           />
           <Link
             href="/projects"

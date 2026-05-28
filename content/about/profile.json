@@ -1,0 +1,120 @@
+{
+  "person": {
+    "name": "Lakshman Shenoy",
+    "role": "Engineer · Researcher · Builder · India",
+    "bio": "I write deeply researched articles on technology, science, finance, and society, and build open source tools along the way.",
+    "availabilityLabel": "Available to collaborate",
+    "location": "Mangalore / Bangalore, India",
+    "timezone": "IST (UTC +5:30)"
+  },
+  "profileLinks": [
+    { "label": "GitHub", "href": "https://github.com/Lakshmanshenoy", "kind": "github" },
+    { "label": "Email", "href": "mailto:hello@shenoylabs.com", "kind": "email" },
+    { "label": "Articles", "href": "/articles", "kind": "articles" },
+    { "label": "Projects", "href": "/projects", "kind": "projects" },
+    { "label": "Support the work", "href": "/support", "kind": "support" }
+  ],
+  "beliefs": [
+    {
+      "title": "Complexity deserves honesty, not simplification",
+      "description": "Accessibility should not come from flattening the truth. Depth changes understanding."
+    },
+    {
+      "title": "Writing is thinking made legible",
+      "description": "Clear writing is evidence of clear thought. If it is muddy on the page, it is muddy in mind."
+    },
+    {
+      "title": "Open source is a form of generosity",
+      "description": "Useful solutions should be shareable. Good tools compound when they are open."
+    },
+    {
+      "title": "Depth over frequency",
+      "description": "Publishing cadence is secondary to quality. Fewer pieces, stronger signal."
+    },
+    {
+      "title": "First principles over received wisdom",
+      "description": "Assumptions should be rebuilt from fundamentals, not inherited from consensus."
+    }
+  ],
+  "skills": [
+    {
+      "label": "Languages",
+      "items": [
+        { "name": "Python", "level": 3 },
+        { "name": "TypeScript", "level": 3 },
+        { "name": "JavaScript", "level": 2 },
+        { "name": "SQL", "level": 2 },
+        { "name": "Rust", "level": 1 },
+        { "name": "Shell", "level": 1 }
+      ]
+    },
+    {
+      "label": "Frontend & Web",
+      "items": [
+        { "name": "Next.js", "level": 3 },
+        { "name": "React", "level": 3 },
+        { "name": "Tailwind CSS", "level": 2 },
+        { "name": "MDX", "level": 2 },
+        { "name": "TinaCMS", "level": 2 }
+      ]
+    },
+    {
+      "label": "Data & Analysis",
+      "items": [
+        { "name": "NumPy", "level": 3 },
+        { "name": "Pandas", "level": 3 },
+        { "name": "Matplotlib", "level": 2 },
+        { "name": "Jupyter", "level": 2 },
+        { "name": "R", "level": 1 }
+      ]
+    },
+    {
+      "label": "Infrastructure",
+      "items": [
+        { "name": "Vercel", "level": 2 },
+        { "name": "GitHub Actions", "level": 2 },
+        { "name": "Docker", "level": 2 },
+        { "name": "AWS", "level": 1 }
+      ]
+    }
+  ],
+  "dailyTools": [
+    "VS Code",
+    "GitHub",
+    "Notion",
+    "Obsidian",
+    "Zotero",
+    "Jupyter",
+    "Vercel",
+    "Matplotlib"
+  ],
+  "lab": {
+    "title": "About ShenoyLabs",
+    "paragraphs": [
+      "ShenoyLabs started as a place to put things that did not have a home elsewhere: research notes, project postmortems, and half-finished ideas that became complete ones.",
+      "A lab is where things are tested, revised, and occasionally discarded. Some ideas fail. Some pieces are rewritten as understanding evolves. That is part of the process.",
+      "What stays constant: no ads, no sponsor pressure, no algorithmic publishing. Work gets published when it is worth reading."
+    ],
+    "quote": "Think. Learn. Solve. in that order, and never in a hurry.",
+    "quoteLabel": "The ShenoyLabs philosophy"
+  },
+  "navigation": [
+    { "label": "Home", "href": "/" },
+    { "label": "Articles", "href": "/articles" },
+    { "label": "Projects", "href": "/projects" },
+    { "label": "Contact", "href": "/contact" },
+    { "label": "Support", "href": "/support" }
+  ],
+  "source": {
+    "label": "Source",
+    "href": "https://github.com/Lakshmanshenoy/shenoylabs-web"
+  },
+  "fallbacks": {
+    "readingTitle": "Long-form research in progress",
+    "readingDetail": "Tracking incoming ideas from recent notes and drafts.",
+    "buildingTitle": "ShenoyLabs",
+    "buildingDetail": "Improving the site and open-source tooling stack.",
+    "thinkingTitle": "Modeling uncertainty",
+    "thinkingDetail": "Exploring practical ways to make better decisions under volatility."
+  }
+}

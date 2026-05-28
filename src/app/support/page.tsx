@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
+import { CheckIcon } from "lucide-react";
+
+import { SupportPaymentPanel } from "@/components/support/support-payment-panel";
 import { SectionContainer } from "@/components/shared/section-container";
-import { SectionHeader } from "@/components/shared/section-header";
-import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { getAllArticles } from "@/lib/content";
 
 export const metadata: Metadata = {
   title: "Support the Creator — Shenoy Labs",
@@ -29,82 +27,118 @@ export const metadata: Metadata = {
 };
 
 export default function SupportPage() {
+  const allArticles = getAllArticles();
   const razorpayLink = "https://razorpay.me/@lakshmanshenoy";
+  const upiId = "lakshmanshenoy@upi";
+
+  const totalArticles = allArticles.length;
+  const totalReadingMinutes = allArticles.reduce((sum, article) => {
+    const match = article.readingTime.match(/\d+/);
+    return sum + (match ? Number(match[0]) : 0);
+  }, 0);
+  const activeSeries = Math.max(
+    1,
+    new Set(allArticles.map((article) => article.frontmatter.primaryCategory)).size,
+  );
+
+  const contributionBreakdown = [
+    { icon: "⏱", name: "Research time", description: "Weeks of preparation per article", allocation: "60%", iconClass: "bg-accent" },
+    { icon: "🖥", name: "Hosting and infrastructure", description: "Vercel, domains, CDN, media", allocation: "20%", iconClass: "bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300" },
+    { icon: "📚", name: "Books and research access", description: "Papers, references, source material", allocation: "15%", iconClass: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300" },
+    { icon: "🛠", name: "Tools and software", description: "Dev tools and subscriptions", allocation: "5%", iconClass: "bg-secondary" },
+  ];
+
+  const principles = [
+    "No advertisements, ever",
+    "No sponsored content or paid placements",
+    "All articles permanently free to read",
+    "All projects remain open source",
+    "Your data is never shared or sold",
+  ];
 
   return (
-    <SectionContainer className="max-w-5xl">
-      <SectionHeader
-        badge="Support"
-        title="Support the Creator"
-        description="If the work helps you, optional support keeps experiments and content moving."
-      />
+    <SectionContainer className="max-w-7xl py-10 lg:py-12">
+      <div className="grid border-x border-border lg:grid-cols-[380px_1fr]">
+        <aside className="border-b border-border p-8 lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:overflow-y-auto lg:border-r lg:border-b-0">
+          <p className="mb-3 inline-flex items-center gap-2 text-[10px] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+            <span className="inline-block h-0.5 w-6 bg-primary" />
+            Independent and ad-free
+          </p>
+          <h1 className="font-heading text-5xl leading-[0.9] tracking-tight sm:text-6xl">
+            Support
+            <br />
+            the <span className="text-primary italic">work.</span>
+          </h1>
+          <p className="mt-5 text-base leading-8 text-muted-foreground italic">
+            ShenoyLabs runs without ads, sponsors, or institutional funding. If the articles or projects have been useful, supporting directly keeps it going and keeps it independent.
+          </p>
 
-      <div className="mt-8 grid gap-5 md:grid-cols-2 md:items-stretch">
-        <Card className="mx-auto flex w-full max-w-md flex-col border border-border/80 bg-card/95 md:min-h-[420px]">
-          <CardHeader>
-            <CardTitle className="font-heading text-xl">Razorpay</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-1 flex-col text-sm text-muted-foreground">
-            <div className="space-y-3">
-              <p>Support via Razorpay using secure checkout.</p>
-            </div>
-            <div className="flex flex-1 items-center justify-center py-6">
-              <Link
-                href={razorpayLink}
-                target="_blank"
-                rel="noreferrer"
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "h-[84px] w-full max-w-[340px] justify-between rounded-2xl border-0 bg-[#072654] px-5 text-white shadow-sm transition-colors hover:bg-[#0b2f68] sm:min-w-[340px]",
-                )}
-              >
-                <span className="flex items-center gap-3">
-                  <Image
-                    src="/images/support/razorpay-mark.svg"
-                    alt="Razorpay"
-                    width={36}
-                    height={36}
-                    className="size-9 rounded-lg"
-                  />
-                  <span className="flex flex-col items-start">
-                    <span className="text-xs font-medium uppercase tracking-[0.18em] text-white/70">
-                      Secure checkout
-                    </span>
-                    <span className="text-base font-semibold text-white">
-                      Pay with Razorpay
-                    </span>
-                  </span>
-                </span>
-                <span className="text-base text-white/80">↗</span>
-              </Link>
-            </div>
-            <p className="text-center text-xs text-muted-foreground">
-              Opens Razorpay-hosted secure checkout in a new tab.
+          <div className="mt-8">
+            <p className="mb-3 text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+              Where your contribution goes
             </p>
-          </CardContent>
-        </Card>
+            <div className="divide-y divide-border border-y border-border">
+              {contributionBreakdown.map((item) => (
+                <div key={item.name} className="flex items-center gap-3 py-3">
+                  <span className={`inline-flex size-8 items-center justify-center rounded-sm text-sm ${item.iconClass}`}>
+                    {item.icon}
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{item.name}</p>
+                    <p className="text-xs italic text-muted-foreground">{item.description}</p>
+                  </div>
+                  <span className="ml-auto font-mono text-xs text-muted-foreground">{item.allocation}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-        <Card className="mx-auto w-full max-w-md border border-border/80 bg-card/95 md:min-h-[420px]">
-          <CardHeader>
-            <CardTitle className="font-heading text-xl">UPI</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>Scan the QR code or use the UPI ID below for direct support contributions.</p>
-            <div className="mx-auto max-w-[240px] overflow-hidden rounded-lg border border-border/80 bg-background p-3">
-              <Image
-                src="/images/support/upi-qr.png"
-                alt="UPI QR code for lakshmanshenoy@upi"
-                width={768}
-                height={768}
-                className="h-auto w-full rounded-md"
-                sizes="(max-width: 768px) 100vw, 360px"
-              />
+          <div className="mt-8 rounded-md border border-border bg-secondary/60 p-4">
+            <p className="mb-3 text-sm font-semibold text-foreground">What will never change</p>
+            <div className="space-y-2">
+              {principles.map((principle) => (
+                <p key={principle} className="inline-flex items-start gap-2 text-sm text-muted-foreground">
+                  <CheckIcon className="mt-0.5 size-3.5 text-emerald-600" />
+                  {principle}
+                </p>
+              ))}
             </div>
-            <div className="rounded-lg border border-dashed border-border px-4 py-3 font-mono text-sm text-foreground">
-              lakshmanshenoy@upi
+          </div>
+
+          <div className="mt-8 border-t border-border pt-4">
+            <p className="text-sm font-semibold text-foreground">Supported by readers</p>
+            <p className="text-sm text-muted-foreground">100% reader-funded since day one</p>
+          </div>
+        </aside>
+
+        <main className="space-y-10 p-8 lg:p-12">
+          <SupportPaymentPanel razorpayLink={razorpayLink} upiId={upiId} />
+
+          <section className="border-t border-border pt-8">
+            <p className="mb-3 text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+              <span className="mr-2 inline-block h-0.5 w-6 bg-primary align-middle" />
+              Impact so far
+            </p>
+            <div className="grid overflow-hidden rounded-md border border-border sm:grid-cols-3">
+              <div className="border-b border-border bg-card p-5 sm:border-r sm:border-b-0">
+                <p className="font-heading text-4xl leading-none text-primary">{totalArticles}</p>
+                <p className="mt-1 text-[10px] font-semibold tracking-[0.1em] uppercase">Articles published</p>
+                <p className="mt-1 text-xs italic text-muted-foreground">Long-form research and explainers</p>
+              </div>
+              <div className="border-b border-border bg-card p-5 sm:border-r sm:border-b-0">
+                <p className="font-heading text-4xl leading-none text-primary">{totalReadingMinutes}</p>
+                <p className="mt-1 text-[10px] font-semibold tracking-[0.1em] uppercase">Minutes of reading</p>
+                <p className="mt-1 text-xs italic text-muted-foreground">Across all published writing</p>
+              </div>
+              <div className="bg-card p-5">
+                <p className="font-heading text-4xl leading-none text-primary">{activeSeries}</p>
+                <p className="mt-1 text-[10px] font-semibold tracking-[0.1em] uppercase">Active themes</p>
+                <p className="mt-1 text-xs italic text-muted-foreground">Ongoing areas of exploration</p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          </section>
+
+        </main>
       </div>
     </SectionContainer>
   );
