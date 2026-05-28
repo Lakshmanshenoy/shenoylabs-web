@@ -22,6 +22,11 @@ type Props = {
   githubStats: GitHubProjectStats | null;
 };
 
+type EnrichedProject = ContentItem<ProjectFrontmatter> & {
+  inferredLanguage: string;
+  inferredType: "Tool" | "Library" | "Research" | "Experiment";
+};
+
 type ProjectStatus = ProjectFrontmatter["status"];
 
 const statusMeta: Record<
@@ -85,13 +90,62 @@ function inferType(project: ContentItem<ProjectFrontmatter>): "Tool" | "Library"
   return "Tool";
 }
 
+function projectScore(project: EnrichedProject, githubRepos: GitHubRepoSummary[]): number {
+  let score = 0;
+
+  const statusWeight: Record<ProjectStatus, number> = {
+    shipped: 35,
+    "in-progress": 24,
+    planning: 12,
+  };
+  score += statusWeight[project.frontmatter.status] ?? 0;
+
+  const recencyDays =
+    (Date.now() - new Date(project.frontmatter.date).getTime()) / 86400000;
+  if (Number.isFinite(recencyDays)) {
+    score += Math.max(0, 30 - Math.min(30, recencyDays / 3));
+  }
+
+  const depthWeight: Record<string, number> = {
+    senior: 12,
+    intermediate: 8,
+    beginner: 4,
+  };
+  if (project.frontmatter.depthLevel) {
+    score += depthWeight[project.frontmatter.depthLevel] ?? 0;
+  }
+
+  score += Math.min(10, (project.frontmatter.tags?.length ?? 0) * 1.5);
+  if (project.frontmatter.coverImage) score += 6;
+  if (project.frontmatter.liveUrl) score += 10;
+  if (project.frontmatter.githubUrl) score += 8;
+
+  if (project.frontmatter.githubUrl) {
+    const match = githubRepos.find(
+      (repo) => repo.htmlUrl.toLowerCase() === project.frontmatter.githubUrl?.toLowerCase(),
+    );
+    if (match) {
+      score += Math.min(18, match.stars * 2);
+      score += Math.min(8, match.forks);
+      if (match.archived) score -= 14;
+
+      const pushedDays = (Date.now() - new Date(match.pushedAt).getTime()) / 86400000;
+      if (Number.isFinite(pushedDays)) {
+        score += Math.max(0, 12 - Math.min(12, pushedDays / 10));
+      }
+    }
+  }
+
+  return Math.round(score);
+}
+
 export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Props) {
   const [query, setQuery] = useState("");
   const [activeStatus, setActiveStatus] = useState<"All" | ProjectStatus>("All");
   const [activeType, setActiveType] = useState<"All" | "Tool" | "Library" | "Research" | "Experiment">("All");
   const [activeLanguage, setActiveLanguage] = useState<string>("All");
 
-  const enriched = useMemo(
+  const enriched = useMemo<EnrichedProject[]>(
     () =>
       projects.map((project) => ({
         ...project,
@@ -133,17 +187,17 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
     });
   }, [enriched, activeStatus, activeType, activeLanguage, query]);
 
-  const featured = (() => {
-    const items = filtered.filter((project) => project.frontmatter.featured);
-    if (items.length > 0) {
-      return [...items].sort(
-        (a, b) =>
-          (a.frontmatter.featuredOrder ?? Number.MAX_SAFE_INTEGER) -
-          (b.frontmatter.featuredOrder ?? Number.MAX_SAFE_INTEGER),
-      );
-    }
-    return filtered.slice(0, 2);
-  })();
+  const featured = useMemo(
+    () =>
+      [...filtered]
+        .sort((a, b) => {
+          const scoreDelta = projectScore(b, githubRepos) - projectScore(a, githubRepos);
+          if (scoreDelta !== 0) return scoreDelta;
+          return new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime();
+        })
+        .slice(0, 3),
+    [filtered, githubRepos],
+  );
 
   const latest = useMemo(
     () =>
@@ -361,6 +415,7 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
           {featured.length > 0 ? (
             featured.map((project, index) => {
               const meta = statusMeta[project.frontmatter.status] ?? statusMeta.planning;
+              const score = projectScore(project, githubRepos);
               return (
                 <article
                   key={project.slug}
@@ -406,6 +461,10 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
                         {meta.label}
                       </span>
                     </div>
+
+                    <p className="mt-1 text-[10px] font-mono text-muted-foreground">
+                      Rank score: {score}
+                    </p>
 
                     <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                       {project.frontmatter.description}
