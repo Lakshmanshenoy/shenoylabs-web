@@ -93,6 +93,7 @@ export function getArticle(slug: string): ContentItem<ArticleFrontmatter> {
 
 export function getAllProjects(): ContentItem<ProjectFrontmatter>[] {
   const dir = path.join(CONTENT_DIR, "projects");
+  if (!fs.existsSync(dir)) return [];
   const files = fs.readdirSync(dir).filter((f) => f.endsWith(".mdx"));
   return files
     .map((f) => parseItem<ProjectFrontmatter>("projects", f))
