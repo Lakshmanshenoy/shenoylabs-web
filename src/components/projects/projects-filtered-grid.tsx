@@ -462,7 +462,6 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
           {featured.length > 0 ? (
             featured.map((project, index) => {
               const meta = statusMeta[project.frontmatter.status] ?? statusMeta.planning;
-              const score = projectScore(project, githubRepos);
               return (
                 <article
                   key={project.slug}
@@ -508,10 +507,6 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
                         {meta.label}
                       </span>
                     </div>
-
-                    <p className="mt-1 text-[10px] font-mono text-muted-foreground">
-                      Rank score: {score}
-                    </p>
 
                     <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                       {project.frontmatter.description}
@@ -572,7 +567,6 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
             rankedAutoRepos.slice(0, 3).map((repo, index) => {
               const active = !repo.archived;
               const statusClass = active ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-700";
-              const rank = repoScore(repo);
 
               return (
                 <article
@@ -613,8 +607,6 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
                         {active ? "Active" : "Archived"}
                       </span>
                     </div>
-
-                    <p className="mt-1 text-[10px] font-mono text-muted-foreground">Rank score: {rank}</p>
 
                     <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{repo.description}</p>
 
