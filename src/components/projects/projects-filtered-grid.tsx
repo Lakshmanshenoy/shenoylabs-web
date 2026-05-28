@@ -27,6 +27,10 @@ type EnrichedProject = ContentItem<ProjectFrontmatter> & {
   inferredType: "Tool" | "Library" | "Research" | "Experiment";
 };
 
+type RankedRepo = GitHubRepoSummary & {
+  inferredType: "Tool" | "Library" | "Research" | "Experiment";
+};
+
 type ProjectStatus = ProjectFrontmatter["status"];
 
 const statusMeta: Record<
@@ -139,6 +143,37 @@ function projectScore(project: EnrichedProject, githubRepos: GitHubRepoSummary[]
   return Math.round(score);
 }
 
+function inferTypeFromRepo(repo: GitHubRepoSummary): "Tool" | "Library" | "Research" | "Experiment" {
+  const tags = repo.topics.map((topic) => topic.toLowerCase());
+  if (tags.some((tag) => ["sdk", "package", "library", "framework"].includes(tag))) {
+    return "Library";
+  }
+  if (tags.some((tag) => ["research", "analysis", "paper", "benchmark"].includes(tag))) {
+    return "Research";
+  }
+  if (tags.some((tag) => ["prototype", "poc", "experimental", "lab"].includes(tag))) {
+    return "Experiment";
+  }
+  return "Tool";
+}
+
+function repoScore(repo: GitHubRepoSummary): number {
+  let score = 0;
+  score += Math.min(35, repo.stars * 3);
+  score += Math.min(15, repo.forks * 2);
+  score += Math.min(12, repo.topics.length * 2);
+  if (repo.homepage) score += 10;
+  if (repo.description && repo.description.trim().length > 20) score += 8;
+  if (repo.archived) score -= 18;
+
+  const pushedDays = (Date.now() - new Date(repo.pushedAt).getTime()) / 86400000;
+  if (Number.isFinite(pushedDays)) {
+    score += Math.max(0, 24 - Math.min(24, pushedDays / 8));
+  }
+
+  return Math.round(score);
+}
+
 export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Props) {
   const [query, setQuery] = useState("");
   const [activeStatus, setActiveStatus] = useState<"All" | ProjectStatus>("All");
@@ -186,18 +221,6 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
       return haystack.includes(needle);
     });
   }, [enriched, activeStatus, activeType, activeLanguage, query]);
-
-  const featured = useMemo(
-    () =>
-      [...filtered]
-        .sort((a, b) => {
-          const scoreDelta = projectScore(b, githubRepos) - projectScore(a, githubRepos);
-          if (scoreDelta !== 0) return scoreDelta;
-          return new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime();
-        })
-        .slice(0, 3),
-    [filtered, githubRepos],
-  );
 
   const latest = useMemo(
     () =>
@@ -252,6 +275,30 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
       return haystack.includes(needle);
     });
   }, [autoRepos, query, activeLanguage, activeStatus, activeType]);
+
+  const rankedAutoRepos = useMemo<RankedRepo[]>(
+    () =>
+      [...filteredAutoRepos]
+        .map((repo) => ({ ...repo, inferredType: inferTypeFromRepo(repo) }))
+        .sort((a, b) => {
+          const delta = repoScore(b) - repoScore(a);
+          if (delta !== 0) return delta;
+          return new Date(b.pushedAt).getTime() - new Date(a.pushedAt).getTime();
+        }),
+    [filteredAutoRepos],
+  );
+
+  const featured = useMemo(
+    () =>
+      [...filtered]
+        .sort((a, b) => {
+          const scoreDelta = projectScore(b, githubRepos) - projectScore(a, githubRepos);
+          if (scoreDelta !== 0) return scoreDelta;
+          return new Date(b.frontmatter.date).getTime() - new Date(a.frontmatter.date).getTime();
+        })
+        .slice(0, 3),
+    [filtered, githubRepos],
+  );
 
   return (
     <div className="space-y-10">
@@ -516,6 +563,90 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
                           </a>
                         ) : null}
                       </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })
+          ) : rankedAutoRepos.length > 0 ? (
+            rankedAutoRepos.slice(0, 3).map((repo, index) => {
+              const active = !repo.archived;
+              const statusClass = active ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-700";
+              const rank = repoScore(repo);
+
+              return (
+                <article
+                  key={repo.fullName}
+                  className={cn(
+                    "grid overflow-hidden rounded-lg border border-border bg-card/95 transition-shadow hover:shadow-md",
+                    index % 2 === 0 ? "lg:grid-cols-[360px_1fr]" : "lg:grid-cols-[1fr_360px]",
+                  )}
+                >
+                  <a
+                    href={repo.htmlUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      "relative flex min-h-56 items-center justify-center border-border bg-secondary/55 p-6",
+                      index % 2 === 0 ? "border-r" : "order-2 border-l",
+                    )}
+                  >
+                    <GitHubBrandIcon className="size-20 text-foreground/15" />
+                  </a>
+
+                  <div className="flex flex-col p-6">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
+                          {repo.inferredType}
+                        </p>
+                        <a
+                          href={repo.htmlUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 block text-2xl font-bold leading-tight tracking-tight transition-colors hover:text-primary"
+                        >
+                          {repo.name}
+                        </a>
+                      </div>
+                      <span className={cn("rounded-full px-2 py-1 text-[10px] font-semibold uppercase", statusClass)}>
+                        {active ? "Active" : "Archived"}
+                      </span>
+                    </div>
+
+                    <p className="mt-1 text-[10px] font-mono text-muted-foreground">Rank score: {rank}</p>
+
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{repo.description}</p>
+
+                    <div className="mt-4 flex flex-wrap gap-1.5">
+                      {repo.topics.slice(0, 6).map((tag) => (
+                        <span key={tag} className="rounded-sm border border-border px-2 py-1 text-[10px] text-muted-foreground">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="mt-5 flex items-center justify-between border-t border-border pt-3 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-3">
+                        <span className="inline-flex items-center gap-1">★ {repo.stars}</span>
+                        <span className="inline-flex items-center gap-1">Forks {repo.forks}</span>
+                        <span className="inline-flex items-center gap-1">
+                          <CalendarDaysIcon className="size-3" />
+                          {new Date(repo.pushedAt).toLocaleDateString("en-US", {
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                      <a
+                        href={repo.htmlUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center rounded-sm border border-border p-1.5 transition-colors hover:border-primary hover:text-primary"
+                        aria-label="Open GitHub"
+                      >
+                        <GitHubBrandIcon className="size-3.5" />
+                      </a>
                     </div>
                   </div>
                 </article>
