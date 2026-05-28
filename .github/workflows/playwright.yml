@@ -58,9 +58,22 @@ jobs:
 
       - name: Install Playwright browsers
         id: install_browsers
+        env:
+          PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: "120000"
         run: |
           start=$(date +%s)
-          npx playwright install chromium
+          for attempt in 1 2 3; do
+            echo "Playwright browser install attempt ${attempt}/3"
+            if timeout 12m pnpm exec playwright install chromium; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Playwright browser install failed after 3 attempts" >&2
+              exit 1
+            fi
+            echo "Install attempt ${attempt} failed; retrying in 10s..."
+            sleep 10
+          done
           end=$(date +%s)
           echo "seconds=$((end - start))" >> "$GITHUB_OUTPUT"
 
@@ -68,7 +81,7 @@ jobs:
         id: run_tests
         run: |
           start=$(date +%s)
-          npx playwright test --project=chromium --reporter=html
+          pnpm exec playwright test --project=chromium --reporter=html
           end=$(date +%s)
           echo "seconds=$((end - start))" >> "$GITHUB_OUTPUT"
 
