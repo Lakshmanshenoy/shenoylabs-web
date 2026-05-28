@@ -13,10 +13,13 @@ import {
 
 import { GitHubBrandIcon } from "@/components/shared/social-brand-icons";
 import type { ContentItem, ProjectFrontmatter } from "@/lib/content";
+import type { GitHubProjectStats, GitHubRepoSummary } from "@/lib/github-projects";
 import { cn } from "@/lib/utils";
 
 type Props = {
   projects: ContentItem<ProjectFrontmatter>[];
+  githubRepos: GitHubRepoSummary[];
+  githubStats: GitHubProjectStats | null;
 };
 
 type ProjectStatus = ProjectFrontmatter["status"];
@@ -82,7 +85,7 @@ function inferType(project: ContentItem<ProjectFrontmatter>): "Tool" | "Library"
   return "Tool";
 }
 
-export function ProjectsFilteredGrid({ projects }: Props) {
+export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Props) {
   const [query, setQuery] = useState("");
   const [activeStatus, setActiveStatus] = useState<"All" | ProjectStatus>("All");
   const [activeType, setActiveType] = useState<"All" | "Tool" | "Library" | "Research" | "Experiment">("All");
@@ -158,12 +161,43 @@ export function ProjectsFilteredGrid({ projects }: Props) {
   });
 
   const totalRepos = projects.length;
-  const totalStarsProxy = projects.reduce(
+  const totalStars = githubStats?.stars ?? projects.reduce(
     (sum, project) => sum + (project.frontmatter.tags?.length ?? 0),
     0,
   );
+  const totalForks = githubStats?.forks ?? 0;
   const activeCount = projects.filter((project) => project.frontmatter.status === "shipped").length;
-  const languageCount = new Set(enriched.map((project) => project.inferredLanguage)).size;
+  const languageCount = githubStats?.languageCount ?? new Set(enriched.map((project) => project.inferredLanguage)).size;
+  const autoRepos = useMemo(() => {
+    const localUrls = new Set(
+      projects
+        .map((project) => project.frontmatter.githubUrl?.toLowerCase())
+        .filter(Boolean) as string[],
+    );
+    return githubRepos.filter((repo) => !localUrls.has(repo.htmlUrl.toLowerCase()));
+  }, [projects, githubRepos]);
+
+  const filteredAutoRepos = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return autoRepos.filter((repo) => {
+      const matchesLanguage =
+        activeLanguage === "All" || (repo.language ?? "Other") === activeLanguage;
+      if (!matchesLanguage) return false;
+
+      if (activeStatus !== "All") {
+        if (activeStatus === "planning" && !repo.archived) return false;
+        if (activeStatus !== "planning" && repo.archived) return false;
+      }
+
+      if (activeType !== "All" && activeType !== "Tool") return false;
+
+      if (!needle) return true;
+      const haystack = [repo.name, repo.description, repo.language ?? "Other", ...repo.topics]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(needle);
+    });
+  }, [autoRepos, query, activeLanguage, activeStatus, activeType]);
 
   return (
     <div className="space-y-10">
@@ -197,21 +231,21 @@ export function ProjectsFilteredGrid({ projects }: Props) {
 
         <div className="mt-6 grid gap-3 border-t border-border pt-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="border-r border-border/80 pr-4 last:border-r-0">
-            <p className="text-4xl font-bold leading-none text-foreground">{totalRepos}</p>
+            <p className="text-4xl font-bold leading-none text-foreground">{githubStats?.repoCount ?? totalRepos}</p>
             <p className="mt-1 text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
               Repositories
             </p>
           </div>
           <div className="border-r border-border/80 pr-4 last:border-r-0">
-            <p className="text-4xl font-bold leading-none text-foreground">{totalStarsProxy}</p>
+            <p className="text-4xl font-bold leading-none text-foreground">{totalStars}</p>
             <p className="mt-1 text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-              Tags Indexed
+              Total Stars
             </p>
           </div>
           <div className="border-r border-border/80 pr-4 last:border-r-0">
-            <p className="text-4xl font-bold leading-none text-foreground">{activeCount}</p>
+            <p className="text-4xl font-bold leading-none text-foreground">{githubStats ? totalForks : activeCount}</p>
             <p className="mt-1 text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-              Active Builds
+              {githubStats ? "Total Forks" : "Active Builds"}
             </p>
           </div>
           <div>
@@ -220,7 +254,7 @@ export function ProjectsFilteredGrid({ projects }: Props) {
               Languages
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Last active {latest?.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+              Last active {(githubStats?.lastActive ? new Date(githubStats.lastActive) : latest)?.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
             </p>
           </div>
         </div>
@@ -490,6 +524,54 @@ export function ProjectsFilteredGrid({ projects }: Props) {
           </div>
         )}
       </section>
+
+      {filteredAutoRepos.length > 0 ? (
+        <section className="space-y-4 border-t border-border pt-10">
+          <div>
+            <p className="text-[10px] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+              <span className="mr-2 inline-block h-0.5 w-6 bg-primary align-middle" />
+              Auto-synced GitHub Repositories
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Fetched via GitHub API and refreshed every hour.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {filteredAutoRepos.slice(0, 24).map((repo) => (
+              <article
+                key={repo.fullName}
+                className="rounded-lg border border-border bg-card/90 p-4 transition-colors hover:border-primary/35 hover:bg-secondary/30"
+              >
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+                    <span className={cn("inline-block size-2 rounded-full", repo.archived ? "bg-slate-500" : "bg-emerald-500")} />
+                    {repo.archived ? "Archived" : "Active"}
+                  </span>
+                  <span className="text-[10px] font-mono text-muted-foreground">{repo.language ?? "Other"}</span>
+                </div>
+
+                <a
+                  href={repo.htmlUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="line-clamp-2 text-lg font-semibold leading-tight transition-colors hover:text-primary"
+                >
+                  {repo.name}
+                </a>
+                <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+                  {repo.description}
+                </p>
+
+                <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                  <span>★ {repo.stars} · Forks {repo.forks}</span>
+                  <span>{new Date(repo.pushedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

@@ -3,7 +3,10 @@ import type { Metadata } from "next";
 import { ProjectsFilteredGrid } from "@/components/projects/projects-filtered-grid";
 import { SectionContainer } from "@/components/shared/section-container";
 import { getAllProjects } from "@/lib/content";
+import { getGitHubProjectsData, type GitHubProjectsData } from "@/lib/github-projects";
 import { buildBreadcrumbJsonLd } from "@/lib/seo";
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Projects — Shenoy Labs",
@@ -29,8 +32,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ProjectsPage() {
+export default async function ProjectsPage() {
   const projects = getAllProjects();
+  let githubData: GitHubProjectsData | null = null;
+
+  try {
+    githubData = await getGitHubProjectsData();
+  } catch {
+    githubData = null;
+  }
+
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
     { name: "Home", path: "/" },
     { name: "Projects", path: "/projects" },
@@ -45,7 +56,11 @@ export default function ProjectsPage() {
         }}
       />
 
-      <ProjectsFilteredGrid projects={projects} />
+      <ProjectsFilteredGrid
+        projects={projects}
+        githubRepos={githubData?.repos ?? []}
+        githubStats={githubData?.stats ?? null}
+      />
     </SectionContainer>
   );
 }
