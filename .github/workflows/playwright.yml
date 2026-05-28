@@ -44,36 +44,15 @@ jobs:
         id: install_deps
         run: |
           start=$(date +%s)
-          npx pnpm@10 install --frozen-lockfile
+          pnpm install --frozen-lockfile
           end=$(date +%s)
           echo "seconds=$((end - start))" >> "$GITHUB_OUTPUT"
 
-      - name: Cache Playwright browsers
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-
-      - name: Install Playwright browsers
-        id: install_browsers
-        env:
-          PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: "120000"
+      - name: Verify Chrome availability
+        id: verify_chrome
         run: |
           start=$(date +%s)
-          for attempt in 1 2 3; do
-            echo "Playwright browser install attempt ${attempt}/3"
-            if timeout 12m pnpm exec playwright install chromium; then
-              break
-            fi
-            if [ "$attempt" -eq 3 ]; then
-              echo "Playwright browser install failed after 3 attempts" >&2
-              exit 1
-            fi
-            echo "Install attempt ${attempt} failed; retrying in 10s..."
-            sleep 10
-          done
+          google-chrome --version
           end=$(date +%s)
           echo "seconds=$((end - start))" >> "$GITHUB_OUTPUT"
 
@@ -89,13 +68,13 @@ jobs:
         if: always()
         run: |
           deps="${{ steps.install_deps.outputs.seconds || 'n/a' }}"
-          browsers="${{ steps.install_browsers.outputs.seconds || 'n/a' }}"
+          browsers="${{ steps.verify_chrome.outputs.seconds || 'n/a' }}"
           tests="${{ steps.run_tests.outputs.seconds || 'n/a' }}"
           {
             echo "## Playwright timing summary"
             echo ""
             echo "- Install dependencies: ${deps}s"
-            echo "- Install browsers: ${browsers}s"
+            echo "- Verify Chrome availability: ${browsers}s"
             echo "- Run tests: ${tests}s"
           } >> "$GITHUB_STEP_SUMMARY"
 

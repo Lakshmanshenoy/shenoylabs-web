@@ -16,6 +16,12 @@ export default defineConfig({
     reuseExistingServer: !!process.env.CI === false,
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        ...(process.env.CI ? { channel: 'chrome' } : {}),
+      },
+    },
   ],
 });
