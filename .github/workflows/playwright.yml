@@ -41,7 +41,12 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: npx pnpm@10 install --frozen-lockfile
+        id: install_deps
+        run: |
+          start=$(date +%s)
+          npx pnpm@10 install --frozen-lockfile
+          end=$(date +%s)
+          echo "seconds=$((end - start))" >> "$GITHUB_OUTPUT"
 
       - name: Cache Playwright browsers
         uses: actions/cache@v5
@@ -52,10 +57,34 @@ jobs:
             ${{ runner.os }}-playwright-
 
       - name: Install Playwright browsers
-        run: npx playwright install chromium
+        id: install_browsers
+        run: |
+          start=$(date +%s)
+          npx playwright install chromium
+          end=$(date +%s)
+          echo "seconds=$((end - start))" >> "$GITHUB_OUTPUT"
 
       - name: Run Playwright tests
-        run: npx playwright test --project=chromium --reporter=html
+        id: run_tests
+        run: |
+          start=$(date +%s)
+          npx playwright test --project=chromium --reporter=html
+          end=$(date +%s)
+          echo "seconds=$((end - start))" >> "$GITHUB_OUTPUT"
+
+      - name: Timing summary
+        if: always()
+        run: |
+          deps="${{ steps.install_deps.outputs.seconds || 'n/a' }}"
+          browsers="${{ steps.install_browsers.outputs.seconds || 'n/a' }}"
+          tests="${{ steps.run_tests.outputs.seconds || 'n/a' }}"
+          {
+            echo "## Playwright timing summary"
+            echo ""
+            echo "- Install dependencies: ${deps}s"
+            echo "- Install browsers: ${browsers}s"
+            echo "- Run tests: ${tests}s"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload Playwright HTML report
         if: always()
