@@ -73,7 +73,7 @@ export function Footer() {
         {/* Row 3 — Copyright + legal (small, tertiary) */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-6 pt-5">
           <p className="text-xs text-muted-foreground/60">
-            © {new Date().getFullYear()} Shenoy Labs. All rights reserved.
+            © {new Date().getFullYear()} ShenoyLabs. All rights reserved.
           </p>
           <div className="flex flex-wrap items-center gap-4">
             {legalLinks.map((link) => (

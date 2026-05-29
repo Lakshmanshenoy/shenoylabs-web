@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { GitHubBrandIcon } from "@/components/shared/social-brand-icons";
+import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import type { ContentItem, ProjectFrontmatter } from "@/lib/content";
 import type { GitHubProjectStats, GitHubRepoSummary } from "@/lib/github-projects";
 import { cn } from "@/lib/utils";
@@ -34,12 +35,13 @@ type ProjectStatus = ProjectFrontmatter["status"];
 
 const statusMeta: Record<
   ProjectStatus,
-  { label: string; className: string; dotClassName: string }
+  { label: string; className: string; dotClassName: string; pulse?: boolean }
 > = {
   shipped: {
     label: "Active",
     className: "bg-emerald-100 text-emerald-700",
     dotClassName: "bg-emerald-500",
+    pulse: true,
   },
   "in-progress": {
     label: "Maintained",
@@ -170,7 +172,6 @@ function projectScore(project: EnrichedProject, githubRepos: GitHubRepoSummary[]
 }
 
 function inferTypeFromRepo(repo: GitHubRepoSummary): "Tool" | "Library" | "Research" | "Experiment" {
-  if (repo.type) return repo.type;
   const tags = repo.topics.map((topic) => topic.toLowerCase());
   if (tags.some((tag) => ["sdk", "package", "library", "framework"].includes(tag))) {
     return "Library";
@@ -308,16 +309,13 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
   }, [autoRepos, query, activeLanguage, activeStatus, activeType]);
 
   const featuredCount =
-    filtered.filter((project) => project.frontmatter.featured).length +
-    filteredAutoRepos.filter((repo) => repo.featured).length;
+    filtered.filter((project) => project.frontmatter.featured).length;
 
   const rankedAutoRepos = useMemo<RankedRepo[]>(
     () =>
       [...filteredAutoRepos]
         .map((repo) => ({ ...repo, inferredType: inferTypeFromRepo(repo) }))
         .sort((a, b) => {
-          const featuredDelta = Number(b.featured) - Number(a.featured);
-          if (featuredDelta !== 0) return featuredDelta;
           const delta = repoScore(b) - repoScore(a);
           if (delta !== 0) return delta;
           return new Date(b.pushedAt).getTime() - new Date(a.pushedAt).getTime();
@@ -537,9 +535,12 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
                           {project.frontmatter.title}
                         </Link>
                       </div>
-                      <span className={cn("rounded-full px-2 py-1 text-[10px] font-semibold uppercase", meta.className)}>
-                        {meta.label}
-                      </span>
+                      <ProjectStatusBadge
+                        label={meta.label}
+                        className={meta.className}
+                        dotClassName={meta.dotClassName}
+                        pulse={meta.pulse}
+                      />
                     </div>
 
                     <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
@@ -637,14 +638,15 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
                           {repo.name}
                         </a>
                       </div>
-                      <span className={cn("rounded-full px-2 py-1 text-[10px] font-semibold uppercase", statusClass)}>
-                        {active ? "Active" : "Archived"}
-                      </span>
+                      <ProjectStatusBadge
+                        label={active ? "Active" : "Archived"}
+                        className={statusClass}
+                        dotClassName={active ? "bg-emerald-500" : "bg-slate-500"}
+                        pulse={active}
+                      />
                     </div>
 
-                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                      {repo.writeup ?? repo.description}
-                    </p>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{repo.description}</p>
 
                     <div className="mt-4 flex flex-wrap gap-1.5">
                       {repo.topics.slice(0, 6).map((tag) => (
@@ -711,10 +713,12 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
                 className="rounded-lg border border-border bg-card/90 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-secondary/30 hover:shadow-md"
               >
                 <div className="mb-2 flex items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-                    <span className={cn("inline-block size-2 rounded-full", repo.archived ? "bg-slate-500" : "bg-emerald-500")} />
-                    {repo.archived ? "Archived" : "Active"}
-                  </span>
+                  <ProjectStatusBadge
+                    label={repo.archived ? "Archived" : "Active"}
+                    className={repo.archived ? "bg-slate-200 text-slate-700" : "bg-emerald-100 text-emerald-700"}
+                    dotClassName={repo.archived ? "bg-slate-500" : "bg-emerald-500"}
+                    pulse={!repo.archived}
+                  />
                   <span className="text-[10px] font-mono text-muted-foreground">{repo.language ?? "Other"}</span>
                 </div>
 
