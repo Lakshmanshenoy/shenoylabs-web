@@ -169,20 +169,13 @@ export function Navbar() {
                     ))}
                   </nav>
                   <div className="border-t border-border/60 px-3 pt-3">
-                    <div className="grid grid-cols-2 gap-2 pb-2">
+                    <div className="grid grid-cols-1 gap-2 pb-2">
                       <Link
                         href="/support"
                         onClick={() => setIsMenuOpen(false)}
                         className="rounded-xl border border-border/70 px-3 py-2.5 text-center text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                       >
                         Support
-                      </Link>
-                      <Link
-                        href="/contact"
-                        onClick={() => setIsMenuOpen(false)}
-                        className="rounded-xl border border-border/70 px-3 py-2.5 text-center text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                      >
-                        Contact
                       </Link>
                     </div>
                   </div>
