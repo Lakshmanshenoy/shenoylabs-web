@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 
 import { ArticlesFilteredGrid } from "@/components/articles/articles-filtered-grid";
+import {
+  ArticlesJourneyOverview,
+  type JourneyArticleMeta,
+} from "@/components/articles/gamified-reading-experience";
 import { ChapterOpener } from "@/components/shared/chapter-opener";
 import { SectionContainer } from "@/components/shared/section-container";
 import { getAllArticles } from "@/lib/content";
@@ -32,6 +36,18 @@ export const metadata: Metadata = {
 
 export default function ArticlesPage() {
   const articles = getAllArticles();
+  const articleJourneyCatalog: JourneyArticleMeta[] = articles.map((article) => {
+    const readingMatch = article.readingTime.match(/(\d+)/);
+    return {
+      slug: article.slug,
+      title: article.frontmatter.title,
+      category: article.frontmatter.primaryCategory ?? article.frontmatter.category,
+      tags: article.frontmatter.tags ?? [],
+      readingTimeMinutes: Math.max(1, Number.parseInt(readingMatch?.[1] ?? "1", 10)),
+      date: article.frontmatter.date,
+      featured: article.frontmatter.featured,
+    };
+  });
   const topTopics = Array.from(
     new Set(
       articles
@@ -67,6 +83,8 @@ export default function ArticlesPage() {
         className="mb-10 border-b border-border/60 pb-8"
         headingLevel="h2"
       />
+
+      <ArticlesJourneyOverview allArticles={articleJourneyCatalog} />
 
       <ArticlesFilteredGrid articles={articles} />
     </SectionContainer>

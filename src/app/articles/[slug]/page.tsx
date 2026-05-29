@@ -12,6 +12,10 @@ import {
   ArticleTocSidebar,
   type ArticleTocItem,
 } from "@/components/articles/article-reader-enhancements";
+import {
+  ArticleGamifiedExperience,
+  type JourneyArticleMeta,
+} from "@/components/articles/gamified-reading-experience";
 import { ReadingProgress } from "@/components/articles/reading-progress";
 import { InteractionCtaPanel } from "@/components/engagement/interaction-cta-panel";
 import { SectionContainer } from "@/components/shared/section-container";
@@ -194,6 +198,27 @@ export default async function ArticleDetailPage({
   const recommendedReads = getRecommendedNextReads(slug, 3);
   const relatedArticles = getRelatedArticles(slug, 3);
   const relatedProjects = getRelatedProjectsForArticle(slug, 3);
+  const articleJourneyCatalog: JourneyArticleMeta[] = getAllArticles().map((article) => {
+    const readingMatch = article.readingTime.match(/(\d+)/);
+    return {
+      slug: article.slug,
+      title: article.frontmatter.title,
+      category: article.frontmatter.primaryCategory ?? article.frontmatter.category,
+      tags: article.frontmatter.tags ?? [],
+      readingTimeMinutes: Math.max(1, Number.parseInt(readingMatch?.[1] ?? "1", 10)),
+      date: article.frontmatter.date,
+      featured: article.frontmatter.featured,
+    };
+  });
+  const currentArticleMeta = articleJourneyCatalog.find((article) => article.slug === slug) ?? {
+    slug,
+    title: fm.title,
+    category: fm.primaryCategory ?? fm.category,
+    tags: fm.tags ?? [],
+    readingTimeMinutes,
+    date: fm.date,
+    featured: fm.featured,
+  };
 
   const { content } = await compileMDX({
     source,
@@ -260,6 +285,13 @@ export default async function ArticleDetailPage({
         updatedDateLabel={updatedDateLabel}
         versionLabel={versionLabel}
         versionSummary={versionSummary}
+      />
+      <ArticleGamifiedExperience
+        allArticles={articleJourneyCatalog}
+        currentArticle={currentArticleMeta}
+        toc={toc}
+        relatedSlugs={relatedArticles.map((article) => article.slug)}
+        recommendedSlugs={recommendedReads.map((article) => article.slug)}
       />
 
       {/* JSON-LD */}
