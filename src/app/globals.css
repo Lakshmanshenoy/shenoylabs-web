@@ -10,6 +10,13 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-heading: var(--font-heading);
+  --font-lora: var(--font-body);
+  /* Design 10/10 extended color tokens */
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-light: var(--accent-light);
+  --color-border-strong: var(--border-strong);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -54,6 +61,12 @@
   --font-heading: "Playfair Display", Georgia, "Times New Roman", serif;
   --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
+  /* Design 10/10 extended tokens */
+  --ink-muted:      #78716C;
+  --ink-faint:      #A8A29E;
+  --accent-hover:   #B45309;
+  --accent-light:   #FEF3C7;
+  --border-strong:  #C7BDB3;
   --background: #f8f4ee;
   --foreground: #141210;
   --card: #f8f4ee;
@@ -107,9 +120,20 @@
   --border: rgba(240, 234, 224, 0.1);
   --input: rgba(240, 234, 224, 0.18);
   --ring: #e06020;
+  /* Design 10/10 extended tokens */
+  --ink-muted:      #A8A29E;
+  --ink-faint:      #78716C;
+  --accent-hover:   #FCD34D;
+  --accent-light:   #451A03;
+  --border-strong:  #44403C;
 }
 
 @layer base {
+  a, button {
+    transition-property: color, background-color, border-color, text-decoration-color, opacity, transform;
+    transition-timing-function: ease;
+    transition-duration: 150ms;
+  }
   * {
     @apply border-border outline-ring/50;
   }
@@ -389,11 +413,23 @@
     margin-bottom: 1.35rem;
     transition: line-height 1.2s ease, margin-bottom 1.2s ease;
   }
+  & h1,
+  & h2,
+  & h3,
+  & h4 {
+    font-family: var(--font-body);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+  & h1 {
+    font-style: italic;
+  }
   & h2 {
     margin-top: 3.25rem;
     margin-bottom: 1rem;
     padding-top: 2.5rem;
     border-top: 1px solid var(--border);
+    font-style: normal;
     transition: margin-top 1.2s ease;
   }
   & h2:first-of-type {
@@ -411,13 +447,29 @@
     margin-bottom: 0.3rem;
     transition: line-height 1.2s ease;
   }
+  & a {
+    color: var(--primary);
+    text-decoration: none;
+  }
+  & a:hover {
+    text-decoration: underline;
+  }
   & blockquote {
     border-left-width: 3px;
+    border-left-color: var(--primary);
     padding-left: 1.25rem;
     font-size: 1.05rem;
     line-height: 1.8;
+    font-style: normal;
+    color: var(--muted-foreground);
     margin-top: 1.75rem;
     margin-bottom: 1.75rem;
+  }
+  & code:not(pre code) {
+    background-color: var(--secondary);
+    color: var(--foreground);
+    border-radius: 0.25rem;
+    padding: 0.1em 0.4em;
   }
 
   & pre,

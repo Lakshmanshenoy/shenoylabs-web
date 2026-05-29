@@ -95,12 +95,14 @@ export function ArticlesFilteredGrid({ articles }: Props) {
     return sum + (match ? Number.parseInt(match[0], 10) : 0);
   }, 0);
 
-  const liveDate = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const liveDate =
+    new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "Asia/Kolkata",
+    }) + " IST";
 
   const showHero = !!featured && activeCategory === "All" && !search.trim();
 
@@ -290,6 +292,11 @@ export function ArticlesFilteredGrid({ articles }: Props) {
                     <p className="mt-1 text-lg font-semibold leading-tight">
                       {article.frontmatter.title}
                     </p>
+                    {article.frontmatter.excerpt && (
+                      <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                        {article.frontmatter.excerpt}
+                      </p>
+                    )}
                     <p className="mt-1 text-xs text-muted-foreground">
                       {article.frontmatter.date} · {article.readingTime}
                     </p>
