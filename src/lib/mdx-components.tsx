@@ -172,6 +172,53 @@ export function getMDXComponents(overrides?: MDXComponents): MDXComponents {
         {...props}
       />
     ),
+    Investigation: ({ className, title = "Investigation", children, ...props }) => (
+      <section className={cn("investigation-block", className)} {...props}>
+        <p className="investigation-label">
+          <span className="identity-pip" aria-hidden="true" />
+          {title}
+        </p>
+        <div className="space-y-3 text-[0.98rem] leading-7 text-foreground/85">{children}</div>
+      </section>
+    ),
+    Evidence: ({ className, title = "Evidence", children, ...props }) => (
+      <aside
+        className={cn(
+          "investigation-block border-l-2 border-primary/70 bg-primary/[0.04]",
+          className,
+        )}
+        {...props}
+      >
+        <p className="investigation-label">{title}</p>
+        <div className="space-y-2 text-sm leading-7 text-foreground/80">{children}</div>
+      </aside>
+    ),
+    Takeaway: ({ className, children, ...props }) => (
+      <aside
+        className={cn(
+          "my-7 rounded-xl border border-border/70 bg-secondary/40 px-5 py-4",
+          className,
+        )}
+        {...props}
+      >
+        <p className="editorial-kicker mb-2 inline-flex items-center gap-2 text-primary">
+          <span className="identity-pip" aria-hidden="true" />
+          Key Takeaway
+        </p>
+        <div className="text-base leading-7 text-foreground/85">{children}</div>
+      </aside>
+    ),
+    Timeline: ({ className, children, ...props }) => (
+      <ol
+        className={cn(
+          "my-6 space-y-3 border-l border-border/70 pl-4 marker:text-primary",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </ol>
+    ),
     ...overrides,
   };
 }

@@ -220,7 +220,7 @@ export default async function AboutPage() {
   }).format(new Date(newestDate ?? ABOUT_FALLBACK_UPDATED_TIMESTAMP));
 
   return (
-    <SectionContainer className="max-w-7xl py-10 lg:py-12">
+    <SectionContainer className="env-about max-w-7xl rounded-2xl py-10 lg:py-12">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

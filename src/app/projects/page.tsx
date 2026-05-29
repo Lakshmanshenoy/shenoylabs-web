@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { ProjectsFilteredGrid } from "@/components/projects/projects-filtered-grid";
+import { ChapterOpener } from "@/components/shared/chapter-opener";
 import { SectionContainer } from "@/components/shared/section-container";
 import { getAllProjects } from "@/lib/content";
 import { getGitHubProjectsData, type GitHubProjectsData } from "@/lib/github-projects";
@@ -47,13 +48,31 @@ export default async function ProjectsPage() {
     { name: "Projects", path: "/projects" },
   ]);
 
+  const keyCategories = Array.from(
+    new Set(projects.map((project) => project.frontmatter.primaryCategory).filter(Boolean)),
+  )
+    .slice(0, 3)
+    .map((category) => ({
+      href: `/projects?category=${encodeURIComponent(category)}`,
+      label: category,
+    }));
+
   return (
-    <SectionContainer>
+    <SectionContainer className="env-projects rounded-2xl">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
         }}
+      />
+
+      <ChapterOpener
+        kicker="Build Log"
+        title="Products shipped, maintained, and explored in public"
+        deck="A transparent view of what is live, what is evolving, and what is being tested next inside Shenoy Labs."
+        links={keyCategories}
+        className="mb-10 border-b border-border/60 pb-8"
+        headingLevel="h2"
       />
 
       <ProjectsFilteredGrid

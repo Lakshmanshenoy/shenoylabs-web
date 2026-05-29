@@ -265,6 +265,48 @@
     linear-gradient(90deg, color-mix(in srgb, var(--secondary) 26%, transparent) 0%, transparent 60%);
 }
 
+.env-about {
+  background:
+    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--surface-mist) 80%, transparent), transparent 34%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-paper) 92%, transparent), transparent 40%);
+}
+
+.env-support {
+  background:
+    radial-gradient(circle at 92% -10%, color-mix(in srgb, var(--surface-inkwash) 26%, transparent), transparent 36%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-paper) 94%, transparent), transparent 36%);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--identity-mark) 80%, transparent);
+  outline-offset: 2px;
+}
+
+.investigation-block {
+  margin: 1.75rem 0;
+  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  border-radius: 0.75rem;
+  padding: 1rem 1.05rem;
+  background: color-mix(in srgb, var(--secondary) 32%, transparent);
+}
+
+.investigation-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+  font-family: var(--font-sans);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--muted-foreground) 90%, transparent);
+}
+
 @keyframes enter-up {
   from {
     opacity: 0;

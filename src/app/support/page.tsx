@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CheckIcon } from "lucide-react";
 
+import { ChapterOpener } from "@/components/shared/chapter-opener";
 import { SupportPaymentPanel } from "@/components/support/support-payment-panel";
 import { SectionContainer } from "@/components/shared/section-container";
 import { getAllArticles } from "@/lib/content";
@@ -57,7 +58,20 @@ export default function SupportPage() {
   ];
 
   return (
-    <SectionContainer className="max-w-7xl py-10 lg:py-12">
+    <SectionContainer className="env-support max-w-7xl rounded-2xl py-10 lg:py-12">
+      <ChapterOpener
+        kicker="Reader Supported"
+        title="Keep the work independent"
+        deck="No ads, no sponsored narratives, and no paywalled essentials. Contributions directly fund research depth, publishing reliability, and open access."
+        links={[
+          { href: "/articles", label: "Read Articles" },
+          { href: "/projects", label: "Explore Projects" },
+          { href: "/about", label: "About the Lab" },
+        ]}
+        className="mb-8 border-b border-border/60 pb-8"
+        headingLevel="h2"
+      />
+
       <div className="grid border-x border-border lg:grid-cols-[380px_1fr]">
         <aside className="border-b border-border p-8 lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:overflow-y-auto lg:border-r lg:border-b-0">
           <p className="mb-3 inline-flex items-center gap-2 text-[10px] font-semibold tracking-[0.16em] text-muted-foreground uppercase">
