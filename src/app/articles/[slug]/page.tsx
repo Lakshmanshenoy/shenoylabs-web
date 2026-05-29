@@ -289,9 +289,6 @@ export default async function ArticleDetailPage({
       <ArticleGamifiedExperience
         allArticles={articleJourneyCatalog}
         currentArticle={currentArticleMeta}
-        toc={toc}
-        relatedSlugs={relatedArticles.map((article) => article.slug)}
-        recommendedSlugs={recommendedReads.map((article) => article.slug)}
       />
 
       {/* JSON-LD */}
