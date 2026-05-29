@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { ProjectStatusBadge } from "@/components/projects/project-status-badge";
 import { SupportCardCta } from "@/components/shared/support-card-cta";
 import { getAllArticles, getAllProjects } from "@/lib/content";
 import { getGitHubProjectsData } from "@/lib/github-projects";
@@ -20,9 +21,40 @@ type RecentProjectCard = {
   title: string;
   description: string;
   href: string;
-  status: string;
+  statusLabel: string;
+  statusClassName: string;
+  statusDotClassName: string;
+  statusPulse?: boolean;
   primaryCategory: string;
+  external?: boolean;
 };
+
+function mapLocalProjectStatus(status: "shipped" | "in-progress" | "planning") {
+  if (status === "shipped") {
+    return {
+      statusLabel: "Active",
+      statusClassName: "bg-emerald-100 text-emerald-700",
+      statusDotClassName: "bg-emerald-500",
+      statusPulse: true,
+    };
+  }
+
+  if (status === "in-progress") {
+    return {
+      statusLabel: "Maintained",
+      statusClassName: "bg-sky-100 text-sky-700",
+      statusDotClassName: "bg-sky-500",
+      statusPulse: false,
+    };
+  }
+
+  return {
+    statusLabel: "Experimental",
+    statusClassName: "bg-amber-100 text-amber-700",
+    statusDotClassName: "bg-amber-500",
+    statusPulse: false,
+  };
+}
 
 export default async function Home() {
   const allArticles = getAllArticles();
@@ -36,8 +68,12 @@ export default async function Home() {
       title: repo.name,
       description: repo.description,
       href: repo.htmlUrl,
-      status: repo.archived ? "Archived" : repo.pushedAt ? "Active" : "Updated",
+      statusLabel: repo.archived ? "Archived" : "Active",
+      statusClassName: repo.archived ? "bg-slate-200 text-slate-700" : "bg-emerald-100 text-emerald-700",
+      statusDotClassName: repo.archived ? "bg-slate-500" : "bg-emerald-500",
+      statusPulse: !repo.archived,
       primaryCategory: repo.language ?? "GitHub",
+      external: true,
     }));
   } catch {
     githubProjectCards = [];
@@ -62,33 +98,22 @@ export default async function Home() {
     })
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6);
-  const recentProjects: RecentProjectCard[] =
-    allProjects.length >= 2
-      ? allProjects.slice(0, 2).map((project) => ({
-          title: project.frontmatter.title,
-          description: project.frontmatter.description,
-          href: `/projects/${project.slug}`,
-          status: project.frontmatter.status,
-          primaryCategory: project.frontmatter.primaryCategory,
-        }))
-      : githubProjectCards.length >= 2
-        ? githubProjectCards
-        : [
-            {
-              title: "Shenoy Labs Website",
-              description: "The research and publishing site itself, built as a public-facing platform.",
-              href: "/projects",
-              status: "Active",
-              primaryCategory: "Platform",
-            },
-            {
-              title: "Open Research Notes",
-              description: "A living collection of long-form articles, experiments, and systems thinking.",
-              href: "/articles",
-              status: "Active",
-              primaryCategory: "Research",
-            },
-          ];
+  const localProjectCards: RecentProjectCard[] = allProjects.slice(0, 2).map((project) => {
+    const mapped = mapLocalProjectStatus(project.frontmatter.status);
+    return {
+      title: project.frontmatter.title,
+      description: project.frontmatter.description,
+      href: `/projects/${project.slug}`,
+      statusLabel: mapped.statusLabel,
+      statusClassName: mapped.statusClassName,
+      statusDotClassName: mapped.statusDotClassName,
+      statusPulse: mapped.statusPulse,
+      primaryCategory: project.frontmatter.primaryCategory,
+      external: false,
+    };
+  });
+
+  const recentProjects: RecentProjectCard[] = [...localProjectCards, ...githubProjectCards].slice(0, 2);
 
   const todayLabel =
     new Date().toLocaleDateString("en-US", {
@@ -277,19 +302,49 @@ export default async function Home() {
           </Link>
         </div>
         <div className="grid gap-px rounded-xl border border-border/70 bg-border/80 md:grid-cols-2">
-          {recentProjects.map((project) => (
-            <Link
-              key={`${project.title}-${project.href}`}
-              href={project.href}
-              className="group bg-background/95 p-8 transition-colors hover:bg-secondary"
-            >
-              <p className="font-heading text-2xl leading-tight">{project.title}</p>
-              <p className="mt-2 text-sm text-muted-foreground">{project.description}</p>
-              <p className="mt-4 text-xs tracking-[0.08em] text-muted-foreground uppercase">
-                {project.status} · {project.primaryCategory}
-              </p>
-            </Link>
-          ))}
+          {recentProjects.length > 0 ? (
+            recentProjects.map((project) => {
+              const cardBody = (
+                <>
+                  <p className="font-heading text-2xl leading-tight">{project.title}</p>
+                  {project.description ? <p className="mt-2 text-sm text-muted-foreground">{project.description}</p> : null}
+                  <div className="mt-4 flex items-center gap-2 text-xs tracking-[0.08em] text-muted-foreground uppercase">
+                    <ProjectStatusBadge
+                      label={project.statusLabel}
+                      className={project.statusClassName}
+                      dotClassName={project.statusDotClassName}
+                      pulse={project.statusPulse}
+                    />
+                    <span>· {project.primaryCategory}</span>
+                  </div>
+                </>
+              );
+
+              return project.external ? (
+                <a
+                  key={`${project.title}-${project.href}`}
+                  href={project.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group bg-background/95 p-8 transition-colors hover:bg-secondary"
+                >
+                  {cardBody}
+                </a>
+              ) : (
+                <Link
+                  key={`${project.title}-${project.href}`}
+                  href={project.href}
+                  className="group bg-background/95 p-8 transition-colors hover:bg-secondary"
+                >
+                  {cardBody}
+                </Link>
+              );
+            })
+          ) : (
+            <p className="bg-background/95 p-8 text-sm text-muted-foreground md:col-span-2">
+              No recent projects available right now.
+            </p>
+          )}
         </div>
       </section>
 

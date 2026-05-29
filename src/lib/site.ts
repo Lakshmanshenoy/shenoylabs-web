@@ -1,5 +1,5 @@
 export const siteConfig = {
-  name: process.env.NEXT_PUBLIC_SITE_NAME ?? "Shenoy Labs",
+  name: process.env.NEXT_PUBLIC_SITE_NAME ?? "ShenoyLabs",
   description:
     process.env.NEXT_PUBLIC_SITE_DESCRIPTION ??
     "Research and projects built in public by Lakshman Shenoy.",
