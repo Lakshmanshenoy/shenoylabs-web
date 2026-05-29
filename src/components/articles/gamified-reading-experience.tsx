@@ -94,7 +94,7 @@ export function ArticleGamifiedExperience({}: DetailProps) {
             Reading Experience
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Full controls on mobile and desktop: width, typography, density, theme, and deep focus.
+            Full controls on width, typography, density, theme, and deep focus.
           </p>
         </div>
 

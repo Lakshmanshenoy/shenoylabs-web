@@ -10,6 +10,7 @@ import { CalendarDaysIcon, Clock3Icon, Link2Icon } from "lucide-react";
 import {
   ArticleReaderEnhancements,
   ArticleTocSidebar,
+  MobileTocSheet,
   type ArticleTocItem,
 } from "@/components/articles/article-reader-enhancements";
 import {
@@ -317,12 +318,15 @@ export default async function ArticleDetailPage({
           >
             ← All Articles
           </Link>
-          <p
-            id="reader-progress-text"
-            className="font-mono text-[11px] text-muted-foreground/60"
-          >
-            Reading mode
-          </p>
+          <div className="flex items-center gap-2">
+            <MobileTocSheet toc={toc} />
+            <p
+              id="reader-progress-text"
+              className="font-mono text-[11px] text-muted-foreground/60 transition-colors data-[tone=yellow]:text-yellow-500 data-[tone=amber]:text-amber-500 data-[tone=red]:text-red-500 data-[tone=green]:text-green-500"
+            >
+              Reading mode
+            </p>
+          </div>
         </div>
       </div>
 
