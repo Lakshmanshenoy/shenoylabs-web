@@ -90,12 +90,14 @@ export default async function Home() {
             },
           ];
 
-  const todayLabel = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const todayLabel =
+    new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone: "Asia/Kolkata",
+    }) + " IST";
 
   return (
     <>
@@ -108,7 +110,7 @@ export default async function Home() {
             Shenoy<span className="text-primary">.</span>Labs
           </h1>
           <p className="mt-6 text-sm tracking-[0.18em] text-muted-foreground uppercase sm:mt-7 lg:mt-8">
-            Think · Learn · Solve
+            Think · <span className="text-primary">Learn</span> · Solve
           </p>
           <div className="mt-8 flex flex-wrap justify-center border-y border-border">
             <Link href="/articles" className="border-r border-border px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-muted-foreground uppercase transition-colors hover:bg-secondary hover:text-primary">
@@ -119,6 +121,38 @@ export default async function Home() {
             </Link>
             <Link href="/support" className="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-muted-foreground uppercase transition-colors hover:bg-secondary hover:text-primary">
               Support Us
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-border py-14 md:py-20">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+          <p className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">
+            Available to collaborate · India
+          </p>
+          <h2 className="font-[family-name:var(--font-body)] mb-4 max-w-2xl text-4xl font-semibold italic leading-tight text-foreground md:text-5xl">
+            Research &amp; projects<br />built in public.
+          </h2>
+          <p className="mb-8 max-w-xl text-base leading-relaxed text-muted-foreground">
+            Deeply researched writing on technology, science, and systems — by{" "}
+            <Link href="/about" className="text-foreground underline underline-offset-2 decoration-primary/50 hover:decoration-primary transition-colors">
+              Lakshman Shenoy
+            </Link>
+            . No ads. No algorithms. Published when ready.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/articles"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90"
+            >
+              Read Articles →
+            </Link>
+            <Link
+              href="/projects"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+            >
+              View Projects
             </Link>
           </div>
         </div>
@@ -137,7 +171,7 @@ export default async function Home() {
             <>
               <Link
                 href={`/articles/${featuredArticle.slug}`}
-                className="font-heading block text-3xl leading-tight tracking-tight transition-colors hover:text-primary sm:text-4xl"
+                className="font-[family-name:var(--font-body)] block text-3xl font-semibold italic leading-tight tracking-tight transition-colors hover:text-primary sm:text-4xl"
               >
                 {featuredArticle.frontmatter.title}
               </Link>

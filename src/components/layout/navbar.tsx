@@ -57,6 +57,8 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-md">
+      {/* Amber accent bar */}
+      <div className="h-[2px] w-full bg-primary" aria-hidden="true" />
       <div className="mx-auto w-full max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
         {searchOpen ? (
           /* Expanded search row */

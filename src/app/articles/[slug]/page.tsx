@@ -12,6 +12,7 @@ import {
   ArticleTocSidebar,
   type ArticleTocItem,
 } from "@/components/articles/article-reader-enhancements";
+import { ReadingProgress } from "@/components/articles/reading-progress";
 import { InteractionCtaPanel } from "@/components/engagement/interaction-cta-panel";
 import { SectionContainer } from "@/components/shared/section-container";
 import {
@@ -249,6 +250,8 @@ export default async function ArticleDetailPage({
 
   return (
     <SectionContainer className="py-6 lg:py-8">
+      {/* Reading progress bar — amber line grows from left to right as user scrolls */}
+      <ReadingProgress />
       {/* Global reader enhancements: top progress bar, selection popover, long-session watcher */}
       <ArticleReaderEnhancements
         toc={toc}
@@ -332,7 +335,7 @@ export default async function ArticleDetailPage({
               {fm.primaryCategory}
             </p>
 
-            <h1 className="font-heading text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl">
+            <h1 className="font-[family-name:var(--font-body)] text-4xl font-semibold italic leading-tight tracking-tight sm:text-5xl">
               {fm.title}
             </h1>
 
