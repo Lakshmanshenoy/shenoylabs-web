@@ -170,6 +170,7 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
   }
   button,
   input,
@@ -371,6 +372,32 @@ textarea:focus-visible {
   opacity: 0;
   transform: translateY(12px);
   animation: enter-up 480ms ease-out 120ms forwards;
+}
+
+@media (max-width: 767px) {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-size: 1.02rem;
+    line-height: 1.78;
+    /* Avoid iOS scroll-jank from fixed body backgrounds. */
+    background-attachment: scroll;
+  }
+
+  a,
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  .below-fold {
+    contain-intrinsic-size: 1px 780px;
+  }
 }
 
 /* ── Ambient blob drift ───────────────────────────────────────────────────── */
