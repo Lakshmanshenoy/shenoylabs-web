@@ -24,7 +24,7 @@ export function Footer() {
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/60 py-6">
           <span className="inline-flex items-center gap-2 font-heading text-sm font-medium text-foreground">
             <span className="identity-pip" aria-hidden="true" />
-            Shenoy<span className="text-primary">Labs</span>
+            <span>Shenoy<span className="text-primary">Labs</span></span>
           </span>
           <div className="flex items-center gap-4">
             <a
