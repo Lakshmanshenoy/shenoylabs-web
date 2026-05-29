@@ -137,21 +137,21 @@ export default function ContactPage() {
               className="inline-flex items-center justify-center gap-2 rounded-sm border border-border px-4 py-2 text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase transition-colors hover:text-primary"
             >
               <FileTextIcon className="size-3.5" />
-              Read Articles
+              Read Articles →
             </Link>
             <Link
               href="/projects"
               className="inline-flex items-center justify-center gap-2 rounded-sm border border-border px-4 py-2 text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase transition-colors hover:text-primary"
             >
               <GitPullRequestArrowIcon className="size-3.5" />
-              Browse Projects
+              Browse Projects →
             </Link>
             <Link
               href="/about"
               className="inline-flex items-center justify-center gap-2 rounded-sm border border-border px-4 py-2 text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase transition-colors hover:text-primary"
             >
               <MicIcon className="size-3.5" />
-              About
+              About →
             </Link>
           </div>
         </main>

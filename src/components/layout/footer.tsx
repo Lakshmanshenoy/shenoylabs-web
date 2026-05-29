@@ -63,6 +63,26 @@ const socialLinks = [
 export function Footer() {
   return (
     <footer className="footer-reveal border-t border-border bg-background/95">
+      <div className="border-b border-border">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
+          <div>
+            <p className="font-heading text-xl font-semibold leading-tight">
+              Shenoy<span className="text-primary">Labs</span>
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Deeply researched articles and open source projects.
+              <br />
+              No ads. No sponsors. No algorithmic pressure.
+            </p>
+          </div>
+          <p className="text-xs leading-relaxed text-muted-foreground lg:text-right">
+            India · Global audience
+            <br />
+            Built for deep reading and open building.
+          </p>
+        </div>
+      </div>
+
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>

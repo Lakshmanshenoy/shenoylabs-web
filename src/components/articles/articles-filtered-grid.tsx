@@ -260,7 +260,7 @@ export function ArticlesFilteredGrid({ articles }: Props) {
             <div className="grid overflow-hidden rounded-lg border border-border lg:grid-cols-3">
               <Link
                 href={`/articles/${anchor.slug}`}
-                className="border-b border-border p-6 transition-colors hover:bg-secondary lg:col-span-1 lg:row-span-2 lg:border-b-0 lg:border-r"
+                className="border-b border-border p-6 transition-all duration-200 hover:-translate-y-0.5 hover:bg-secondary hover:shadow-md lg:col-span-1 lg:row-span-2 lg:border-b-0 lg:border-r"
               >
                 <p className="text-[10px] font-semibold tracking-[0.12em] text-primary uppercase">
                   {anchor.frontmatter.primaryCategory ?? anchor.frontmatter.category}
@@ -280,7 +280,7 @@ export function ArticlesFilteredGrid({ articles }: Props) {
                     key={article.slug}
                     href={`/articles/${article.slug}`}
                     className={cn(
-                      "block border-b border-border p-5 transition-colors hover:bg-secondary",
+                      "block border-b border-border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:bg-secondary hover:shadow-sm",
                       index === [...mids, ...small].slice(0, 6).length - 1 && "border-b-0",
                     )}
                   >
@@ -310,7 +310,7 @@ export function ArticlesFilteredGrid({ articles }: Props) {
               <Link
                 key={article.slug}
                 href={`/articles/${article.slug}`}
-                className="flex items-center gap-4 border-b border-border px-5 py-4 transition-colors last:border-b-0 hover:bg-secondary"
+                className="flex items-center gap-4 border-b border-border px-5 py-4 transition-all duration-200 last:border-b-0 hover:-translate-y-0.5 hover:bg-secondary hover:shadow-sm"
               >
                 <p className="w-12 text-3xl font-bold leading-none text-foreground/20">
                   {String(index + 1).padStart(2, "0")}
@@ -346,7 +346,7 @@ export function ArticlesFilteredGrid({ articles }: Props) {
           </div>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {seriesGroups.map(([pathway, items]) => (
-              <div key={pathway} className="rounded-lg border border-border p-6 transition-colors hover:border-primary">
+              <div key={pathway} className="rounded-lg border border-border p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
                 <p className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
                   Pathway
                 </p>

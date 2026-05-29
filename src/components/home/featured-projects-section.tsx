@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRightIcon, ExternalLinkIcon } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 
 import { SectionContainer } from "@/components/shared/section-container";
 import { SectionHeader } from "@/components/shared/section-header";
@@ -35,8 +35,8 @@ export function FeaturedProjectsSection({ content }: Props) {
               "shrink-0 gap-1.5",
             )}
           >
-            View all projects
-            <ExternalLinkIcon className="size-3.5" />
+            View all projects →
+            <ArrowRightIcon className="size-3.5" />
           </Link>
         </div>
 
@@ -95,7 +95,7 @@ export function FeaturedProjectsSection({ content }: Props) {
                     ))}
                   </div>
                   <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-colors group-hover:text-primary/80">
-                    View Project
+                    View Project →
                     <ArrowRightIcon className="size-3.5" />
                   </p>
                 </CardContent>

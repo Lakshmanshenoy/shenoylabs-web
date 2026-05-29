@@ -262,7 +262,7 @@ export function ContactForm() {
               href="/articles"
               className="inline-flex items-center rounded-sm border border-border px-5 py-2.5 text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase transition-colors hover:text-primary"
             >
-              Read articles
+              Read articles →
             </Link>
           </div>
         </div>

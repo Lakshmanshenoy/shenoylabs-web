@@ -453,7 +453,7 @@ export function ArticleReaderEnhancements({
               <Clock3 className="size-3.5" />
               Minutes left
             </span>
-            <span className="font-mono text-[12px] text-foreground">~{minutesLeft}m</span>
+            <span className="font-mono text-[12px] text-foreground">{minutesLeft} min read</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-muted-foreground">Read</span>
