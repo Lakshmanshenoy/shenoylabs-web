@@ -1,171 +1,194 @@
-# Development
+# ShenoyLabs
 
-Run the checks (ESLint + TypeScript) locally:
+ShenoyLabs is the public website and publishing system for Lakshman Shenoy's research, long-form writing, and projects built in public.
 
-```bash
-# preferred (uses your package manager to run the script)
-pnpm run check
-# or
-npm run check
+Live site: https://www.shenoylabs.com
+
+The product goal is simple: publish thoughtful work with a calm editorial interface, strong reading performance, and enough operational discipline that the site can be maintained long-term without paid tooling.
+
+## What This Repo Contains
+
+- A public-facing Next.js site for articles, projects, support, contact, and policy pages.
+- A content pipeline powered by MDX and JSON content files.
+- TinaCMS configuration for editorial workflows.
+- Small operational APIs for contact, consent, DSR, media PR creation, payments, and OG image generation.
+- Repo-level checks and runbooks intended to keep quality high without adding heavy process.
+
+## Product Principles
+
+- Editorial-first: readable typography, calm pacing, and long-form content that does not feel like a SaaS landing page.
+- Built in public: projects and process are visible, documented, and linked back to source where useful.
+- No-cost discipline: quality should come from automation and review, not expensive tooling.
+- Operational clarity: consent, retention, support, and publishing flows are documented in-repo.
+
+The editorial contract for new pages and articles lives in `docs/EDITORIAL-IDENTITY-CONTRACT.md`.
+
+## Stack
+
+- Next.js 16 App Router
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- TinaCMS
+- Vitest and Playwright
+- GitHub Actions for CI and operational jobs
+
+## Repository Map
+
+```text
+src/
+  app/                 App Router pages and API routes
+  components/          UI building blocks by feature area
+  lib/                 Content loading, metadata, and utilities
+content/
+  articles/            MDX articles
+  homepage/            Home page content JSON
+  pages/               Standalone page content
+  projects/            Project content
+docs/                  Editorial and operational documentation
+scripts/               Checks, validation, verification, and helper scripts
+tests/                 Playwright end-to-end tests
+test/                  Vitest coverage for utilities and server behavior
+tina/                  TinaCMS schema and generated artifacts
 ```
 
-Or run the script directly:
+## Local Development
+
+Install dependencies:
 
 ```bash
-sh ./scripts/checks.sh
+pnpm install
 ```
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
+Run the site locally:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-### TinaCMS
-
-This repository includes a TinaCMS schema at `tina/config.ts` for MDX and homepage JSON content.
-
-Run Tina + Next locally:
+Run Tina locally with the isomorphic Git bridge:
 
 ```bash
 pnpm dev:tina
 ```
 
-Use the regular app server (without Tina sidebar):
+Use this mode when you want the admin sidebar and local content editing without Tina Cloud.
 
-```bash
-pnpm dev
-```
-
-For cloud-backed Tina editing/builds, set:
-
-```bash
-NEXT_PUBLIC_TINA_CLIENT_ID=<your_client_id>
-TINA_TOKEN=<your_readonly_token>
-```
-
-Local Git bridge (no cloud)
-
-This repository supports a local Git-backed editing flow using Tina's isomorphic git bridge. Edits made in the Tina admin will be committed directly into the repository on the machine running the dev server.
-
-Quick start (local only):
-
-```bash
-# Run the site with Tina admin and local git bridge
-pnpm dev:tina
-```
-
-Notes:
-- Ensure your git user is configured so commits have an author:
+If you use the local Git-backed editing flow, make sure Git has an author configured:
 
 ```bash
 git config user.name "Your Name"
 git config user.email "you@example.com"
 ```
-- After editing in the admin, review changes with `git status` and push as usual.
 
-GitHub-backed (no Tina Cloud)
+## Quality Checks
 
-If you prefer web editing for collaborators without using Tina Cloud, we can add a GitHub-backed flow next. That requires a GitHub token for the server to create commits/PRs and a small server-side bridge or configuration to push changes.
+The main developer gate is the repo check script:
 
-GitHub-backed (self-hosted admin, no Tina Cloud)
-
-This repo includes a small helper API at `/api/tina/github` that can create a branch, commit file changes, and open a pull request using a GitHub token. This enables a self-hosted web admin that writes edits back to your repo without Tina Cloud.
-
-Steps to use the GitHub flow
-
-1. Create a GitHub Personal Access Token with `repo` scope.
-2. Set environment variables (see `.env.local.example`):
-
-```
-GITHUB_TOKEN=ghp_xxx
-GITHUB_REPOSITORY=owner/repo
-GITHUB_BASE_BRANCH=main
+```bash
+pnpm run check
 ```
 
-3. Build or run your admin and wire the admin save action to POST to `/api/tina/github` with JSON like:
+Equivalent direct invocation:
 
-```json
-{
-	"changes": [
-		{ "path": "content/homepage/hero.json", "content": "{...}" }
-	],
-	"commitMessage": "Update homepage hero",
-	"prTitle": "Content updates via Tina"
-}
+```bash
+bash ./scripts/checks.sh
 ```
 
-4. The API will create a branch `tina-edit-<ts>`, commit the changed files, and open a pull request into the base branch.
+What it covers:
 
-Notes & next steps
+- ESLint
+- TypeScript type-checking
+- Featured project validation
+- Content quality validation
+- Detection of common hyphenated DOM attribute mistakes in MDX and JSX
 
-- This helper intentionally performs per-file content updates using the GitHub Contents API (simple, robust for MDX/JSON edits). For bulk edits in a single commit, we can extend it to create trees + single commit instead.
-- If you want, I can wire the generated Tina admin to call this endpoint automatically on save, and add a CI job to build and publish the admin to `/admin` on merges.
+CI mode adds tests and a production build:
 
-Tree-based single commit endpoint
-
-There is also a tree-based helper endpoint at `/api/tina/github/tree` that creates blobs, builds a tree, makes a single commit, and opens a PR. Use this when you want a single atomic commit/PR containing all changes instead of per-file updates.
-
-POST shape example for the tree endpoint:
-
-```json
-{
-	"changes": [
-		{ "path": "content/homepage/hero.json", "content": "{\"headline\": \"New\"}" }
-	],
-	"commitMessage": "Update hero via Tina",
-	"prTitle": "Content: Update hero",
-	"branchName": "tina-admin-update-123"
-}
+```bash
+bash ./scripts/checks.sh --ci
 ```
 
-The endpoint requires the same `GITHUB_TOKEN` and `GITHUB_REPOSITORY` env vars described earlier.
+Supporting notes live in `README-CHECKS.md` and `docs/TEN-OUT-OF-TEN-QA-CHECKLIST.md`.
 
-CI: build Tina admin
+## Content Workflow
 
-There is a GitHub Actions workflow that builds the Tina admin and uploads it as an artifact on pushes to `main`. It also supports a manual `workflow_dispatch` run that will copy the built `admin/` into `public/admin` and commit it back to the repository (useful for publishing a static admin bundle).
+Most content lives under `content/`:
 
-The workflow file is `.github/workflows/build-tina-admin.yml`.
+- `content/articles/` for long-form articles
+- `content/projects/` for project entries
+- `content/pages/` for standalone pages such as About and Support
+- `content/homepage/` for homepage copy and hero content
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The site metadata is defined in `src/lib/site.ts` and can be overridden through environment variables.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+When adding or editing content:
 
-## Learn More
+1. Update the relevant MDX or JSON file.
+2. Run `pnpm run check`.
+3. Review the output against the editorial contract and QA checklist.
+4. Verify the change in the browser, especially for spacing, headings, and mobile readability.
 
-To learn more about Next.js, take a look at the following resources:
+## Integrations And Environment
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Core environment variables are documented in `.env.example`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Key integration groups:
 
-## Deploy on Vercel
+- Site metadata and analytics: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SITE_NAME`, `NEXT_PUBLIC_SITE_DESCRIPTION`, `NEXT_PUBLIC_GA_ID`
+- Contact form and email delivery: `RESEND_API_KEY`, `CONTACT_FROM_EMAIL`, `CONTACT_TO_EMAIL`
+- Human verification: `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`
+- Support and payments: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `NEXT_PUBLIC_RAZORPAY_KEY_ID`
+- GitHub-backed editorial flow: `GITHUB_TOKEN`, `GITHUB_REPOSITORY`, `GITHUB_BASE_BRANCH`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Tina And GitHub Publishing Flows
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This repo supports two editorial modes:
 
-## Verification
+### 1. Local Git bridge
 
-To verify the `CONSENT_ADMIN_KEY` and exercise the consent endpoints after deployment or when testing locally:
+Use `pnpm dev:tina` for local editing with Tina's isomorphic Git bridge. Content changes are written directly into the local repository.
 
-- Ensure the production environment variable `CONSENT_ADMIN_KEY` is set in your deployment environment.
-- The repository includes a helper script: [scripts/verify_consent_key.sh](scripts/verify_consent_key.sh).
+### 2. GitHub-backed PR flow
 
-Example — use the key from your local `.env.local` and run the script from the repo root:
+The repo also exposes helper endpoints for a self-hosted admin that opens pull requests instead of writing directly to the filesystem:
+
+- `/api/tina/github`
+- `/api/tina/github/tree`
+
+Use these when editors should produce reviewable GitHub changesets rather than local commits.
+
+The Tina admin build workflow is defined in `.github/workflows/build-tina-admin.yml`.
+
+## API Surface
+
+Notable application endpoints include:
+
+- `/api/contact`
+- `/api/consent`
+- `/api/dsr`
+- `/api/create-order`
+- `/api/verify-payment`
+- `/api/media/prs`
+- `/api/og`
+
+These routes support contact handling, privacy workflows, payment flows, media contribution review, and social preview generation.
+
+## Operations And Runbooks
+
+Operational guidance is intentionally kept close to the codebase.
+
+Useful starting points:
+
+- `docs/CONSENT_ROTATION_AND_VERIFICATION.md`
+- `docs/DATA_RETENTION.md`
+- `docs/CDN-WAF.md`
+- `docs/CI-Playwright-Troubleshooting.md`
+- `docs/runbooks/`
+
+To verify consent admin behavior after deployment, use:
 
 ```bash
 BASE_URL=$(grep -E '^NEXT_PUBLIC_SITE_URL=' .env.local | cut -d= -f2-) \
@@ -173,10 +196,24 @@ CONSENT_ADMIN_KEY=$(grep -E '^CONSENT_ADMIN_KEY=' .env.local | cut -d= -f2-) \
 bash scripts/verify_consent_key.sh
 ```
 
-Or run against a deployed URL:
+Or run against production directly:
 
 ```bash
 BASE_URL=https://shenoylabs.com CONSENT_ADMIN_KEY=<your_key_here> bash scripts/verify_consent_key.sh
 ```
 
-Check the script output for HTTP status codes and presence of the `events` array in the admin GET response.
+## CI And Automation
+
+GitHub Actions in `.github/workflows/` cover:
+
+- continuous integration
+- Playwright execution
+- Tina admin build publishing
+- consent cleanup
+- rate-limit monitoring
+
+## Contributing
+
+Open a branch, keep changes focused, and run `pnpm run check` before pushing.
+
+For pnpm build-script allowlist changes and related review rules, see `CONTRIBUTING.md`.
