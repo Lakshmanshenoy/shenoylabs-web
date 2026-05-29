@@ -83,9 +83,14 @@ function bindScrollListeners(onScroll: () => void) {
 
 function getProgressTone(progress: number): "yellow" | "amber" | "red" | "green" {
   if (progress >= 100) return "green";
-  if (progress >= 80) return "red";
-  if (progress >= 40) return "amber";
+  if (progress > 40) return "red";
+  if (progress > 20) return "amber";
   return "yellow";
+}
+
+function getMinutesLeft(readingTimeMinutes: number, progress: number): number {
+  if (progress >= 100) return 0;
+  return Math.max(1, Math.ceil((readingTimeMinutes * (100 - progress)) / 100));
 }
 
 export function MobileTocSheet({ toc }: { toc: ArticleTocItem[] }) {
@@ -446,7 +451,7 @@ export function ArticleReaderEnhancements({
       const { progress: pct, thresholdCurrent } = getScrollState();
       setProgress(pct);
 
-      const minutesLeft = Math.max(1, Math.ceil((readingTimeMinutes * (100 - pct)) / 100));
+      const minutesLeft = getMinutesLeft(readingTimeMinutes, pct);
       const el = document.getElementById("reader-progress-text");
       if (el) {
         el.textContent = `${pct}% · ${minutesLeft}m left`;
@@ -516,7 +521,7 @@ export function ArticleReaderEnhancements({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [quote]);
 
-  const minutesLeft = Math.max(1, Math.ceil((readingTimeMinutes * (100 - progress)) / 100));
+  const minutesLeft = getMinutesLeft(readingTimeMinutes, progress);
   const currentSection = toc.find((item) => item.id === activeId);
   const sectionIndex = activeId ? toc.findIndex((item) => item.id === activeId) + 1 : 0;
 
