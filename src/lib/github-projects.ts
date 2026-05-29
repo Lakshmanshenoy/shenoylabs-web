@@ -49,7 +49,7 @@ type GitHubApiRepo = {
   fork: boolean;
 };
 
-const HIDDEN_REPOS = new Set(["lstest", "bharat-alpha", "equilis-india"]);
+const HIDDEN_REPOS = new Set(["lstest", "bharat-alpha", "equilis-india", "PythonProjects"]);
 const STALE_THRESHOLD_MONTHS = 18;
 
 type RepoOverride = {
@@ -147,7 +147,7 @@ export async function getGitHubProjectsData(): Promise<GitHubProjectsData> {
       name: repo.name,
       fullName: repo.full_name,
       description:
-        REPO_OVERRIDES[repo.name]?.description ?? repo.description ?? "No description provided.",
+        REPO_OVERRIDES[repo.name]?.description ?? repo.description ?? `${repo.name} repository on GitHub.`,
       htmlUrl: repo.html_url,
       homepage: repo.homepage,
       language: repo.language,

@@ -65,26 +65,11 @@ export function getAboutProfileContent(): AboutProfileContent {
   return JSON.parse(raw) as AboutProfileContent;
 }
 
-function normalizeVersion(version: string | undefined): string {
-  if (!version) return "Unknown";
-  return version.replace(/^[~^]/, "");
-}
-
 export function getAboutColophonFromPackage(): AboutColophonRow[] {
-  const packageRaw = fs.readFileSync(path.join(process.cwd(), "package.json"), "utf-8");
-  const pkg = JSON.parse(packageRaw) as {
-    dependencies?: Record<string, string>;
-    devDependencies?: Record<string, string>;
-  };
-
-  const nextVersion = normalizeVersion(pkg.dependencies?.next);
-  const tsVersion = normalizeVersion(pkg.devDependencies?.typescript);
-  const tinaVersion = normalizeVersion(pkg.dependencies?.tinacms);
-
   return [
-    { label: "Framework", value: `Next.js ${nextVersion}` },
-    { label: "Language", value: tsVersion === "Unknown" ? "TypeScript" : `TypeScript ${tsVersion}` },
-    { label: "CMS", value: tinaVersion === "Unknown" ? "TinaCMS + MDX" : `TinaCMS ${tinaVersion} + MDX` },
+    { label: "Framework", value: "Next.js" },
+    { label: "Language", value: "TypeScript" },
+    { label: "CMS", value: "TinaCMS + MDX" },
     { label: "Hosting", value: "Vercel" },
   ];
 }
