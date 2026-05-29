@@ -431,14 +431,6 @@ export function ArticleReaderEnhancements({
 
   return (
     <>
-      {/* Thin top progress bar — minimal, no percentage text */}
-      <div className="fixed inset-x-0 top-0 z-50 h-[2px] bg-border/30 pointer-events-none">
-        <div
-          className="h-full bg-primary/65 transition-[width] duration-200 ease-out"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-
       {/* Floating reading HUD */}
       <aside className="fixed bottom-5 right-5 z-40 hidden w-[16.5rem] rounded-xl border border-border/70 bg-background/95 p-3 shadow-lg backdrop-blur sm:block">
         <div className="mb-2 flex items-center justify-between">

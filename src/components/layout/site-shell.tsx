@@ -17,7 +17,7 @@ export function SiteShell({ children }: SiteShellProps) {
       <div className="site-navbar">
         <Navbar />
       </div>
-      <main id="main-content" className="page-enter flex-1">
+      <main id="main-content" className="page-enter flex-1 pt-[3.5rem] sm:pt-[3.75rem]">
         {children}
       </main>
       <div className="site-footer">

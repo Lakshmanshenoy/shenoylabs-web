@@ -306,7 +306,7 @@ export default async function ArticleDetailPage({
       />
 
       {/* Top reader bar — full width above the layout grid */}
-      <div className="sticky top-0 z-20 mb-5 border-b border-border/65 bg-background/92 py-3 backdrop-blur-sm">
+      <div className="sticky top-[3.5rem] z-30 mb-5 border-b border-border/65 bg-background/92 py-3 backdrop-blur-sm sm:top-[3.75rem]">
         <div className="flex items-center justify-between">
           <Link
             href="/articles"

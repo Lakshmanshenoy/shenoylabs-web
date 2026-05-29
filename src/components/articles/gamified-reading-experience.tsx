@@ -86,7 +86,7 @@ export function ArticleGamifiedExperience({}: DetailProps) {
   }, [prefs]);
 
   return (
-    <section className="sticky top-[3.4rem] z-20 mb-4 rounded-xl border border-border/70 bg-background/88 p-3 backdrop-blur-sm md:static md:z-auto">
+    <section className="mb-4 rounded-xl border border-border/70 bg-background/88 p-3 backdrop-blur-sm">
       <div className="flex flex-wrap items-start gap-3 md:items-end">
         <div className="min-w-[10rem] grow pr-2">
           <p className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
