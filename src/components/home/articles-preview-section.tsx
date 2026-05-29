@@ -33,7 +33,7 @@ export function ArticlesPreviewSection() {
               "shrink-0 gap-1.5",
             )}
           >
-            View all articles
+            View all articles →
             <ArrowRightIcon className="size-3.5" />
           </Link>
         </div>
@@ -77,7 +77,7 @@ export function ArticlesPreviewSection() {
                   {lead.frontmatter.excerpt}
                 </p>
                 <p className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
-                  Read Article
+                  Read Article →
                   <ArrowRightIcon className="size-3.5" />
                 </p>
               </div>
@@ -130,7 +130,7 @@ export function ArticlesPreviewSection() {
                     {article.frontmatter.excerpt}
                   </p>
                   <p className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary">
-                    Read Article
+                    Read Article →
                     <ArrowRightIcon className="size-3.5" />
                   </p>
                 </CardContent>

@@ -394,7 +394,7 @@ export default async function ArticleDetailPage({
                   className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
                   <Link2Icon className="size-3.5" />
-                  Explore More
+                  Explore More →
                 </Link>
                 <Link
                   href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(`https://shenoylabs.com/articles/${slug}`)}`}
@@ -450,7 +450,7 @@ export default async function ArticleDetailPage({
                     <Link
                       key={article.slug}
                       href={`/articles/${article.slug}`}
-                      className="group rounded-xl border border-border px-4 py-3.5 transition-all hover:border-primary/40 hover:bg-accent/30"
+                      className="group rounded-xl border border-border px-4 py-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:bg-accent/30 hover:shadow-md"
                     >
                       <p className="text-[10px] font-semibold tracking-[0.1em] text-primary uppercase">
                         {article.frontmatter.primaryCategory}
@@ -480,9 +480,10 @@ export default async function ArticleDetailPage({
                     <Link
                       key={article.slug}
                       href={`/articles/${article.slug}`}
-                      className="rounded-lg border border-border/70 px-3 py-2 text-sm transition-colors hover:border-primary/30 hover:text-primary"
+                      className="rounded-lg border border-border/70 px-3 py-2 text-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary hover:shadow-sm"
                     >
-                      {article.frontmatter.title}
+                      <p className="font-medium">{article.frontmatter.title}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{article.readingTime}</p>
                     </Link>
                   ))}
                 </div>

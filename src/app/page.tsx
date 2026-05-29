@@ -50,11 +50,15 @@ export default async function Home() {
     .slice(0, 4);
   const mostRead = allArticles.slice(0, 4);
   const topicCounts = allArticles.reduce<Record<string, number>>((acc, article) => {
-    const category = article.frontmatter.category;
+    const category = article.frontmatter.category ?? "Uncategorised";
     acc[category] = (acc[category] ?? 0) + 1;
     return acc;
   }, {});
   const topics = Object.entries(topicCounts)
+    .filter(([topic]) => {
+      const trimmed = topic.trim();
+      return trimmed !== "" && trimmed !== "undefined" && trimmed !== "null";
+    })
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6);
   const recentProjects: RecentProjectCard[] =
@@ -120,6 +124,10 @@ export default async function Home() {
       </section>
 
       <section className="mx-auto grid w-full max-w-7xl border-b border-border px-4 sm:px-6 lg:grid-cols-[2fr_1fr] lg:px-8">
+        <div className="border-b border-border py-3 text-center text-[13px] text-muted-foreground tracking-[0.02em] lg:col-span-2">
+          Deeply researched articles on technology, science, finance and society written by
+          <span className="ml-1 font-semibold text-foreground">Lakshman Shenoy</span>.
+        </div>
         <div className="border-border py-10 lg:border-r lg:pr-10">
           <p className="mb-5 inline-block bg-primary px-2 py-1 text-[10px] font-bold tracking-[0.12em] text-primary-foreground uppercase">
             Featured Article
@@ -136,7 +144,7 @@ export default async function Home() {
                 {featuredArticle.frontmatter.excerpt}
               </p>
               <p className="mt-4 text-[11px] tracking-[0.07em] text-muted-foreground uppercase">
-                <span className="font-semibold text-primary">{featuredArticle.frontmatter.category}</span>
+                <span className="font-semibold text-primary">{featuredArticle.frontmatter.category ?? "Uncategorised"}</span>
                 <span className="mx-2">·</span>
                 <span>{featuredArticle.frontmatter.author}</span>
                 <span className="mx-2">·</span>
@@ -159,7 +167,7 @@ export default async function Home() {
                   className="block border-b border-border pb-5 transition-colors last:border-none hover:text-primary"
                 >
                   <p className="text-[10px] font-semibold tracking-[0.14em] text-primary uppercase">
-                    {article.frontmatter.category}
+                    {article.frontmatter.category ?? "Uncategorised"}
                   </p>
                   <p className="mt-1 font-heading text-2xl leading-tight">{article.frontmatter.title}</p>
                   <p className="mt-1 text-xs tracking-[0.07em] text-muted-foreground uppercase">
@@ -172,7 +180,7 @@ export default async function Home() {
               href="/articles"
               className="mt-4 inline-flex rounded-sm border border-border px-4 py-2 text-xs font-semibold tracking-[0.07em] uppercase transition-colors hover:bg-secondary"
             >
-              View All Articles
+              View All Articles →
             </Link>
           </div>
         </div>
@@ -192,7 +200,9 @@ export default async function Home() {
                   {String(index + 1).padStart(2, "0")}
                 </p>
                 <p className="mt-1 font-heading text-base leading-snug">{article.frontmatter.title}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{article.frontmatter.category}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {(article.frontmatter.category ?? "Uncategorised")} · {article.readingTime}
+                </p>
               </Link>
             ))}
           </div>
@@ -223,7 +233,7 @@ export default async function Home() {
             Recent Projects
           </p>
           <Link href="/projects" className="text-xs font-semibold tracking-[0.08em] uppercase text-muted-foreground transition-colors hover:text-primary">
-            View All
+            View All →
           </Link>
         </div>
         <div className="grid gap-px rounded-md border border-border bg-border md:grid-cols-2">

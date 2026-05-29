@@ -65,10 +65,30 @@ function parseItem<T>(type: "articles" | "projects", filename: string): ContentI
   const { data, content } = matter(raw);
   const rt = readingTime(content);
 
+  if (type === "articles") {
+    const articleData = data as Record<string, unknown>;
+    const rawCategory =
+      typeof articleData.category === "string" ? articleData.category.trim() : "";
+    if (!rawCategory || rawCategory.toLowerCase() === "undefined") {
+      articleData.category = "Uncategorised";
+    }
+
+    const rawPrimaryCategory =
+      typeof articleData.primaryCategory === "string"
+        ? articleData.primaryCategory.trim()
+        : "";
+    if (!rawPrimaryCategory || rawPrimaryCategory.toLowerCase() === "undefined") {
+      articleData.primaryCategory = articleData.category;
+    }
+  }
+
+  const readTimeMatch = /(\d+)/.exec(rt.text);
+  const normalizedReadTime = `${Math.max(1, Number.parseInt(readTimeMatch?.[1] ?? "1", 10))} min read`;
+
   return {
     slug,
     frontmatter: data as T,
-    readingTime: rt.text,
+    readingTime: normalizedReadTime,
     source: raw,
   };
 }

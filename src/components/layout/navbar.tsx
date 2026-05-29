@@ -102,9 +102,9 @@ export function Navbar() {
                   href={link.href}
                   aria-current={isActive(link.href) ? "page" : undefined}
                   className={cn(
-                    "rounded-sm px-3 py-1.5 text-[11px] font-semibold tracking-[0.08em] uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                    "rounded-sm border-b-2 border-transparent px-3 py-1.5 text-[11px] font-semibold tracking-[0.08em] uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                     isActive(link.href)
-                      ? "text-primary"
+                      ? "border-primary text-primary"
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground",
                   )}
                 >

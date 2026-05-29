@@ -15,6 +15,12 @@ type SupportCardCtaProps = {
   className?: string;
 };
 
+function withDirectionalArrow(label: string, href: string): string {
+  if (/[↗→]$/.test(label.trim())) return label;
+  if (href.startsWith("/") || href.startsWith("#")) return `${label} →`;
+  return `${label} ↗`;
+}
+
 export function SupportCardCta({
   title,
   body,
@@ -56,7 +62,7 @@ export function SupportCardCta({
               "h-12 gap-2 px-7 shadow-sm shadow-primary/20 transition-shadow hover:shadow-md hover:shadow-primary/25",
             )}
           >
-            {primaryCtaLabel}
+            {withDirectionalArrow(primaryCtaLabel, primaryCtaHref)}
             <HeartIcon className="size-4 text-red-500" />
           </Link>
 
@@ -65,7 +71,7 @@ export function SupportCardCta({
               href={secondaryCtaHref}
               className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-12 px-7")}
             >
-              {secondaryCtaLabel}
+              {withDirectionalArrow(secondaryCtaLabel, secondaryCtaHref)}
             </Link>
           ) : null}
         </div>

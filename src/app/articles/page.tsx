@@ -8,14 +8,14 @@ import { buildBreadcrumbJsonLd } from "@/lib/seo";
 export const metadata: Metadata = {
   title: "Articles — Shenoy Labs",
   description:
-    "In-depth articles on product, engineering, and founder strategy by Lakshman Shenoy.",
+    "Deeply researched articles on technology, science, finance, and society by Lakshman Shenoy. Written slowly. Published when ready.",
   alternates: {
     canonical: "/articles",
   },
   openGraph: {
     title: "Articles — Shenoy Labs",
     description:
-      "In-depth articles on product, engineering, and founder strategy by Lakshman Shenoy.",
+      "Deeply researched articles on technology, science, finance, and society by Lakshman Shenoy. Written slowly. Published when ready.",
     type: "website",
     url: "/articles",
     images: ["/api/og?title=Articles"],
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Articles — Shenoy Labs",
     description:
-      "In-depth articles on product, engineering, and founder strategy by Lakshman Shenoy.",
+      "Deeply researched articles on technology, science, finance, and society by Lakshman Shenoy. Written slowly. Published when ready.",
     images: ["/api/og?title=Articles"],
   },
 };

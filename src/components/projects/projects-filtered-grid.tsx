@@ -170,6 +170,7 @@ function projectScore(project: EnrichedProject, githubRepos: GitHubRepoSummary[]
 }
 
 function inferTypeFromRepo(repo: GitHubRepoSummary): "Tool" | "Library" | "Research" | "Experiment" {
+  if (repo.type) return repo.type;
   const tags = repo.topics.map((topic) => topic.toLowerCase());
   if (tags.some((tag) => ["sdk", "package", "library", "framework"].includes(tag))) {
     return "Library";
@@ -276,14 +277,13 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
     day: "numeric",
   });
 
-  const totalRepos = projects.length;
-  const totalStars = githubStats?.stars ?? projects.reduce(
-    (sum, project) => sum + (project.frontmatter.tags?.length ?? 0),
-    0,
-  );
-  const totalForks = githubStats?.forks ?? 0;
-  const activeCount = projects.filter((project) => project.frontmatter.status === "shipped").length;
+  const totalRepos = githubStats?.repoCount ?? projects.length;
   const languageCount = githubStats?.languageCount ?? new Set(enriched.map((project) => project.inferredLanguage)).size;
+  const lastActiveDate = (githubStats?.lastActive ? new Date(githubStats.lastActive) : latest)?.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 
   const filteredAutoRepos = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -307,11 +307,17 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
     });
   }, [autoRepos, query, activeLanguage, activeStatus, activeType]);
 
+  const featuredCount =
+    filtered.filter((project) => project.frontmatter.featured).length +
+    filteredAutoRepos.filter((repo) => repo.featured).length;
+
   const rankedAutoRepos = useMemo<RankedRepo[]>(
     () =>
       [...filteredAutoRepos]
         .map((repo) => ({ ...repo, inferredType: inferTypeFromRepo(repo) }))
         .sort((a, b) => {
+          const featuredDelta = Number(b.featured) - Number(a.featured);
+          if (featuredDelta !== 0) return featuredDelta;
           const delta = repoScore(b) - repoScore(a);
           if (delta !== 0) return delta;
           return new Date(b.pushedAt).getTime() - new Date(a.pushedAt).getTime();
@@ -363,31 +369,29 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
 
         <div className="mt-6 grid gap-3 border-t border-border pt-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="border-r border-border/80 pr-4 last:border-r-0">
-            <p className="text-4xl font-bold leading-none text-foreground">{githubStats?.repoCount ?? totalRepos}</p>
+            <p className="text-4xl font-bold leading-none text-foreground">{totalRepos}</p>
             <p className="mt-1 text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
               Repositories
             </p>
           </div>
           <div className="border-r border-border/80 pr-4 last:border-r-0">
-            <p className="text-4xl font-bold leading-none text-foreground">{totalStars}</p>
-            <p className="mt-1 text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-              Total Stars
-            </p>
-          </div>
-          <div className="border-r border-border/80 pr-4 last:border-r-0">
-            <p className="text-4xl font-bold leading-none text-foreground">{githubStats ? totalForks : activeCount}</p>
-            <p className="mt-1 text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-              {githubStats ? "Total Forks" : "Active Builds"}
-            </p>
-          </div>
-          <div>
             <p className="text-4xl font-bold leading-none text-foreground">{languageCount}</p>
             <p className="mt-1 text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
               Languages
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Last active {(githubStats?.lastActive ? new Date(githubStats.lastActive) : latest)?.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+          </div>
+          <div className="border-r border-border/80 pr-4 last:border-r-0">
+            <p className="text-4xl font-bold leading-none text-foreground">{lastActiveDate}</p>
+            <p className="mt-1 text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+              Last Active
             </p>
+          </div>
+          <div>
+            <p className="text-4xl font-bold leading-none text-foreground">{featuredCount}</p>
+            <p className="mt-1 text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+              Featured
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">Manually curated</p>
           </div>
         </div>
       </section>
@@ -496,7 +500,7 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
                 <article
                   key={project.slug}
                   className={cn(
-                    "grid overflow-hidden rounded-lg border border-border bg-card/95 transition-shadow hover:shadow-md",
+                    "grid overflow-hidden rounded-lg border border-border bg-card/95 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
                     index % 2 === 0 ? "lg:grid-cols-[360px_1fr]" : "lg:grid-cols-[1fr_360px]",
                   )}
                 >
@@ -570,10 +574,10 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
                             href={project.frontmatter.githubUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center rounded-sm border border-border p-1.5 transition-colors hover:border-primary hover:text-primary"
-                            aria-label="Open GitHub"
+                            className="inline-flex items-center gap-1.5 rounded-sm border border-border px-2.5 py-1.5 text-[10px] font-semibold tracking-[0.08em] uppercase transition-colors hover:border-primary hover:text-primary"
                           >
                             <GitHubBrandIcon className="size-3.5" />
+                            View on GitHub ↗
                           </a>
                         ) : null}
                         {project.frontmatter.liveUrl ? (
@@ -602,7 +606,7 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
                 <article
                   key={repo.fullName}
                   className={cn(
-                    "grid overflow-hidden rounded-lg border border-border bg-card/95 transition-shadow hover:shadow-md",
+                    "grid overflow-hidden rounded-lg border border-border bg-card/95 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
                     index % 2 === 0 ? "lg:grid-cols-[360px_1fr]" : "lg:grid-cols-[1fr_360px]",
                   )}
                 >
@@ -638,7 +642,9 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
                       </span>
                     </div>
 
-                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{repo.description}</p>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                      {repo.writeup ?? repo.description}
+                    </p>
 
                     <div className="mt-4 flex flex-wrap gap-1.5">
                       {repo.topics.slice(0, 6).map((tag) => (
@@ -668,10 +674,10 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
                         href={repo.htmlUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center rounded-sm border border-border p-1.5 transition-colors hover:border-primary hover:text-primary"
-                        aria-label="Open GitHub"
+                        className="inline-flex items-center gap-1.5 rounded-sm border border-border px-2.5 py-1.5 text-[10px] font-semibold tracking-[0.08em] uppercase transition-colors hover:border-primary hover:text-primary"
                       >
                         <GitHubBrandIcon className="size-3.5" />
+                        View on GitHub ↗
                       </a>
                     </div>
                   </div>
@@ -702,7 +708,7 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
             {filteredAutoRepos.slice(0, 24).map((repo) => (
               <article
                 key={repo.fullName}
-                className="rounded-lg border border-border bg-card/90 p-4 transition-colors hover:border-primary/35 hover:bg-secondary/30"
+                className="rounded-lg border border-border bg-card/90 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-secondary/30 hover:shadow-md"
               >
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
