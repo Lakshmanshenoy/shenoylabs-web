@@ -249,7 +249,7 @@ export default async function ArticleDetailPage({
   };
 
   return (
-    <SectionContainer className="py-6 lg:py-8">
+    <SectionContainer className="env-article rounded-2xl py-6 lg:py-8">
       {/* Reading progress bar — amber line grows from left to right as user scrolls */}
       <ReadingProgress />
       {/* Global reader enhancements: top progress bar, selection popover, long-session watcher */}
@@ -277,13 +277,13 @@ export default async function ArticleDetailPage({
       />
 
       {/* Top reader bar — full width above the layout grid */}
-      <div className="sticky top-0 z-20 mb-5 border-b border-border bg-background/95 py-3 backdrop-blur-sm">
+      <div className="sticky top-0 z-20 mb-5 border-b border-border/65 bg-background/92 py-3 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <Link
             href="/articles"
             className={cn(
               buttonVariants({ variant: "ghost", size: "sm" }),
-              "-ml-2 gap-1.5 text-[11px] font-semibold tracking-[0.06em] text-muted-foreground uppercase",
+              "-ml-2 gap-1.5 text-[11px] font-semibold tracking-[0.06em] text-muted-foreground",
             )}
           >
             ← All Articles
@@ -330,8 +330,8 @@ export default async function ArticleDetailPage({
               </div>
             )}
 
-            <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.08em] text-primary uppercase">
-              <span className="inline-block size-1.5 rounded-full bg-primary" />
+            <p className="editorial-kicker inline-flex items-center gap-2 text-primary">
+              <span className="identity-pip" aria-hidden="true" />
               {fm.primaryCategory}
             </p>
 
@@ -339,7 +339,7 @@ export default async function ArticleDetailPage({
               {fm.title}
             </h1>
 
-            <p className="border-l-4 border-primary pl-5 text-xl leading-relaxed text-muted-foreground italic">
+            <p className="editorial-deck border-l-2 border-primary/70 pl-5 italic">
               {fm.excerpt}
             </p>
 

@@ -101,40 +101,41 @@ export default async function Home() {
 
   return (
     <>
-      <section className="border-b border-border">
-        <div className="mx-auto w-full max-w-7xl px-4 pb-8 pt-14 text-center sm:px-6 lg:px-8">
-          <p className="text-[10px] font-semibold tracking-[0.2em] text-muted-foreground uppercase">
+      <section className="env-home border-b border-border/55">
+        <div className="mx-auto w-full max-w-7xl px-4 pb-14 pt-16 text-center sm:px-6 lg:px-8 lg:pb-16">
+          <p className="editorial-kicker">
             {todayLabel}
           </p>
-          <h1 className="mt-4 text-6xl leading-[0.93] sm:text-7xl md:text-8xl lg:text-9xl">
+          <h1 className="mt-5 text-6xl leading-[0.93] sm:text-7xl md:text-8xl lg:text-9xl">
             Shenoy<span className="text-primary">.</span>Labs
           </h1>
-          <p className="mt-6 text-sm tracking-[0.18em] text-muted-foreground uppercase sm:mt-7 lg:mt-8">
+          <p className="mt-6 text-sm tracking-[0.14em] text-muted-foreground uppercase sm:mt-7 lg:mt-8">
             Think · <span className="text-primary">Learn</span> · Solve
           </p>
-          <div className="mt-8 flex flex-wrap justify-center border-y border-border">
-            <Link href="/articles" className="border-r border-border px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-muted-foreground uppercase transition-colors hover:bg-secondary hover:text-primary">
+          <div className="mx-auto mt-10 flex w-fit flex-wrap justify-center overflow-hidden rounded-full border border-border/70 bg-background/70 backdrop-blur-sm">
+            <Link href="/articles" className="border-r border-border/60 px-5 py-2.5 text-[11px] font-semibold tracking-[0.1em] text-muted-foreground uppercase transition-colors hover:bg-secondary hover:text-primary">
               Articles
             </Link>
-            <Link href="/projects" className="border-r border-border px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-muted-foreground uppercase transition-colors hover:bg-secondary hover:text-primary">
+            <Link href="/projects" className="border-r border-border/60 px-5 py-2.5 text-[11px] font-semibold tracking-[0.1em] text-muted-foreground uppercase transition-colors hover:bg-secondary hover:text-primary">
               Projects
             </Link>
-            <Link href="/support" className="px-5 py-3 text-[10px] font-bold tracking-[0.18em] text-muted-foreground uppercase transition-colors hover:bg-secondary hover:text-primary">
+            <Link href="/support" className="px-5 py-2.5 text-[11px] font-semibold tracking-[0.1em] text-muted-foreground uppercase transition-colors hover:bg-secondary hover:text-primary">
               Support Us
             </Link>
           </div>
         </div>
       </section>
 
-      <section className="border-b border-border py-14 md:py-20">
+      <section className="border-b border-border/55 py-16 md:py-24">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-          <p className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">
+          <p className="editorial-kicker mb-3 inline-flex items-center gap-2">
+            <span className="identity-pip" aria-hidden="true" />
             Available to collaborate · India
           </p>
-          <h2 className="font-[family-name:var(--font-body)] mb-4 max-w-2xl text-4xl font-semibold italic leading-tight text-foreground md:text-5xl">
+          <h2 className="font-[family-name:var(--font-body)] mb-5 max-w-2xl text-4xl font-semibold italic leading-tight text-foreground md:text-5xl">
             Research &amp; projects<br />built in public.
           </h2>
-          <p className="mb-8 max-w-xl text-base leading-relaxed text-muted-foreground">
+          <p className="editorial-deck mb-10 max-w-2xl">
             Deeply researched writing on technology, science, and systems — by{" "}
             <Link href="/about" className="text-foreground underline underline-offset-2 decoration-primary/50 hover:decoration-primary transition-colors">
               Lakshman Shenoy
@@ -158,13 +159,14 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="mx-auto grid w-full max-w-7xl border-b border-border px-4 sm:px-6 lg:grid-cols-[2fr_1fr] lg:px-8">
-        <div className="border-b border-border py-3 text-center text-[13px] text-muted-foreground tracking-[0.02em] lg:col-span-2">
+      <section className="mx-auto grid w-full max-w-7xl px-4 pt-4 sm:px-6 lg:grid-cols-[2fr_1fr] lg:px-8">
+        <div className="py-4 text-center text-[13px] text-muted-foreground tracking-[0.02em] lg:col-span-2">
           Deeply researched articles on technology, science, finance and society written by
           <span className="ml-1 font-semibold text-foreground">Lakshman Shenoy</span>.
         </div>
-        <div className="border-border py-10 lg:border-r lg:pr-10">
-          <p className="mb-5 inline-block bg-primary px-2 py-1 text-[10px] font-bold tracking-[0.12em] text-primary-foreground uppercase">
+        <div className="border-border py-12 lg:border-r lg:pr-12">
+          <p className="editorial-kicker mb-5 inline-flex items-center gap-2 rounded-full bg-primary/8 px-3 py-1.5 text-primary">
+            <span className="identity-pip" aria-hidden="true" />
             Featured Article
           </p>
           {featuredArticle ? (
@@ -190,8 +192,9 @@ export default async function Home() {
             </>
           ) : null}
 
-          <div className="mt-10 border-t border-border pt-8">
-            <p className="mb-5 text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
+          <div className="mt-12 pt-9">
+            <hr className="chapter-rule" />
+            <p className="editorial-kicker mb-5 mt-8">
               Recent Articles
             </p>
             <div className="space-y-5">
@@ -199,12 +202,12 @@ export default async function Home() {
                 <Link
                   key={article.slug}
                   href={`/articles/${article.slug}`}
-                  className="block border-b border-border pb-5 transition-colors last:border-none hover:text-primary"
+                  className="block border-b border-border/60 pb-5 transition-colors last:border-none hover:text-primary"
                 >
                   <p className="text-[10px] font-semibold tracking-[0.14em] text-primary uppercase">
                     {article.frontmatter.category ?? "Uncategorised"}
                   </p>
-                  <p className="mt-1 font-heading text-2xl leading-tight">{article.frontmatter.title}</p>
+                  <p className="mt-1 font-heading text-2xl leading-tight tracking-tight">{article.frontmatter.title}</p>
                   <p className="mt-1 text-xs tracking-[0.07em] text-muted-foreground uppercase">
                     {article.frontmatter.date} · {article.readingTime}
                   </p>
@@ -220,8 +223,8 @@ export default async function Home() {
           </div>
         </div>
 
-        <aside className="py-10 lg:pl-9">
-          <p className="mb-5 text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
+        <aside className="py-12 lg:pl-11">
+          <p className="editorial-kicker mb-5">
             Most Read
           </p>
           <div className="space-y-4">
@@ -229,7 +232,7 @@ export default async function Home() {
               <Link
                 key={article.slug}
                 href={`/articles/${article.slug}`}
-                className="block border-b border-border pb-4 transition-colors last:border-none hover:text-primary"
+                className="block border-b border-border/60 pb-4 transition-colors last:border-none hover:text-primary"
               >
                 <p className="font-heading text-4xl leading-none text-foreground/20">
                   {String(index + 1).padStart(2, "0")}
@@ -242,8 +245,9 @@ export default async function Home() {
             ))}
           </div>
 
-          <div className="mt-8 border-t border-border pt-6">
-            <p className="mb-4 text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
+          <div className="mt-9 pt-6">
+            <hr className="chapter-rule" />
+            <p className="editorial-kicker mb-4 mt-6">
               Topics
             </p>
             <div className="space-y-1">
@@ -251,7 +255,7 @@ export default async function Home() {
                 <Link
                   key={topic}
                   href={`/articles?category=${encodeURIComponent(topic)}`}
-                  className="flex items-center justify-between border-b border-border py-2 text-sm text-muted-foreground transition-colors hover:text-primary"
+                  className="flex items-center justify-between border-b border-border/60 py-2 text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
                   <span>{topic}</span>
                   <span className="text-xs">{count} articles</span>
@@ -262,21 +266,22 @@ export default async function Home() {
         </aside>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+      <section className="env-projects mx-auto w-full max-w-7xl rounded-2xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="mb-6 flex items-center justify-between">
-          <p className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground uppercase">
+          <p className="editorial-kicker inline-flex items-center gap-2">
+            <span className="identity-pip" aria-hidden="true" />
             Recent Projects
           </p>
           <Link href="/projects" className="text-xs font-semibold tracking-[0.08em] uppercase text-muted-foreground transition-colors hover:text-primary">
             View All →
           </Link>
         </div>
-        <div className="grid gap-px rounded-md border border-border bg-border md:grid-cols-2">
+        <div className="grid gap-px rounded-xl border border-border/70 bg-border/80 md:grid-cols-2">
           {recentProjects.map((project) => (
             <Link
               key={`${project.title}-${project.href}`}
               href={project.href}
-              className="group bg-background p-7 transition-colors hover:bg-secondary"
+              className="group bg-background/95 p-8 transition-colors hover:bg-secondary"
             >
               <p className="font-heading text-2xl leading-tight">{project.title}</p>
               <p className="mt-2 text-sm text-muted-foreground">{project.description}</p>
@@ -288,7 +293,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+      <section className="mx-auto w-full max-w-7xl px-4 pb-20 pt-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
           <SupportCardCta
             title={supportCopy.heading}

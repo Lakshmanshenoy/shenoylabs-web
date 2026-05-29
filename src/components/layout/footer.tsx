@@ -17,12 +17,13 @@ const legalLinks = [
 
 export function Footer() {
   return (
-    <footer className="footer-reveal border-t border-border bg-background/95">
+    <footer className="footer-reveal border-t border-border/60 bg-background/92 backdrop-blur-sm">
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
 
         {/* Row 1 — Social + Brand (primary) */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border py-6">
-          <span className="font-heading text-sm font-medium text-foreground">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/60 py-6">
+          <span className="inline-flex items-center gap-2 font-heading text-sm font-medium text-foreground">
+            <span className="identity-pip" aria-hidden="true" />
             Shenoy<span className="text-primary">Labs</span>
           </span>
           <div className="flex items-center gap-4">
@@ -54,7 +55,7 @@ export function Footer() {
         </div>
 
         {/* Row 2 — Primary nav links */}
-        <div className="flex flex-wrap items-center gap-6 border-b border-border py-5">
+        <div className="flex flex-wrap items-center gap-6 border-b border-border/60 py-5">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -64,7 +65,7 @@ export function Footer() {
               {link.label}
             </Link>
           ))}
-          <p className="ml-auto text-right text-xs tracking-[0.14em] text-muted-foreground uppercase">
+          <p className="ml-auto text-right text-xs tracking-[0.1em] text-muted-foreground uppercase">
             Think · <span className="text-primary">Learn</span> · Solve
           </p>
         </div>
