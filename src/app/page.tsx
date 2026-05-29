@@ -57,7 +57,8 @@ export default async function Home() {
   const topics = Object.entries(topicCounts)
     .filter(([topic]) => {
       const trimmed = topic.trim();
-      return trimmed !== "" && trimmed !== "undefined" && trimmed !== "null";
+      const normalized = trimmed.toLowerCase();
+      return normalized !== "" && normalized !== "undefined" && normalized !== "null";
     })
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6);

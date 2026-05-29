@@ -62,7 +62,7 @@ export function ArticlesPreviewSection() {
                     {lead.frontmatter.primaryCategory}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
-                    {lead.readingTime} read ·{" "}
+                    {lead.readingTime} ·{" "}
                     {new Date(lead.frontmatter.date).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "short",
@@ -114,7 +114,7 @@ export function ArticlesPreviewSection() {
                       {article.frontmatter.primaryCategory}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {article.readingTime} read ·{" "}
+                      {article.readingTime} ·{" "}
                       {new Date(article.frontmatter.date).toLocaleDateString(
                         "en-US",
                         { year: "numeric", month: "short", day: "numeric" },
