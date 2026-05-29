@@ -574,10 +574,10 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
                             href={project.frontmatter.githubUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center rounded-sm border border-border p-1.5 transition-colors hover:border-primary hover:text-primary"
-                            aria-label="Open GitHub"
+                            className="inline-flex items-center gap-1.5 rounded-sm border border-border px-2.5 py-1.5 text-[10px] font-semibold tracking-[0.08em] uppercase transition-colors hover:border-primary hover:text-primary"
                           >
                             <GitHubBrandIcon className="size-3.5" />
+                            View on GitHub ↗
                           </a>
                         ) : null}
                         {project.frontmatter.liveUrl ? (
@@ -674,10 +674,10 @@ export function ProjectsFilteredGrid({ projects, githubRepos, githubStats }: Pro
                         href={repo.htmlUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center rounded-sm border border-border p-1.5 transition-colors hover:border-primary hover:text-primary"
-                        aria-label="Open GitHub"
+                        className="inline-flex items-center gap-1.5 rounded-sm border border-border px-2.5 py-1.5 text-[10px] font-semibold tracking-[0.08em] uppercase transition-colors hover:border-primary hover:text-primary"
                       >
                         <GitHubBrandIcon className="size-3.5" />
+                        View on GitHub ↗
                       </a>
                     </div>
                   </div>
