@@ -56,9 +56,9 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/90 backdrop-blur-md">
       {/* Amber accent bar */}
-      <div className="h-[2px] w-full bg-primary" aria-hidden="true" />
+      <div className="h-[2px] w-full bg-gradient-to-r from-primary/70 via-primary to-primary/70" aria-hidden="true" />
       <div className="mx-auto w-full max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
         {searchOpen ? (
           /* Expanded search row */
@@ -91,7 +91,8 @@ export function Navbar() {
         ) : (
           /* Normal nav row */
           <div className="flex items-center justify-between">
-            <Link href="/" className="inline-flex items-center" aria-label="Shenoy Labs home">
+            <Link href="/" className="inline-flex items-center gap-2" aria-label="Shenoy Labs home">
+              <span className="identity-pip" aria-hidden="true" />
               <span className="font-heading text-2xl leading-none tracking-tight">
                 Shenoy<span className="text-primary">Labs</span>
               </span>
@@ -104,7 +105,7 @@ export function Navbar() {
                   href={link.href}
                   aria-current={isActive(link.href) ? "page" : undefined}
                   className={cn(
-                    "rounded-sm border-b-2 border-transparent px-3 py-1.5 text-[11px] font-semibold tracking-[0.08em] uppercase transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                    "rounded-sm border-b-2 border-transparent px-3 py-1.5 text-[12px] font-medium tracking-[0.045em] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                     isActive(link.href)
                       ? "border-primary text-primary"
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground",
