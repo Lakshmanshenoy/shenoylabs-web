@@ -10,8 +10,13 @@ import { CalendarDaysIcon, Clock3Icon, Link2Icon } from "lucide-react";
 import {
   ArticleReaderEnhancements,
   ArticleTocSidebar,
+  MobileTocSheet,
   type ArticleTocItem,
 } from "@/components/articles/article-reader-enhancements";
+import {
+  ArticleGamifiedExperience,
+  type JourneyArticleMeta,
+} from "@/components/articles/gamified-reading-experience";
 import { ReadingProgress } from "@/components/articles/reading-progress";
 import { InteractionCtaPanel } from "@/components/engagement/interaction-cta-panel";
 import { SectionContainer } from "@/components/shared/section-container";
@@ -194,6 +199,27 @@ export default async function ArticleDetailPage({
   const recommendedReads = getRecommendedNextReads(slug, 3);
   const relatedArticles = getRelatedArticles(slug, 3);
   const relatedProjects = getRelatedProjectsForArticle(slug, 3);
+  const articleJourneyCatalog: JourneyArticleMeta[] = getAllArticles().map((article) => {
+    const readingMatch = article.readingTime.match(/(\d+)/);
+    return {
+      slug: article.slug,
+      title: article.frontmatter.title,
+      category: article.frontmatter.primaryCategory ?? article.frontmatter.category,
+      tags: article.frontmatter.tags ?? [],
+      readingTimeMinutes: Math.max(1, Number.parseInt(readingMatch?.[1] ?? "1", 10)),
+      date: article.frontmatter.date,
+      featured: article.frontmatter.featured,
+    };
+  });
+  const currentArticleMeta = articleJourneyCatalog.find((article) => article.slug === slug) ?? {
+    slug,
+    title: fm.title,
+    category: fm.primaryCategory ?? fm.category,
+    tags: fm.tags ?? [],
+    readingTimeMinutes,
+    date: fm.date,
+    featured: fm.featured,
+  };
 
   const { content } = await compileMDX({
     source,
@@ -261,6 +287,10 @@ export default async function ArticleDetailPage({
         versionLabel={versionLabel}
         versionSummary={versionSummary}
       />
+      <ArticleGamifiedExperience
+        allArticles={articleJourneyCatalog}
+        currentArticle={currentArticleMeta}
+      />
 
       {/* JSON-LD */}
       <script
@@ -277,7 +307,7 @@ export default async function ArticleDetailPage({
       />
 
       {/* Top reader bar — full width above the layout grid */}
-      <div className="sticky top-0 z-20 mb-5 border-b border-border/65 bg-background/92 py-3 backdrop-blur-sm">
+      <div className="sticky top-[3.5rem] z-30 mb-5 border-b border-border/65 bg-background/92 py-3 backdrop-blur-sm sm:top-[3.75rem]">
         <div className="flex items-center justify-between">
           <Link
             href="/articles"
@@ -288,12 +318,15 @@ export default async function ArticleDetailPage({
           >
             ← All Articles
           </Link>
-          <p
-            id="reader-progress-text"
-            className="font-mono text-[11px] text-muted-foreground/60"
-          >
-            Reading mode
-          </p>
+          <div className="flex items-center gap-2">
+            <MobileTocSheet toc={toc} />
+            <p
+              id="reader-progress-text"
+              className="font-mono text-[11px] text-muted-foreground/60 transition-colors data-[tone=yellow]:text-yellow-500 data-[tone=amber]:text-amber-500 data-[tone=red]:text-red-500 data-[tone=green]:text-green-500"
+            >
+              Reading mode
+            </p>
+          </div>
         </div>
       </div>
 

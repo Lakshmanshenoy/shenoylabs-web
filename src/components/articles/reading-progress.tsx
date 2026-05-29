@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 export function ReadingProgress() {
   const [progress, setProgress] = useState(0);
+  const [headerHeight, setHeaderHeight] = useState(0);
 
   useEffect(() => {
     const paneId = "reader-scroll-pane";
@@ -33,10 +34,21 @@ export function ReadingProgress() {
     };
   }, []);
 
+  useEffect(() => {
+    const measureHeader = () => {
+      const header = document.querySelector("header");
+      const h = header ? Math.round(header.getBoundingClientRect().height) : 0;
+      setHeaderHeight(h);
+    };
+    measureHeader();
+    window.addEventListener("resize", measureHeader);
+    return () => window.removeEventListener("resize", measureHeader);
+  }, []);
+
   return (
     <div
-      className="fixed left-0 top-0 z-[60] h-[2px] bg-primary transition-[width] duration-75 ease-out"
-      style={{ width: `${progress}%` }}
+      className="fixed left-0 z-[39] h-[2px] bg-primary transition-[width] duration-75 ease-out"
+      style={{ width: `${progress}%`, top: `${headerHeight}px` }}
       role="progressbar"
       aria-valuenow={Math.round(progress)}
       aria-valuemin={0}

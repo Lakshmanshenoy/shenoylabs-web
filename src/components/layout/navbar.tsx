@@ -56,10 +56,15 @@ export function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/90 backdrop-blur-md">
-      {/* Amber accent bar */}
-      <div className="h-[2px] w-full bg-gradient-to-r from-primary/70 via-primary to-primary/70" aria-hidden="true" />
-      <div className="mx-auto w-full max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+    <header className="fixed inset-x-0 top-0 z-40 border-b border-border/60 bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur-md">
+      {/* Amber accent bar — hide on article detail pages to avoid duplicate progress */}
+      {!pathname?.startsWith("/articles/") && (
+        <div
+          className="h-[2px] w-full bg-gradient-to-r from-primary/70 via-primary to-primary/70"
+          aria-hidden="true"
+        />
+      )}
+      <div className="mx-auto w-full max-w-7xl px-4 py-2.5 sm:px-6 sm:py-3 lg:px-8">
         {searchOpen ? (
           /* Expanded search row */
           <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
@@ -128,19 +133,20 @@ export function Navbar() {
             <div className="flex items-center gap-1 md:hidden">
               <Button
                 variant="ghost"
-                size="icon"
+                size="icon-lg"
                 onClick={() => setSearchOpen(true)}
+                className="rounded-xl"
                 aria-label="Open search"
               >
                 <SearchIcon className="size-4" />
               </Button>
               <ThemeToggle />
               <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-                <SheetTrigger render={<Button variant="ghost" size="icon" />}>
+                <SheetTrigger render={<Button variant="ghost" size="icon-lg" className="rounded-xl" />}>
                   <MenuIcon />
                   <span className="sr-only">Open menu</span>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-[85vw] max-w-xs p-0">
+                <SheetContent side="right" className="w-[92vw] max-w-sm p-0 pb-[max(env(safe-area-inset-bottom),0.75rem)]">
                   <SheetHeader className="border-b border-border px-5 py-4">
                     <SheetTitle>Navigation</SheetTitle>
                   </SheetHeader>
@@ -152,7 +158,7 @@ export function Navbar() {
                         onClick={() => setIsMenuOpen(false)}
                         aria-current={isActive(link.href) ? "page" : undefined}
                         className={cn(
-                          "rounded-lg px-3 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                          "rounded-xl px-3 py-3 text-base transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                           isActive(link.href)
                             ? "bg-secondary font-medium text-foreground"
                             : "text-muted-foreground hover:bg-secondary hover:text-foreground",
@@ -162,6 +168,24 @@ export function Navbar() {
                       </Link>
                     ))}
                   </nav>
+                  <div className="border-t border-border/60 px-3 pt-3">
+                    <div className="grid grid-cols-2 gap-2 pb-2">
+                      <Link
+                        href="/support"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="rounded-xl border border-border/70 px-3 py-2.5 text-center text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                      >
+                        Support
+                      </Link>
+                      <Link
+                        href="/contact"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="rounded-xl border border-border/70 px-3 py-2.5 text-center text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                      >
+                        Contact
+                      </Link>
+                    </div>
+                  </div>
                 </SheetContent>
               </Sheet>
             </div>

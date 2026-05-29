@@ -16,6 +16,8 @@ import {
   WhatsAppBrandIcon,
   XBrandIcon,
 } from "@/components/shared/social-brand-icons";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -77,6 +79,97 @@ function bindScrollListeners(onScroll: () => void) {
       pane.removeEventListener("scroll", onScroll);
     }
   };
+}
+
+function getProgressTone(progress: number): "yellow" | "amber" | "red" | "green" {
+  if (progress >= 100) return "green";
+  if (progress > 40) return "red";
+  if (progress > 20) return "amber";
+  return "yellow";
+}
+
+function getMinutesLeft(readingTimeMinutes: number, progress: number): number {
+  if (progress >= 100) return 0;
+  return Math.max(1, Math.ceil((readingTimeMinutes * (100 - progress)) / 100));
+}
+
+export function MobileTocSheet({ toc }: { toc: ArticleTocItem[] }) {
+  const [open, setOpen] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(toc[0]?.id ?? null);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const { thresholdCurrent } = getScrollState();
+      let current: string | null = null;
+
+      for (const item of toc) {
+        const section = document.getElementById(item.id);
+        if (!section) continue;
+        if (section.getBoundingClientRect().top < thresholdCurrent) current = item.id;
+      }
+
+      if (current) setActiveId(current);
+    };
+
+    onScroll();
+    return bindScrollListeners(onScroll);
+  }, [toc]);
+
+  if (toc.length === 0) return null;
+
+  const activeIndex = toc.findIndex((item) => item.id === activeId);
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger
+        render={
+          <Button
+            variant="outline"
+            size="sm"
+            className="xl:hidden"
+          />
+        }
+      >
+        <ListTree className="size-3.5" />
+        TOC
+      </SheetTrigger>
+      <SheetContent side="left" className="w-[84vw] max-w-xs p-0">
+        <SheetHeader className="border-b border-border px-5 py-4">
+          <SheetTitle>Contents</SheetTitle>
+          <p className="text-[11px] text-muted-foreground">
+            {activeIndex >= 0 ? `Section ${activeIndex + 1} of ${toc.length}` : `${toc.length} sections`}
+          </p>
+        </SheetHeader>
+
+        <nav className="max-h-[calc(100vh-5rem)] overflow-y-auto px-3 py-3" aria-label="Article table of contents">
+          <ul className="space-y-1">
+            {toc.map((item) => {
+              const isActive = activeId === item.id;
+              return (
+                <li key={item.id}>
+                  <button
+                    onClick={() => {
+                      document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      setOpen(false);
+                    }}
+                    className={[
+                      "w-full rounded-lg py-2 text-left text-[13px] leading-[1.45] transition-colors",
+                      item.level === 3 ? "pl-6 pr-3" : "pl-3 pr-3",
+                      isActive
+                        ? "bg-primary/10 font-semibold text-primary"
+                        : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground",
+                    ].join(" ")}
+                  >
+                    {item.title}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      </SheetContent>
+    </Sheet>
+  );
 }
 
 // ─── Left TOC Sidebar ─────────────────────────────────────────────────────────
@@ -358,9 +451,12 @@ export function ArticleReaderEnhancements({
       const { progress: pct, thresholdCurrent } = getScrollState();
       setProgress(pct);
 
-      const minutesLeft = Math.max(1, Math.ceil((readingTimeMinutes * (100 - pct)) / 100));
+      const minutesLeft = getMinutesLeft(readingTimeMinutes, pct);
       const el = document.getElementById("reader-progress-text");
-      if (el) el.textContent = `${pct}% · ${minutesLeft}m left`;
+      if (el) {
+        el.textContent = `${pct}% · ${minutesLeft}m left`;
+        el.setAttribute("data-tone", getProgressTone(pct));
+      }
 
       let current: string | null = null;
       for (const item of toc) {
@@ -425,20 +521,12 @@ export function ArticleReaderEnhancements({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [quote]);
 
-  const minutesLeft = Math.max(1, Math.ceil((readingTimeMinutes * (100 - progress)) / 100));
+  const minutesLeft = getMinutesLeft(readingTimeMinutes, progress);
   const currentSection = toc.find((item) => item.id === activeId);
   const sectionIndex = activeId ? toc.findIndex((item) => item.id === activeId) + 1 : 0;
 
   return (
     <>
-      {/* Thin top progress bar — minimal, no percentage text */}
-      <div className="fixed inset-x-0 top-0 z-50 h-[2px] bg-border/30 pointer-events-none">
-        <div
-          className="h-full bg-primary/65 transition-[width] duration-200 ease-out"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-
       {/* Floating reading HUD */}
       <aside className="fixed bottom-5 right-5 z-40 hidden w-[16.5rem] rounded-xl border border-border/70 bg-background/95 p-3 shadow-lg backdrop-blur sm:block">
         <div className="mb-2 flex items-center justify-between">
