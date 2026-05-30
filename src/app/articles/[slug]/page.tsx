@@ -331,7 +331,7 @@ export default async function ArticleDetailPage({
             For Table Of Contents, please click on TOC and,
           </p>
           <p className="mt-1">
-            For Enhanced Reading Experience, Please click on RXP for customisation.
+            For Enhanced Reading Experience, please click on RXP for customisation.
           </p>
         </div>
       </div>
