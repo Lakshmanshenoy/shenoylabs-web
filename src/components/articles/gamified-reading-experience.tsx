@@ -103,7 +103,7 @@ export function ArticleGamifiedExperience({}: DetailProps) {
             Reading Experience
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            For Enhanced Reading Experience, Please click on drop-down and customise accordingly.
+            For Enhanced Reading Experience, Please click on Show controls for customisation.
           </p>
         </div>
         <Button

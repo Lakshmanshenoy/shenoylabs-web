@@ -328,10 +328,10 @@ export default async function ArticleDetailPage({
         </div>
         <div className="mt-2 rounded-lg border border-border/70 bg-secondary/40 px-3 py-2 text-[11px] text-muted-foreground sm:px-4 sm:py-3 sm:text-xs">
           <p>
-            For Table of Contents, please click on TOC above and,
+            For Table of Contents, please click on TOC and,
           </p>
           <p className="mt-1">
-            For Enhanced Reading Experience, Please click on RXP button and customise accordingly.
+            For Enhanced Reading Experience, Please click on RXP for customisation.
           </p>
         </div>
       </div>
