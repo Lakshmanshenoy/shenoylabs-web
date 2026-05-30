@@ -15,6 +15,7 @@ import {
 } from "@/components/articles/article-reader-enhancements";
 import {
   ArticleGamifiedExperience,
+  MobileReadingExperienceSheet,
   type JourneyArticleMeta,
 } from "@/components/articles/gamified-reading-experience";
 import { ReadingProgress } from "@/components/articles/reading-progress";
@@ -282,10 +283,6 @@ export default async function ArticleDetailPage({
       <ArticleReaderEnhancements
         toc={toc}
         readingTimeMinutes={readingTimeMinutes}
-        createdDateLabel={createdDateLabel}
-        updatedDateLabel={updatedDateLabel}
-        versionLabel={versionLabel}
-        versionSummary={versionSummary}
       />
       <ArticleGamifiedExperience
         allArticles={articleJourneyCatalog}
@@ -320,6 +317,7 @@ export default async function ArticleDetailPage({
           </Link>
           <div className="flex items-center gap-2">
             <MobileTocSheet toc={toc} />
+            <MobileReadingExperienceSheet />
             <p
               id="reader-progress-text"
               className="font-mono text-[11px] text-muted-foreground/60 transition-colors data-[tone=yellow]:text-yellow-500 data-[tone=amber]:text-amber-500 data-[tone=red]:text-red-500 data-[tone=green]:text-green-500"
@@ -327,6 +325,14 @@ export default async function ArticleDetailPage({
               Reading mode
             </p>
           </div>
+        </div>
+        <div className="mt-2 rounded-lg border border-border/70 bg-secondary/40 px-3 py-2 text-[11px] text-muted-foreground sm:px-4 sm:py-3 sm:text-xs md:hidden">
+          <p>
+            For Table Of Contents, please click on TOC and,
+          </p>
+          <p className="mt-1">
+            For Enhanced Reading Experience, please click on RXP for customisation.
+          </p>
         </div>
       </div>
 

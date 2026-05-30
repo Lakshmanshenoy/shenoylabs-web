@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Eye, SlidersHorizontal } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 export type JourneyArticleMeta = {
@@ -69,6 +71,17 @@ function applyPrefsToDocument(prefs: ReadingPrefs) {
   }
 }
 
+function useReadingPrefsState() {
+  const [prefs, setPrefs] = useState<ReadingPrefs>(() => readPrefs());
+
+  useEffect(() => {
+    applyPrefsToDocument(prefs);
+    writePrefs(prefs);
+  }, [prefs]);
+
+  return { prefs, setPrefs };
+}
+
 type DetailProps = {
   allArticles?: JourneyArticleMeta[];
   currentArticle?: JourneyArticleMeta;
@@ -78,150 +91,233 @@ type DetailProps = {
 };
 
 export function ArticleGamifiedExperience({}: DetailProps) {
-  const [prefs, setPrefs] = useState<ReadingPrefs>(() => readPrefs());
-
-  useEffect(() => {
-    applyPrefsToDocument(prefs);
-    writePrefs(prefs);
-  }, [prefs]);
+  const [expanded, setExpanded] = useState(false);
+  const { prefs, setPrefs } = useReadingPrefsState();
 
   return (
-    <section className="mb-4 rounded-xl border border-border/70 bg-background/88 p-3 backdrop-blur-sm">
-      <div className="flex flex-wrap items-start gap-3 md:items-end">
+    <section className="mb-4 hidden rounded-xl border border-border/70 bg-background/88 p-3 backdrop-blur-sm md:block">
+      <div className="flex items-center justify-between gap-3">
         <div className="min-w-[10rem] grow pr-2">
           <p className="inline-flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
             <SlidersHorizontal className="size-3.5" />
             Reading Experience
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Full controls on width, typography, density, theme, and deep focus.
+            For Enhanced Reading Experience, please click on Show controls for customisation.
           </p>
         </div>
-
-        <button
+        <Button
           type="button"
-          onClick={() => setPrefs((prev) => ({ ...prev, deepFocus: !prev.deepFocus }))}
-          className={cn(
-            "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[10px] font-semibold tracking-[0.08em] uppercase",
-            prefs.deepFocus ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground",
-          )}
-          aria-pressed={prefs.deepFocus}
+          variant="outline"
+          size="sm"
+          onClick={() => setExpanded((prev) => !prev)}
+          aria-expanded={expanded}
         >
-          <Eye className="size-3" />
-          Deep Focus
-        </button>
-
-        <div className="flex w-full flex-wrap gap-1.5 md:hidden">
-          <ValuePill label="Width" value={prefs.width} />
-          <ValuePill label="Typography" value={prefs.typography} />
-          <ValuePill label="Density" value={prefs.density} />
-          <ValuePill label="Theme" value={prefs.theme} />
-        </div>
-
-        <div className="w-full space-y-2 md:hidden">
-          <div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
-            <button
-              type="button"
-              onClick={() => setPrefs(DEFAULT_PREFS)}
-              className="h-8 shrink-0 rounded-md border border-border px-2.5 text-[10px] font-semibold tracking-[0.08em] uppercase"
-            >
-              Reset
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                setPrefs((prev) => ({
-                  ...prev,
-                  width: "narrow",
-                  density: "relaxed",
-                  typography: "editorial",
-                }))
-              }
-              className="h-8 shrink-0 rounded-md border border-border px-2.5 text-[10px] font-semibold tracking-[0.08em] uppercase"
-            >
-              Comfort Preset
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                setPrefs((prev) => ({
-                  ...prev,
-                  width: "medium",
-                  density: "focused",
-                  typography: "modern",
-                }))
-              }
-              className="h-8 shrink-0 rounded-md border border-border px-2.5 text-[10px] font-semibold tracking-[0.08em] uppercase"
-            >
-              Focus Preset
-            </button>
-          </div>
-
-          <MobileOptionGroup
-            label="Width"
-            value={prefs.width}
-            options={["narrow", "medium", "wide"]}
-            onChange={(value) => setPrefs((prev) => ({ ...prev, width: value as ReadingPrefs["width"] }))}
-          />
-
-          <MobileOptionGroup
-            label="Typography"
-            value={prefs.typography}
-            options={["editorial", "modern", "classic"]}
-            onChange={(value) => setPrefs((prev) => ({ ...prev, typography: value as ReadingPrefs["typography"] }))}
-          />
-
-          <MobileOptionGroup
-            label="Density"
-            value={prefs.density}
-            options={["relaxed", "balanced", "focused"]}
-            onChange={(value) => setPrefs((prev) => ({ ...prev, density: value as ReadingPrefs["density"] }))}
-          />
-
-          <MobileOptionGroup
-            label="Theme"
-            value={prefs.theme}
-            options={["library", "study", "night", "paper"]}
-            onChange={(value) => setPrefs((prev) => ({ ...prev, theme: value as ReadingPrefs["theme"] }))}
-          />
-        </div>
-
-        <div className="hidden w-full flex-wrap items-end gap-3 md:flex">
-          <Picker
-            label="Width"
-            value={prefs.width}
-            options={["narrow", "medium", "wide"]}
-            onChange={(value) => setPrefs((prev) => ({ ...prev, width: value as ReadingPrefs["width"] }))}
-          />
-
-          <Picker
-            label="Typography"
-            value={prefs.typography}
-            options={["editorial", "modern", "classic"]}
-            onChange={(value) => setPrefs((prev) => ({ ...prev, typography: value as ReadingPrefs["typography"] }))}
-          />
-
-          <Picker
-            label="Density"
-            value={prefs.density}
-            options={["relaxed", "balanced", "focused"]}
-            onChange={(value) => setPrefs((prev) => ({ ...prev, density: value as ReadingPrefs["density"] }))}
-          />
-
-          <Picker
-            label="Theme"
-            value={prefs.theme}
-            options={["library", "study", "night", "paper"]}
-            onChange={(value) => setPrefs((prev) => ({ ...prev, theme: value as ReadingPrefs["theme"] }))}
-          />
-        </div>
+          {expanded ? "Hide" : "Show"} controls
+        </Button>
       </div>
+
+      {expanded ? (
+        <div className="mt-3 border-t border-border/60 pt-3">
+          <DesktopReadingExperienceControls prefs={prefs} setPrefs={setPrefs} />
+        </div>
+      ) : null}
     </section>
+  );
+}
+
+export function MobileReadingExperienceSheet() {
+  const { prefs, setPrefs } = useReadingPrefsState();
+
+  return (
+    <Sheet>
+      <SheetTrigger
+        render={
+          <Button
+            variant="outline"
+            size="sm"
+            className="md:hidden"
+          />
+        }
+      >
+        <SlidersHorizontal className="size-3.5" />
+        RXP
+      </SheetTrigger>
+      <SheetContent side="right" className="w-[88vw] max-w-sm p-0">
+        <SheetHeader className="border-b border-border px-5 py-4">
+          <SheetTitle>Enhanced Reading Experience</SheetTitle>
+          <p className="text-[11px] text-muted-foreground">
+            Customize width, typography, density, and focus mode.
+          </p>
+        </SheetHeader>
+        <div className="space-y-3 px-3 py-3">
+          <MobileReadingExperienceControls prefs={prefs} setPrefs={setPrefs} />
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
 export function ArticlesJourneyOverview() {
   return null;
+}
+
+function DesktopReadingExperienceControls({
+  prefs,
+  setPrefs,
+}: {
+  prefs: ReadingPrefs;
+  setPrefs: React.Dispatch<React.SetStateAction<ReadingPrefs>>;
+}) {
+  return (
+    <div className="flex w-full flex-wrap items-end gap-3">
+      <button
+        type="button"
+        onClick={() => setPrefs((prev) => ({ ...prev, deepFocus: !prev.deepFocus }))}
+        className={cn(
+          "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[10px] font-semibold tracking-[0.08em] uppercase",
+          prefs.deepFocus ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground",
+        )}
+        aria-pressed={prefs.deepFocus}
+      >
+        <Eye className="size-3" />
+        Deep Focus
+      </button>
+
+      <ValuePill label="Width" value={prefs.width} />
+      <ValuePill label="Typography" value={prefs.typography} />
+      <ValuePill label="Density" value={prefs.density} />
+      <ValuePill label="Theme" value={prefs.theme} />
+
+      <Picker
+        label="Width"
+        value={prefs.width}
+        options={["narrow", "medium", "wide"]}
+        onChange={(value) => setPrefs((prev) => ({ ...prev, width: value as ReadingPrefs["width"] }))}
+      />
+
+      <Picker
+        label="Typography"
+        value={prefs.typography}
+        options={["editorial", "modern", "classic"]}
+        onChange={(value) => setPrefs((prev) => ({ ...prev, typography: value as ReadingPrefs["typography"] }))}
+      />
+
+      <Picker
+        label="Density"
+        value={prefs.density}
+        options={["relaxed", "balanced", "focused"]}
+        onChange={(value) => setPrefs((prev) => ({ ...prev, density: value as ReadingPrefs["density"] }))}
+      />
+
+      <Picker
+        label="Theme"
+        value={prefs.theme}
+        options={["library", "study", "night", "paper"]}
+        onChange={(value) => setPrefs((prev) => ({ ...prev, theme: value as ReadingPrefs["theme"] }))}
+      />
+    </div>
+  );
+}
+
+function MobileReadingExperienceControls({
+  prefs,
+  setPrefs,
+}: {
+  prefs: ReadingPrefs;
+  setPrefs: React.Dispatch<React.SetStateAction<ReadingPrefs>>;
+}) {
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setPrefs((prev) => ({ ...prev, deepFocus: !prev.deepFocus }))}
+        className={cn(
+          "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[10px] font-semibold tracking-[0.08em] uppercase",
+          prefs.deepFocus ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground",
+        )}
+        aria-pressed={prefs.deepFocus}
+      >
+        <Eye className="size-3" />
+        Deep Focus
+      </button>
+
+      <div className="flex w-full flex-wrap gap-1.5">
+        <ValuePill label="Width" value={prefs.width} />
+        <ValuePill label="Typography" value={prefs.typography} />
+        <ValuePill label="Density" value={prefs.density} />
+        <ValuePill label="Theme" value={prefs.theme} />
+      </div>
+
+      <div className="w-full space-y-2">
+        <div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
+          <button
+            type="button"
+            onClick={() => setPrefs(DEFAULT_PREFS)}
+            className="h-8 shrink-0 rounded-md border border-border px-2.5 text-[10px] font-semibold tracking-[0.08em] uppercase"
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setPrefs((prev) => ({
+                ...prev,
+                width: "narrow",
+                density: "relaxed",
+                typography: "editorial",
+              }))
+            }
+            className="h-8 shrink-0 rounded-md border border-border px-2.5 text-[10px] font-semibold tracking-[0.08em] uppercase"
+          >
+            Comfort Preset
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setPrefs((prev) => ({
+                ...prev,
+                width: "medium",
+                density: "focused",
+                typography: "modern",
+              }))
+            }
+            className="h-8 shrink-0 rounded-md border border-border px-2.5 text-[10px] font-semibold tracking-[0.08em] uppercase"
+          >
+            Focus Preset
+          </button>
+        </div>
+
+        <MobileOptionGroup
+          label="Width"
+          value={prefs.width}
+          options={["narrow", "medium", "wide"]}
+          onChange={(value) => setPrefs((prev) => ({ ...prev, width: value as ReadingPrefs["width"] }))}
+        />
+
+        <MobileOptionGroup
+          label="Typography"
+          value={prefs.typography}
+          options={["editorial", "modern", "classic"]}
+          onChange={(value) => setPrefs((prev) => ({ ...prev, typography: value as ReadingPrefs["typography"] }))}
+        />
+
+        <MobileOptionGroup
+          label="Density"
+          value={prefs.density}
+          options={["relaxed", "balanced", "focused"]}
+          onChange={(value) => setPrefs((prev) => ({ ...prev, density: value as ReadingPrefs["density"] }))}
+        />
+
+        <MobileOptionGroup
+          label="Theme"
+          value={prefs.theme}
+          options={["library", "study", "night", "paper"]}
+          onChange={(value) => setPrefs((prev) => ({ ...prev, theme: value as ReadingPrefs["theme"] }))}
+        />
+      </div>
+    </>
+  );
 }
 
 function Picker({
