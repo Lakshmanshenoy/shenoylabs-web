@@ -2,11 +2,8 @@
 
 import { useEffect, useState } from "react";
 import {
-  Clock3,
   Copy,
-  Gauge,
   ListTree,
-  Pencil,
   X,
 } from "lucide-react";
 
@@ -429,17 +426,9 @@ function QuoteSharePopover({
 export function ArticleReaderEnhancements({
   toc,
   readingTimeMinutes,
-  createdDateLabel,
-  updatedDateLabel,
-  versionLabel,
-  versionSummary,
 }: {
   toc: ArticleTocItem[];
   readingTimeMinutes: number;
-  createdDateLabel: string;
-  updatedDateLabel: string;
-  versionLabel: string;
-  versionSummary: string;
 }) {
   const [progress, setProgress] = useState(0);
   const [quote, setQuote] = useState<QuoteState>(null);
@@ -521,66 +510,8 @@ export function ArticleReaderEnhancements({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [quote]);
 
-  const minutesLeft = getMinutesLeft(readingTimeMinutes, progress);
-  const currentSection = toc.find((item) => item.id === activeId);
-  const sectionIndex = activeId ? toc.findIndex((item) => item.id === activeId) + 1 : 0;
-
   return (
     <>
-      {/* Floating reading HUD */}
-      <aside className="fixed bottom-5 right-5 z-40 hidden w-[16.5rem] rounded-xl border border-border/70 bg-background/95 p-3 shadow-lg backdrop-blur sm:block">
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-            Reading status
-          </p>
-          <Gauge className="size-3.5 text-muted-foreground" />
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <Clock3 className="size-3.5" />
-              Minutes left
-            </span>
-            <span className="font-mono text-[12px] text-foreground">{minutesLeft} min read</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] text-muted-foreground">Read</span>
-            <span className="font-mono text-[12px] text-foreground">{progress}%</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <ListTree className="size-3.5" />
-              Section
-            </span>
-            <span className="font-mono text-[12px] text-foreground">
-              {sectionIndex > 0 ? `${sectionIndex}/${toc.length}` : `0/${toc.length}`}
-            </span>
-          </div>
-          {currentSection ? (
-            <p className="line-clamp-2 rounded-md bg-secondary/65 px-2 py-1.5 text-[10px] leading-relaxed text-foreground/80">
-              {currentSection.title}
-            </p>
-          ) : null}
-
-          <div className="mt-2 space-y-1 rounded-md border border-border/60 bg-secondary/35 px-2 py-2">
-            <p className="text-[9px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
-              Version
-            </p>
-            <p className="font-mono text-[11px] text-foreground">{versionLabel}</p>
-            <p className="text-[10px] leading-relaxed text-muted-foreground">{versionSummary}</p>
-            <div className="pt-1 text-[10px] text-muted-foreground/80">
-              <p>Created: {createdDateLabel}</p>
-              <p>Updated: {updatedDateLabel}</p>
-            </div>
-          </div>
-
-          <p className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground/75">
-            <Pencil className="size-3" />
-            Content-aware article status
-          </p>
-        </div>
-      </aside>
-
       {/* Passage share popover */}
       <QuoteSharePopover quote={quote} onClose={() => setQuote(null)} />
     </>

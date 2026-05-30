@@ -57,13 +57,10 @@ export function Navbar() {
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-border/60 bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur-md">
-      {/* Amber accent bar — hide on article detail pages to avoid duplicate progress */}
-      {!pathname?.startsWith("/articles/") && (
-        <div
-          className="h-[2px] w-full bg-gradient-to-r from-primary/70 via-primary to-primary/70"
-          aria-hidden="true"
-        />
-      )}
+      <div
+        className="h-[2px] w-full bg-gradient-to-r from-primary/70 via-primary to-primary/70"
+        aria-hidden="true"
+      />
       <div className="mx-auto w-full max-w-7xl px-4 py-2.5 sm:px-6 sm:py-3 lg:px-8">
         {searchOpen ? (
           /* Expanded search row */

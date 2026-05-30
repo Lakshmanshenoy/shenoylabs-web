@@ -15,6 +15,7 @@ import {
 } from "@/components/articles/article-reader-enhancements";
 import {
   ArticleGamifiedExperience,
+  MobileReadingExperienceSheet,
   type JourneyArticleMeta,
 } from "@/components/articles/gamified-reading-experience";
 import { ReadingProgress } from "@/components/articles/reading-progress";
@@ -282,10 +283,6 @@ export default async function ArticleDetailPage({
       <ArticleReaderEnhancements
         toc={toc}
         readingTimeMinutes={readingTimeMinutes}
-        createdDateLabel={createdDateLabel}
-        updatedDateLabel={updatedDateLabel}
-        versionLabel={versionLabel}
-        versionSummary={versionSummary}
       />
       <ArticleGamifiedExperience
         allArticles={articleJourneyCatalog}
@@ -320,6 +317,7 @@ export default async function ArticleDetailPage({
           </Link>
           <div className="flex items-center gap-2">
             <MobileTocSheet toc={toc} />
+            <MobileReadingExperienceSheet />
             <p
               id="reader-progress-text"
               className="font-mono text-[11px] text-muted-foreground/60 transition-colors data-[tone=yellow]:text-yellow-500 data-[tone=amber]:text-amber-500 data-[tone=red]:text-red-500 data-[tone=green]:text-green-500"
@@ -375,6 +373,15 @@ export default async function ArticleDetailPage({
             <p className="editorial-deck border-l-2 border-primary/70 pl-5 italic">
               {fm.excerpt}
             </p>
+
+            <div className="rounded-lg border border-border/70 bg-secondary/40 px-4 py-3 text-xs text-muted-foreground">
+              <p>
+                For Table of Contents, please click on TOC above and,
+              </p>
+              <p className="mt-1">
+                For Enhanced Reading Experience, Please click on RXP button and customise accordingly.
+              </p>
+            </div>
 
             <div className="flex items-center gap-3 border-y border-border py-4">
               <div className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 font-heading text-sm font-bold text-primary">
