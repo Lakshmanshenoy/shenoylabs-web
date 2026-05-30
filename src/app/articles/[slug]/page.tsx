@@ -6,6 +6,8 @@ import { compileMDX } from "next-mdx-remote/rsc";
 import fs from "fs";
 import path from "path";
 import { CalendarDaysIcon, Clock3Icon, Link2Icon } from "lucide-react";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 
 import {
   ArticleReaderEnhancements,
@@ -19,6 +21,13 @@ import {
   type JourneyArticleMeta,
 } from "@/components/articles/gamified-reading-experience";
 import { ReadingProgress } from "@/components/articles/reading-progress";
+import {
+  ArticleReadingTracker,
+  BookmarkButton,
+  TopicMasteryBar,
+} from "@/components/articles/reading-tracker";
+import { GiscusComments } from "@/components/articles/giscus-comments";
+import { CopyLinkButton } from "@/components/articles/copy-link-button";
 import { InteractionCtaPanel } from "@/components/engagement/interaction-cta-panel";
 import { SectionContainer } from "@/components/shared/section-container";
 import {
@@ -77,6 +86,25 @@ function extractReadingMinutes(readingTime: string): number {
   const match = /(\d+)/.exec(readingTime);
   if (!match) return 6;
   return Math.max(1, Number.parseInt(match[1], 10));
+}
+
+function DifficultyBadge({ level }: { level: string }) {
+  const levelStyles: Record<string, string> = {
+    introductory: "bg-green-500/12 text-green-700 dark:text-green-400 border-green-500/30",
+    intermediate: "bg-yellow-500/12 text-yellow-700 dark:text-yellow-400 border-yellow-500/30",
+    "deep-dive": "bg-red-500/12 text-red-700 dark:text-red-400 border-red-500/30",
+  };
+  const levelLabel: Record<string, string> = {
+    introductory: "Introductory",
+    intermediate: "Intermediate",
+    "deep-dive": "Deep Dive",
+  };
+  const styleClass = levelStyles[level] ?? "bg-muted text-muted-foreground border-border";
+  return (
+    <span className={cn("inline-flex w-fit items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em]", styleClass)}>
+      {levelLabel[level] ?? level}
+    </span>
+  );
 }
 
 function buildVersionSummary(createdDate: string, lastUpdated: string, customSummary?: string): string {
@@ -225,7 +253,13 @@ export default async function ArticleDetailPage({
   const { content } = await compileMDX({
     source,
     components: getMDXComponents(),
-    options: { parseFrontmatter: true },
+    options: {
+      parseFrontmatter: true,
+      mdxOptions: {
+        remarkPlugins: [remarkMath],
+        rehypePlugins: [rehypeKatex],
+      },
+    },
   });
 
   // If the cover is an SVG in /public, inline it server-side so it always
@@ -287,6 +321,11 @@ export default async function ArticleDetailPage({
       <ArticleGamifiedExperience
         allArticles={articleJourneyCatalog}
         currentArticle={currentArticleMeta}
+      />
+      <ArticleReadingTracker
+        slug={slug}
+        title={fm.title}
+        category={fm.primaryCategory ?? fm.category}
       />
 
       {/* JSON-LD */}
@@ -374,6 +413,11 @@ export default async function ArticleDetailPage({
               {fm.primaryCategory}
             </p>
 
+            {/* Difficulty badge */}
+            {fm.depthLevel && (
+              <DifficultyBadge level={fm.depthLevel} />
+            )}
+
             <h1 className="font-[family-name:var(--font-body)] text-4xl font-semibold italic leading-tight tracking-tight sm:text-5xl">
               {fm.title}
             </h1>
@@ -409,6 +453,7 @@ export default async function ArticleDetailPage({
                   <Link2Icon className="size-3.5" />
                   Updated {updatedDateLabel}
                 </span>
+                <BookmarkButton slug={slug} title={fm.title} category={fm.primaryCategory ?? fm.category} />
               </div>
             </div>
           </header>
@@ -421,6 +466,9 @@ export default async function ArticleDetailPage({
           {/* Post-article sections */}
           <section className="mt-14 space-y-8">
             <div className="h-[3px] w-16 rounded-full bg-foreground/20" />
+
+            {/* Topic mastery bar */}
+            <TopicMasteryBar category={fm.primaryCategory ?? fm.category} />
 
             {/* Share */}
             <div className="rounded-xl border border-border bg-secondary/30 p-6">
@@ -438,6 +486,7 @@ export default async function ArticleDetailPage({
                   <Link2Icon className="size-3.5" />
                   Explore More →
                 </Link>
+                <CopyLinkButton />
                 <Link
                   href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(`https://shenoylabs.com/articles/${slug}`)}`}
                   target="_blank"
@@ -553,6 +602,7 @@ export default async function ArticleDetailPage({
             )}
 
             <div>
+              <GiscusComments slug={slug} />
               <InteractionCtaPanel />
             </div>
           </section>

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "katex/dist/katex.min.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -739,4 +740,127 @@ html[data-reader-focus="true"] #main-content {
     linear-gradient(180deg, color-mix(in srgb, #f7f1e3 16%, var(--background) 84%) 0%, var(--background) 100%);
   border-radius: 0.9rem;
   padding: 1rem;
+}
+
+/* ─── Print Styles ─────────────────────────────────────────────────────────── */
+
+@media print {
+  /* Reset page margins */
+  @page {
+    margin: 1.5cm 2cm;
+  }
+
+  /* Hide all non-content chrome */
+  header,
+  nav,
+  footer,
+  aside,
+  .reading-progress,
+  [data-sidebar],
+  [aria-label="Table of contents"],
+  [aria-label="Reading customisation"],
+  [aria-label="Comments"],
+  .giscus,
+  #reader-scroll-pane > *:not(#article-body):not(header),
+  .sticky,
+  button,
+  form {
+    display: none !important;
+  }
+
+  /* Ensure the article is full-width */
+  #reader-scroll-pane,
+  #article-body,
+  .env-article {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+
+  /* Typography */
+  body,
+  #article-body {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 11pt;
+    line-height: 1.65;
+    color: #000;
+    background: #fff;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: Georgia, serif;
+    page-break-after: avoid;
+    break-after: avoid;
+    color: #000;
+  }
+
+  h1 { font-size: 20pt; margin-bottom: 0.3em; }
+  h2 { font-size: 15pt; margin-top: 1.2em; margin-bottom: 0.25em; }
+  h3 { font-size: 12pt; margin-top: 1em; margin-bottom: 0.2em; }
+
+  /* Avoid page breaks inside code blocks and callouts */
+  pre, blockquote, aside, figure, table {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Code — keep legible in print */
+  pre, code {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 9pt;
+    background: #f3f3f3 !important;
+    color: #000 !important;
+    border: 1px solid #ccc;
+    padding: 0.15em 0.3em;
+    border-radius: 2px;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  pre {
+    padding: 0.6em 0.8em;
+  }
+
+  /* Links — show full URL after text */
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 8pt;
+    color: #555;
+  }
+
+  /* Don't print fragment links or JS placeholders */
+  a[href^="#"]:after,
+  a[href^="javascript:"]:after {
+    content: "";
+  }
+
+  /* Images */
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Remove shadows, borders on card elements */
+  .rounded-xl,
+  .rounded-lg,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Hide copy buttons inside code blocks */
+  .copy-code-btn {
+    display: none !important;
+  }
 }

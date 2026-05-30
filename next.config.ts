@@ -13,14 +13,14 @@ const razorpayConnectOrigins = "https://api.razorpay.com https://checkout.razorp
 const razorpayFrameOrigins = "https://checkout.razorpay.com https://api.razorpay.com";
 
 const scriptSrc = isDev
-  ? `'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://challenges.cloudflare.com ${razorpayScriptOrigin}${tinaDevOrigin}`
-  : `'self' 'unsafe-inline' https://www.googletagmanager.com https://challenges.cloudflare.com ${razorpayScriptOrigin}`;
+  ? `'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://challenges.cloudflare.com https://giscus.app ${razorpayScriptOrigin}${tinaDevOrigin}`
+  : `'self' 'unsafe-inline' https://www.googletagmanager.com https://challenges.cloudflare.com https://giscus.app ${razorpayScriptOrigin}`;
 
 const connectSrc = isDev
-  ? `'self' https://www.google-analytics.com https://region1.google-analytics.com https://challenges.cloudflare.com ${razorpayConnectOrigins}${tinaDevOrigin}`
-  : `'self' https://www.google-analytics.com https://region1.google-analytics.com https://challenges.cloudflare.com ${razorpayConnectOrigins}`;
+  ? `'self' https://www.google-analytics.com https://region1.google-analytics.com https://challenges.cloudflare.com https://giscus.app https://api.github.com ${razorpayConnectOrigins}${tinaDevOrigin}`
+  : `'self' https://www.google-analytics.com https://region1.google-analytics.com https://challenges.cloudflare.com https://giscus.app https://api.github.com ${razorpayConnectOrigins}`;
 
-const frameSrc = `'self' https://challenges.cloudflare.com ${razorpayFrameOrigins}`;
+const frameSrc = `'self' https://challenges.cloudflare.com https://giscus.app ${razorpayFrameOrigins}`;
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
