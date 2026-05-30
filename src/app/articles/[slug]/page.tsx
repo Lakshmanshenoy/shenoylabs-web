@@ -326,6 +326,14 @@ export default async function ArticleDetailPage({
             </p>
           </div>
         </div>
+        <div className="mt-2 rounded-lg border border-border/70 bg-secondary/40 px-3 py-2 text-[11px] text-muted-foreground sm:px-4 sm:py-3 sm:text-xs">
+          <p>
+            For Table of Contents, please click on TOC above and,
+          </p>
+          <p className="mt-1">
+            For Enhanced Reading Experience, Please click on RXP button and customise accordingly.
+          </p>
+        </div>
       </div>
 
       {/* Two-column layout: sticky left TOC + content */}
@@ -373,15 +381,6 @@ export default async function ArticleDetailPage({
             <p className="editorial-deck border-l-2 border-primary/70 pl-5 italic">
               {fm.excerpt}
             </p>
-
-            <div className="rounded-lg border border-border/70 bg-secondary/40 px-4 py-3 text-xs text-muted-foreground">
-              <p>
-                For Table of Contents, please click on TOC above and,
-              </p>
-              <p className="mt-1">
-                For Enhanced Reading Experience, Please click on RXP button and customise accordingly.
-              </p>
-            </div>
 
             <div className="flex items-center gap-3 border-y border-border py-4">
               <div className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 font-heading text-sm font-bold text-primary">
