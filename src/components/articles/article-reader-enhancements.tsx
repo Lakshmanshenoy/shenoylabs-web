@@ -123,7 +123,7 @@ export function MobileTocSheet({ toc }: { toc: ArticleTocItem[] }) {
           <Button
             variant="outline"
             size="sm"
-            className="xl:hidden"
+            className="md:hidden"
           />
         }
       >

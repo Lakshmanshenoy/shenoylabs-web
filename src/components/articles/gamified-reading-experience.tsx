@@ -136,7 +136,7 @@ export function MobileReadingExperienceSheet() {
           <Button
             variant="outline"
             size="sm"
-            className="xl:hidden"
+            className="md:hidden"
           />
         }
       >
