@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore, useEffect } from "react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import Link from "next/link";
 import { CheckIcon, SendIcon } from "lucide-react";
@@ -113,7 +113,11 @@ export function ContactForm() {
       : process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
     : "";
   const turnstileRef = useRef<TurnstileInstance | null>(null);
-  const mountedAtRef = useRef<number>(Date.now());
+  const mountedAtRef = useRef<number>(0);
+
+  useEffect(() => {
+    mountedAtRef.current = Date.now();
+  }, []);
 
   function resetTurnstileWidget() {
     if (verificationReady) {
