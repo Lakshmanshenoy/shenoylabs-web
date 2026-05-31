@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import Script from "next/script";
 
 declare global {
   interface Window {
@@ -11,29 +11,18 @@ declare global {
 }
 
 export function KofiOverlay() {
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    function initOverlay() {
-      window.kofiWidgetOverlay?.draw("lakshmanshenoy", {
-        type: "floating-chat",
-        "floating-chat.donateButton.text": "Support Us",
-        "floating-chat.donateButton.background-color": "#f45d22",
-        "floating-chat.donateButton.text-color": "#fff",
-      });
-    }
-
-    if (window.kofiWidgetOverlay) {
-      initOverlay();
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://storage.ko-fi.com/cdn/scripts/overlay-widget.js";
-    script.async = true;
-    script.onload = initOverlay;
-    document.body.appendChild(script);
-  }, []);
-
-  return null;
+  return (
+    <Script
+      src="https://storage.ko-fi.com/cdn/scripts/overlay-widget.js"
+      strategy="afterInteractive"
+      onLoad={() => {
+        window.kofiWidgetOverlay?.draw("lakshmanshenoy", {
+          type: "floating-chat",
+          "floating-chat.donateButton.text": "Support",
+          "floating-chat.donateButton.background-color": "#f45d22",
+          "floating-chat.donateButton.text-color": "#fff",
+        });
+      }}
+    />
+  );
 }

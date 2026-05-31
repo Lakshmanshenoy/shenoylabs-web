@@ -32,7 +32,7 @@ const nextConfig: NextConfig = {
     const headersList = [
       {
         key: "Content-Security-Policy",
-        value: `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src ${connectSrc}; frame-src ${frameSrc}; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`,
+        value: `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline' https://storage.ko-fi.com; img-src 'self' data: https:; connect-src ${connectSrc}; frame-src ${frameSrc}; font-src 'self' data: https://storage.ko-fi.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`,
       },
       { key: "X-Frame-Options", value: "DENY" },
       { key: "X-Content-Type-Options", value: "nosniff" },

@@ -234,7 +234,7 @@ export default async function AboutPage() {
           <div className="mb-7">
             <div className="relative size-20 overflow-hidden rounded-md">
               <Image
-                src="/images/author.jpg"
+                src="/images/author.png"
                 alt="Lakshman Shenoy"
                 fill
                 className="object-cover object-top"
