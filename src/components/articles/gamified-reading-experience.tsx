@@ -143,14 +143,14 @@ export function MobileReadingExperienceSheet() {
         <SlidersHorizontal className="size-3.5" />
         RXP
       </SheetTrigger>
-      <SheetContent side="right" className="w-[88vw] max-w-sm p-0">
+      <SheetContent side="right" className="flex h-[100dvh] w-[88vw] max-w-sm flex-col overflow-hidden p-0">
         <SheetHeader className="border-b border-border px-5 py-4">
           <SheetTitle>Enhanced Reading Experience</SheetTitle>
           <p className="text-[11px] text-muted-foreground">
             Customize width, typography, density, and focus mode.
           </p>
         </SheetHeader>
-        <div className="space-y-3 px-3 py-3">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3">
           <MobileReadingExperienceControls prefs={prefs} setPrefs={setPrefs} />
         </div>
       </SheetContent>
