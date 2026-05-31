@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
 import Script from "next/script";
 import { readStore } from "@/lib/reading-store";
 
@@ -206,12 +205,10 @@ export function KofiOverlay() {
             right: closePos.right ?? undefined,
             top: closePos.top,
             zIndex: 1200,
-            width: 40,
-            height: 40,
           }}
-          className="inline-flex items-center justify-center rounded-full border border-border/80 bg-background/95 text-foreground shadow-md transition hover:bg-background"
+          className="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 text-white font-bold shadow-md transition hover:bg-red-700 px-3 py-2 text-sm"
         >
-          <X className="size-3.5" />
+          Close
         </button>
       ) : null}
 
