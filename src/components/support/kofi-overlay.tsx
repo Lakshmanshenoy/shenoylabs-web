@@ -1,8 +1,6 @@
 "use client";
 
-"use client";
-
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import Script from "next/script";
 
@@ -15,7 +13,7 @@ declare global {
 }
 
 export function KofiOverlay() {
-  const dismissKey = useMemo(() => "shenoylabs:kofi-floating:dismissed:v1", []);
+  const dismissKey = "shenoylabs:kofi-floating:dismissed:v1";
   const [dismissed, setDismissed] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     try {
