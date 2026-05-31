@@ -63,10 +63,10 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/api/og",
+        url: "/api/og?title=Think+%C2%B7+Learn+%C2%B7+Solve&type=home",
         width: 1200,
         height: 630,
-        alt: `${siteConfig.name} social preview`,
+        alt: `${siteConfig.name} — Think · Learn · Solve`,
       },
     ],
   },
@@ -74,7 +74,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: siteConfig.name,
     description: siteConfig.description,
-    images: ["/api/og"],
+    images: ["/api/og?title=Think+%C2%B7+Learn+%C2%B7+Solve&type=home"],
+    creator: "@shenoylakshman",
+    site: "@shenoylakshman",
   },
 };
 

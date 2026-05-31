@@ -10,10 +10,35 @@ import { getSupportCopyContent } from "@/lib/homepage-content";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Home — Shenoy Labs",
-  description: "Research and projects built in public by Lakshman Shenoy.",
+  title: "ShenoyLabs — Think · Learn · Solve",
+  description:
+    "Research and projects built in public by Lakshman Shenoy. Deeply researched writing on technology, science, and systems.",
   alternates: {
     canonical: "/",
+  },
+  openGraph: {
+    title: "ShenoyLabs — Think · Learn · Solve",
+    description: "Research and projects built in public by Lakshman Shenoy.",
+    url: "https://shenoylabs.com",
+    siteName: "ShenoyLabs",
+    images: [
+      {
+        url: "/api/og?title=Think+%C2%B7+Learn+%C2%B7+Solve&type=home",
+        width: 1200,
+        height: 630,
+        alt: "ShenoyLabs — Think · Learn · Solve",
+      },
+    ],
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ShenoyLabs — Think · Learn · Solve",
+    description: "Research and projects built in public by Lakshman Shenoy.",
+    images: ["/api/og?title=Think+%C2%B7+Learn+%C2%B7+Solve&type=home"],
+    creator: "@shenoylakshman",
+    site: "@shenoylakshman",
   },
 };
 

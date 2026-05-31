@@ -8,26 +8,35 @@ import { buildBreadcrumbJsonLd } from "@/lib/seo";
 import JsonLd from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
-  title: "Articles — Shenoy Labs",
+  title: "Articles — ShenoyLabs",
   description:
-    "Deeply researched articles on technology, science, finance, and society by Lakshman Shenoy. Written slowly. Published when ready.",
+    "Deeply researched writing on technology, science, finance, and society by Lakshman Shenoy.",
   alternates: {
     canonical: "/articles",
   },
   openGraph: {
-    title: "Articles — Shenoy Labs",
+    title: "Articles — ShenoyLabs",
     description:
-      "Deeply researched articles on technology, science, finance, and society by Lakshman Shenoy. Written slowly. Published when ready.",
+      "Deeply researched writing on technology, science, finance, and society.",
     type: "website",
     url: "/articles",
-    images: ["/api/og?title=Articles"],
+    siteName: "ShenoyLabs",
+    images: [
+      {
+        url: "/api/og?title=Articles&type=page&description=Deeply+researched+writing+on+technology%2C+science%2C+and+systems",
+        width: 1200,
+        height: 630,
+        alt: "Articles — ShenoyLabs",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Articles — Shenoy Labs",
+    title: "Articles — ShenoyLabs",
     description:
-      "Deeply researched articles on technology, science, finance, and society by Lakshman Shenoy. Written slowly. Published when ready.",
-    images: ["/api/og?title=Articles"],
+      "Deeply researched writing on technology, science, finance, and society.",
+    images: ["/api/og?title=Articles&type=page"],
+    creator: "@shenoylakshman",
   },
 };
 

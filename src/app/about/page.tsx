@@ -28,26 +28,35 @@ import JsonLd from "@/components/seo/json-ld";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "About — Shenoy Labs",
+  title: "About — ShenoyLabs",
   description:
-    "Lakshman Shenoy is a builder and founder behind Shenoy Labs — a hybrid product studio focused on useful software, research, and systems.",
+    "Lakshman Shenoy — engineer, researcher, builder. Currently available to collaborate from India.",
   alternates: {
     canonical: "/about",
   },
   openGraph: {
-    title: "About — Shenoy Labs",
+    title: "About Lakshman Shenoy",
     description:
-      "Lakshman Shenoy is a builder and founder behind Shenoy Labs — a hybrid product studio focused on useful software, research, and systems.",
+      "Engineer, researcher, builder. Writing deeply about technology, science, and systems.",
     type: "profile",
     url: "/about",
-    images: ["/api/og?title=About+Lakshman+Shenoy&type=site"],
+    siteName: "ShenoyLabs",
+    images: [
+      {
+        url: "/api/og?title=About+Lakshman+Shenoy&type=page&description=Engineer%2C+researcher%2C+builder",
+        width: 1200,
+        height: 630,
+        alt: "About Lakshman Shenoy — ShenoyLabs",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "About — Shenoy Labs",
+    title: "About Lakshman Shenoy — ShenoyLabs",
     description:
-      "Lakshman Shenoy is a builder and founder behind Shenoy Labs — a hybrid product studio focused on useful software, research, and systems.",
-    images: ["/api/og?title=About+Lakshman+Shenoy&type=site"],
+      "Engineer, researcher, builder. Writing deeply about technology, science, and systems.",
+    images: ["/api/og?title=About+Lakshman+Shenoy&type=page"],
+    creator: "@shenoylakshman",
   },
 };
 
