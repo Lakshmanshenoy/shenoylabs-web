@@ -23,6 +23,7 @@ import {
 import { getAllArticles, getAllProjects } from "@/lib/content";
 import { getGitHubProjectsData } from "@/lib/github-projects";
 import { cn } from "@/lib/utils";
+import JsonLd from "@/components/seo/json-ld";
 
 export const revalidate = 3600;
 
@@ -222,12 +223,7 @@ export default async function AboutPage() {
 
   return (
     <SectionContainer className="env-about max-w-7xl rounded-2xl py-10 lg:py-12">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(personJsonLd).replace(/</g, "\\u003c"),
-        }}
-      />
+      <JsonLd id="jsonld-person" json={personJsonLd} />
 
       <div className="grid border-x border-border lg:grid-cols-[300px_1fr]">
         <aside className="border-b border-border p-8 lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:overflow-y-auto lg:border-r lg:border-b-0">

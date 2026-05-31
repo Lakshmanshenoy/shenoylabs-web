@@ -5,6 +5,7 @@ import { ChapterOpener } from "@/components/shared/chapter-opener";
 import { SectionContainer } from "@/components/shared/section-container";
 import { getAllArticles } from "@/lib/content";
 import { buildBreadcrumbJsonLd } from "@/lib/seo";
+import JsonLd from "@/components/seo/json-ld";
 
 export const metadata: Metadata = {
   title: "Articles — Shenoy Labs",
@@ -52,12 +53,7 @@ export default function ArticlesPage() {
 
   return (
     <SectionContainer className="env-article rounded-2xl">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
-        }}
-      />
+      <JsonLd id="jsonld-articles-page" json={breadcrumbJsonLd} />
 
       <ChapterOpener
         kicker="Investigations"

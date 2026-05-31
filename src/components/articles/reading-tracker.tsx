@@ -192,7 +192,7 @@ export function BookmarkButton({
             placeholder="Why did you save this?"
             rows={2}
             className="w-full resize-none rounded-md border border-border bg-background px-2 py-1.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-primary/40"
-            // eslint-disable-next-line jsx-a11y/no-autofocus
+             
             autoFocus
           />
           <button
