@@ -247,25 +247,21 @@ export function ArticleReadingTracker({ slug, title, category }: ArticleReadingT
   // Mount: record visit, detect saved position
   useEffect(() => {
     const { store: newStore, newBadges } = recordVisit(slug, title, category);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setStore(newStore);
-
     const savedPct = newStore.visits[slug]?.scrollPct ?? 0;
-    if (savedPct >= 5) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSavedScrollPct(savedPct);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setShowContinueBanner(true);
-    }
+    queueMicrotask(() => {
+      setStore(newStore);
+      if (savedPct >= 5) {
+        setSavedScrollPct(savedPct);
+        setShowContinueBanner(true);
+      }
 
-    if (newBadges.length > 0) {
-      const defs = newBadges
-        .map((id) => ALL_BADGES.find((b) => b.id === id))
-        .filter(Boolean) as BadgeDef[];
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setToastQueue((prev) => [...prev, ...defs]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      if (newBadges.length > 0) {
+        const defs = newBadges
+          .map((id) => ALL_BADGES.find((b) => b.id === id))
+          .filter(Boolean) as BadgeDef[];
+        setToastQueue((prev) => [...prev, ...defs]);
+      }
+    });
   }, [slug]);
 
   // Listen for badge events fired by saveScrollPosition
@@ -378,23 +374,32 @@ export function ArticleReadingTracker({ slug, title, category }: ArticleReadingT
 // ─── Topic Mastery Bar ────────────────────────────────────────────────────────
 
 export function TopicMasteryBar({ className }: { className?: string; category?: string }) {
-  const [stats] = useState<{
+  const [stats, setStats] = useState<{
     totalRead: number;
     totalCompleted: number;
     streak: number;
     badges: number;
-  } | null>(() => {
-    if (typeof window === "undefined") return null;
+  } | null>(null);
+
+  useEffect(() => {
+    // Compute stats only on client after mount to keep server and initial
+    // client render identical (avoid hydration mismatch).
     const store = readStore();
     const visits = Object.values(store.visits);
-    if (visits.length === 0) return null;
-    return {
-      totalRead: visits.length,
-      totalCompleted: visits.filter((v) => v.completed).length,
-      streak: store.streak.current,
-      badges: store.earnedBadges.length,
-    };
-  });
+    if (visits.length === 0) {
+      queueMicrotask(() => setStats(null));
+      return;
+    }
+    queueMicrotask(() =>
+      setStats({
+        totalRead: visits.length,
+        totalCompleted: visits.filter((v) => v.completed).length,
+        streak: store.streak.current,
+        badges: store.earnedBadges.length,
+      }),
+    );
+    // no deps — run once on mount
+  }, []);
 
   if (!stats || stats.totalRead === 0) return null;
 
