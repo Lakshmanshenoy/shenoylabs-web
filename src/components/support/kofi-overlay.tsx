@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
-import { readStore } from "@/lib/reading-store";
 
 declare global {
   interface Window {
@@ -13,210 +12,183 @@ declare global {
 }
 
 export function KofiOverlay() {
-  const dismissKey = "shenoylabs:kofi-floating:dismissed:v1";
-  const [dismissed, setDismissed] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return window.localStorage.getItem(dismissKey) === "true";
-    } catch {
-      return false;
-    }
-  });
-
   const [scriptLoaded, setScriptLoaded] = useState(false);
-  const [drawn, setDrawn] = useState(false);
-  const overlayRef = useRef<HTMLElement | null>(null);
-  const [closePos, setClosePos] = useState<{ left?: number; right?: number; top?: number } | null>(null);
+  const drawnRef = useRef(false);
+  const [visible, setVisible] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const pollRef = useRef<number | null>(null);
 
-  const hideFloatingOverlay = () => {
-    if (typeof document === "undefined") return;
-
+  const findOverlayElements = (): HTMLElement[] => {
+    if (typeof document === "undefined") return [];
+    const set = new Set<HTMLElement>();
     const iframe = document.querySelector<HTMLIFrameElement>('iframe[src*="ko-fi.com"]');
-    const fixedCandidates = [
-      ...Array.from(document.querySelectorAll<HTMLElement>('[id*="kofi" i], [id*="ko-fi" i], [class*="kofi" i], [class*="ko-fi" i]')),
-      ...Array.from(document.querySelectorAll<HTMLElement>('iframe[src*="ko-fi.com"]')),
-    ];
+    if (iframe) set.add(iframe as unknown as HTMLElement);
+    const candidates = Array.from(
+      document.querySelectorAll<HTMLElement>('[id*="kofi" i], [id*="ko-fi" i], [class*="kofi" i], [class*="ko-fi" i]')
+    );
+    for (const c of candidates) set.add(c);
+    return Array.from(set);
+  };
 
-    const toHide = new Set<HTMLElement>();
-    for (const el of fixedCandidates) {
-      let node: HTMLElement | null = el;
-      for (let depth = 0; depth < 5 && node; depth += 1) {
-        const style = window.getComputedStyle(node);
-        if (style.position === "fixed" || style.position === "absolute") {
-          toHide.add(node);
-          break;
+  const hideNodes = (nodes: HTMLElement[]) => {
+    for (const n of nodes) {
+      try {
+        n.style.display = "none";
+        n.setAttribute("data-kofi-hidden", "true");
+      } catch {}
+    }
+  };
+
+  const showNodes = (nodes: HTMLElement[]) => {
+    for (const n of nodes) {
+      try {
+        n.style.display = "";
+        n.removeAttribute("data-kofi-hidden");
+      } catch {}
+    }
+  };
+
+  const ensureOverlayDisplayed = () => {
+    if (typeof window === "undefined") return;
+    if (pollRef.current) return;
+    let elapsed = 0;
+    const max = 5000;
+    const interval = 300;
+    pollRef.current = window.setInterval(() => {
+      const nodes = findOverlayElements();
+      if (nodes.length > 0) {
+        if (!sheetOpen && visible) showNodes(nodes);
+        else hideNodes(nodes);
+        if (pollRef.current) {
+          window.clearInterval(pollRef.current);
+          pollRef.current = null;
         }
-        node = node.parentElement;
+      } else {
+        elapsed += interval;
+        if (elapsed > max && pollRef.current) {
+          window.clearInterval(pollRef.current);
+          pollRef.current = null;
+        }
       }
-    }
-
-    if (iframe) {
-      let node: HTMLElement | null = iframe as unknown as HTMLElement;
-      for (let depth = 0; depth < 5 && node; depth += 1) {
-        toHide.add(node);
-        node = node.parentElement;
-      }
-    }
-
-    toHide.forEach((node) => {
-      node.style.display = "none";
-      node.setAttribute("data-kofi-dismissed", "true");
-    });
+    }, interval) as unknown as number;
   };
 
   useEffect(() => {
-    if (dismissed) hideFloatingOverlay();
-  }, [dismissed]);
+    const handler = (ev: Event) => {
+      const e = ev as CustomEvent<{ name: string; open: boolean }>;
+      if (!e.detail) return;
+      const { name, open } = e.detail;
+      if (name === "toc" || name === "rxp") {
+        setSheetOpen(open);
+      }
+    };
+    window.addEventListener("shenoylabs:sheet-state", handler as EventListener);
+    return () => window.removeEventListener("shenoylabs:sheet-state", handler as EventListener);
+  }, []);
 
-  const closeOverlay = () => {
-    setDismissed(true);
-    hideFloatingOverlay();
-    try {
-      window.localStorage.setItem(dismissKey, "true");
-    } catch {
-      // ignore
+  const getScrollPercent = (): number => {
+    if (typeof document === "undefined") return 0;
+    const pane = document.getElementById("reader-scroll-pane");
+    if (pane && pane.scrollHeight - pane.clientHeight > 4) {
+      const max = pane.scrollHeight - pane.clientHeight;
+      return Math.min(100, Math.round((pane.scrollTop / max) * 100));
     }
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    return max > 0 ? Math.min(100, Math.round((window.scrollY / max) * 100)) : 0;
   };
 
-
-  // draw only after current article is marked completed
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    const match = window.location.pathname.match(/^\/articles\/([^/]+)/);
-    const slug = match ? match[1] : null;
-    if (!slug) return;
-
-    let intervalId: number | null = null;
-
-    const tryDraw = () => {
-      if (dismissed || drawn || !scriptLoaded) return;
-      try {
-        const store = readStore();
-        const visit = store.visits[slug];
-        if (visit && visit.completed) {
-          try {
-            window.kofiWidgetOverlay?.draw("lakshmanshenoy", {
-              type: "floating-chat",
-              "floating-chat.donateButton.text": "Support",
-              "floating-chat.donateButton.background-color": "#f45d22",
-              "floating-chat.donateButton.text-color": "#fff",
-            });
-            setDrawn(true);
-          } catch {}
-        }
-      } catch {}
+    const threshold = 15;
+    const onScroll = () => {
+      const pct = getScrollPercent();
+      // once user scrolls past threshold, keep the overlay visible
+      if (pct >= threshold) {
+        setVisible(true);
+      }
     };
-
-    tryDraw();
-    intervalId = window.setInterval(tryDraw, 1000);
-
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    const pane = document.getElementById("reader-scroll-pane");
+    if (pane) pane.addEventListener("scroll", onScroll, { passive: true });
     return () => {
-      if (intervalId) window.clearInterval(intervalId);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (pane) pane.removeEventListener("scroll", onScroll);
     };
-  }, [scriptLoaded, dismissed, drawn]);
+  }, [sheetOpen]);
 
   useEffect(() => {
-    if (!drawn) return;
-    if (typeof document === "undefined") return;
+    if (!scriptLoaded) return;
+    if (visible && !drawnRef.current) {
+      try {
+        window.kofiWidgetOverlay?.draw("lakshmanshenoy", {
+          type: "floating-chat",
+          "floating-chat.donateButton.text": "Support",
+          "floating-chat.donateButton.background-color": "#f45d22",
+          "floating-chat.donateButton.text-color": "#fff",
+        });
+        // avoid synchronous setState inside effect by using a ref
+        drawnRef.current = true;
 
-    const findOverlayElement = (): HTMLElement | null => {
-      const iframe = document.querySelector<HTMLIFrameElement>('iframe[src*="ko-fi.com"]');
-      if (iframe) {
-        let node: HTMLElement | null = iframe as unknown as HTMLElement;
-        for (let i = 0; i < 6 && node; i += 1) {
-          const style = window.getComputedStyle(node);
-          if (style.position === "fixed" || style.position === "absolute") return node;
-          node = node.parentElement;
+        // poll for the overlay DOM nodes and show/hide when found
+        if (!pollRef.current) {
+          let elapsed = 0;
+          const max = 5000;
+          const interval = 300;
+          pollRef.current = window.setInterval(() => {
+            const nodes = findOverlayElements();
+            if (nodes.length > 0) {
+              if (!sheetOpen && visible) showNodes(nodes);
+              else hideNodes(nodes);
+              if (pollRef.current) {
+                window.clearInterval(pollRef.current);
+                pollRef.current = null;
+              }
+            } else {
+              elapsed += interval;
+              if (elapsed > max && pollRef.current) {
+                window.clearInterval(pollRef.current);
+                pollRef.current = null;
+              }
+            }
+          }, interval) as unknown as number;
         }
-        return iframe as unknown as HTMLElement;
-      }
-
-      const candidates = Array.from(document.querySelectorAll<HTMLElement>('[id*="kofi" i], [id*="ko-fi" i], [class*="kofi" i], [class*="ko-fi" i]'));
-      for (const el of candidates) {
-        const style = window.getComputedStyle(el);
-        if (style.position === "fixed" || style.position === "absolute") return el;
-      }
-      return null;
-    };
-
-    const positionClose = (el: HTMLElement) => {
-      const rect = el.getBoundingClientRect();
-      const buttonSize = 40;
-      const gap = 8;
-      const top = Math.max(8, rect.top + (rect.height - buttonSize) / 2);
-
-      if (rect.left > buttonSize + gap + 8) {
-        const left = Math.max(8, rect.left - buttonSize - gap);
-        setClosePos({ left, top });
-      } else if (window.innerWidth - rect.right > buttonSize + gap + 8) {
-        const left = rect.right + gap;
-        setClosePos({ left, top });
+      } catch {}
+    } else if (drawnRef.current) {
+      const nodes = findOverlayElements();
+      if (nodes.length > 0) {
+        if (!sheetOpen && visible) showNodes(nodes);
+        else hideNodes(nodes);
       } else {
-        const right = Math.max(8, window.innerWidth - rect.right + gap);
-        setClosePos({ right, top });
+        if (visible && !sheetOpen && !pollRef.current) ensureOverlayDisplayed();
       }
-    };
-
-    const initial = findOverlayElement();
-    if (initial) {
-      overlayRef.current = initial;
-      positionClose(initial);
     }
+  }, [scriptLoaded, visible, sheetOpen]);
 
-    const mo = new MutationObserver(() => {
-      if (!overlayRef.current) {
-        const found = findOverlayElement();
-        if (found) {
-          overlayRef.current = found;
-          positionClose(found);
-        }
-      } else {
-        positionClose(overlayRef.current);
-      }
-    });
-    mo.observe(document.body, { childList: true, subtree: true, attributes: true });
+  useEffect(() => {
+    const nodes = findOverlayElements();
+    if (nodes.length > 0) {
+      if (sheetOpen) hideNodes(nodes);
+      else if (visible) showNodes(nodes);
+    }
+  }, [sheetOpen, visible]);
 
-    const onResize = () => {
-      if (overlayRef.current) positionClose(overlayRef.current);
-    };
-    window.addEventListener("resize", onResize);
-    window.addEventListener("scroll", onResize, { passive: true });
-
+  useEffect(() => {
     return () => {
-      mo.disconnect();
-      window.removeEventListener("resize", onResize);
-      window.removeEventListener("scroll", onResize);
+      if (pollRef.current) {
+        window.clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
     };
-  }, [drawn]);
-
-  if (dismissed) return null;
+  }, []);
 
   return (
-    <>
-      {drawn && closePos ? (
-        <button
-          type="button"
-          aria-label="Close support floating bar"
-          onClick={closeOverlay}
-          style={{
-            position: "fixed",
-            left: closePos.left ?? undefined,
-            right: closePos.right ?? undefined,
-            top: closePos.top,
-            zIndex: 1200,
-          }}
-          className="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 text-white font-bold shadow-md transition hover:bg-red-700 px-3 py-2 text-sm"
-        >
-          Close
-        </button>
-      ) : null}
-
-      <Script
-        src="https://storage.ko-fi.com/cdn/scripts/overlay-widget.js"
-        strategy="afterInteractive"
-        onLoad={() => setScriptLoaded(true)}
-      />
-    </>
+    <Script
+      src="https://storage.ko-fi.com/cdn/scripts/overlay-widget.js"
+      strategy="afterInteractive"
+      onLoad={() => setScriptLoaded(true)}
+    />
   );
 }

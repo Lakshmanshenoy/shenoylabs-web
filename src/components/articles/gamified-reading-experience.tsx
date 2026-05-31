@@ -128,9 +128,18 @@ export function ArticleGamifiedExperience({}: DetailProps) {
 
 export function MobileReadingExperienceSheet() {
   const { prefs, setPrefs } = useReadingPrefsState();
+  const [open, setOpen] = useState(false);
 
   return (
-    <Sheet>
+    <Sheet
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("shenoylabs:sheet-state", { detail: { name: "rxp", open: v } }));
+        }
+      }}
+    >
       <SheetTrigger
         render={
           <Button
@@ -170,52 +179,56 @@ function DesktopReadingExperienceControls({
   setPrefs: React.Dispatch<React.SetStateAction<ReadingPrefs>>;
 }) {
   return (
-    <div className="flex w-full flex-wrap items-end gap-3">
-      <button
-        type="button"
-        onClick={() => setPrefs((prev) => ({ ...prev, deepFocus: !prev.deepFocus }))}
-        className={cn(
-          "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[10px] font-semibold tracking-[0.08em] uppercase",
-          prefs.deepFocus ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground",
-        )}
-        aria-pressed={prefs.deepFocus}
-      >
-        <Eye className="size-3" />
-        Deep Focus
-      </button>
+    <div className="w-full">
+      <div className="flex w-full items-center gap-3 flex-wrap">
+        <button
+          type="button"
+          onClick={() => setPrefs((prev) => ({ ...prev, deepFocus: !prev.deepFocus }))}
+          className={cn(
+            "inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[10px] font-semibold tracking-[0.08em] uppercase",
+            prefs.deepFocus ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground",
+          )}
+          aria-pressed={prefs.deepFocus}
+        >
+          <Eye className="size-3" />
+          Deep Focus
+        </button>
 
-      <ValuePill label="Width" value={prefs.width} />
-      <ValuePill label="Typography" value={prefs.typography} />
-      <ValuePill label="Density" value={prefs.density} />
-      <ValuePill label="Theme" value={prefs.theme} />
+        <ValuePill label="Width" value={prefs.width} />
+        <ValuePill label="Typography" value={prefs.typography} />
+        <ValuePill label="Density" value={prefs.density} />
+        <ValuePill label="Theme" value={prefs.theme} />
+      </div>
 
-      <Picker
-        label="Width"
-        value={prefs.width}
-        options={["narrow", "medium", "wide"]}
-        onChange={(value) => setPrefs((prev) => ({ ...prev, width: value as ReadingPrefs["width"] }))}
-      />
+      <div className="mt-3 flex w-full items-end gap-3 flex-wrap">
+        <Picker
+          label="Density"
+          value={prefs.density}
+          options={["relaxed", "balanced", "focused"]}
+          onChange={(value) => setPrefs((prev) => ({ ...prev, density: value as ReadingPrefs["density"] }))}
+        />
 
-      <Picker
-        label="Typography"
-        value={prefs.typography}
-        options={["editorial", "modern", "classic"]}
-        onChange={(value) => setPrefs((prev) => ({ ...prev, typography: value as ReadingPrefs["typography"] }))}
-      />
+        <Picker
+          label="Theme"
+          value={prefs.theme}
+          options={["library", "study", "night", "paper"]}
+          onChange={(value) => setPrefs((prev) => ({ ...prev, theme: value as ReadingPrefs["theme"] }))}
+        />
 
-      <Picker
-        label="Density"
-        value={prefs.density}
-        options={["relaxed", "balanced", "focused"]}
-        onChange={(value) => setPrefs((prev) => ({ ...prev, density: value as ReadingPrefs["density"] }))}
-      />
+        <Picker
+          label="Width"
+          value={prefs.width}
+          options={["narrow", "medium", "wide"]}
+          onChange={(value) => setPrefs((prev) => ({ ...prev, width: value as ReadingPrefs["width"] }))}
+        />
 
-      <Picker
-        label="Theme"
-        value={prefs.theme}
-        options={["library", "study", "night", "paper"]}
-        onChange={(value) => setPrefs((prev) => ({ ...prev, theme: value as ReadingPrefs["theme"] }))}
-      />
+        <Picker
+          label="Typography"
+          value={prefs.typography}
+          options={["editorial", "modern", "classic"]}
+          onChange={(value) => setPrefs((prev) => ({ ...prev, typography: value as ReadingPrefs["typography"] }))}
+        />
+      </div>
     </div>
   );
 }
