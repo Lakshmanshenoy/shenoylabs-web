@@ -328,10 +328,14 @@ async function verifyTurnstileToken(token: string, ip: string, trustedHosts: Set
     const verification = (await verifyResponse.json()) as TurnstileVerifyResponse;
     if (!verification.success) {
       const errorCodes = verification["error-codes"] ?? [];
-      logContactSecurityEvent("turnstile_verification_failed", {
-        ip,
-        errorCodes,
-      });
+        // Log non-sensitive verification details to help diagnose failures.
+        logContactSecurityEvent("turnstile_verification_failed", {
+          ip,
+          errorCodes,
+          action: verification.action ?? null,
+          hostname: verification.hostname ?? null,
+          providerStatus: verifyResponse.status,
+        });
 
       return {
         ok: false,
