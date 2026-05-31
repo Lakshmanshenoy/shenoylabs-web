@@ -117,7 +117,15 @@ export function MobileTocSheet({ toc }: { toc: ArticleTocItem[] }) {
   const activeIndex = toc.findIndex((item) => item.id === activeId);
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("shenoylabs:sheet-state", { detail: { name: "toc", open: v } }));
+        }
+      }}
+    >
       <SheetTrigger
         render={
           <Button
