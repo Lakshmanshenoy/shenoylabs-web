@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { lrange, delKey, rpush, ltrim, getKey, setKey } from "@/lib/upstash";
+import { checkAdminRateLimit } from "@/lib/admin-rate-limit";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const LOG_FILE = path.join(DATA_DIR, "consent-events.ndjson");
@@ -82,6 +83,9 @@ export async function POST(req: Request) {
     if (!ADMIN_KEY || provided !== ADMIN_KEY) {
       return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 });
     }
+
+    const rl = await checkAdminRateLimit(req);
+    if (rl) return rl;
 
     const body = await req.json().catch(() => ({}));
     const action = body?.action;

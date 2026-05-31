@@ -1,3 +1,5 @@
+import { checkAdminRateLimit } from "./admin-rate-limit";
+
 function getExpectedAdminKey() {
   return process.env.ADMIN_API_KEY ?? process.env.CONSENT_ADMIN_KEY ?? null;
 }
@@ -10,14 +12,23 @@ export function isAuthorizedAdminRequest(req: Request) {
   return headerKey === expected;
 }
 
-export function requireAdminAuth(req: Request) {
-  if (isAuthorizedAdminRequest(req)) return null;
+export async function requireAdminAuth(req: Request) {
+  if (!isAuthorizedAdminRequest(req)) {
+    return new Response(JSON.stringify({ error: "unauthorized" }), {
+      status: 401,
+      headers: {
+        "Content-Type": "application/json",
+        "WWW-Authenticate": 'ApiKey realm="admin"',
+      },
+    });
+  }
 
-  return new Response(JSON.stringify({ error: "unauthorized" }), {
-    status: 401,
-    headers: {
-      "Content-Type": "application/json",
-      "WWW-Authenticate": 'ApiKey realm="admin"',
-    },
-  });
+  try {
+    const rl = await checkAdminRateLimit(req);
+    if (rl) return rl;
+  } catch (err) {
+    console.error("requireAdminAuth: rate-limit check failed", err);
+  }
+
+  return null;
 }

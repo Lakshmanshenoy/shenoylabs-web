@@ -16,7 +16,7 @@ function encodePathSegments(p: string) {
 }
 
 export async function POST(req: Request) {
-  const unauthorized = requireAdminAuth(req);
+  const unauthorized = await requireAdminAuth(req);
   if (unauthorized) return unauthorized;
 
   try {
@@ -139,7 +139,7 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-  const unauthorized = requireAdminAuth(req);
+  const unauthorized = await requireAdminAuth(req);
   if (unauthorized) return unauthorized;
 
   return jsonResponse({ info: "GitHub-backed Tina helper. POST with changes to create a PR." });

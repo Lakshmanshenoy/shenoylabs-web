@@ -9,7 +9,7 @@ function jsonResponse(obj: unknown, status = 200) {
 }
 
 export async function DELETE(req: Request) {
-  const unauthorized = requireAdminAuth(req);
+  const unauthorized = await requireAdminAuth(req);
   if (unauthorized) return unauthorized;
 
   try {
@@ -95,7 +95,7 @@ export async function DELETE(req: Request) {
 }
 
 export async function GET(req: Request) {
-  const unauthorized = requireAdminAuth(req);
+  const unauthorized = await requireAdminAuth(req);
   if (unauthorized) return unauthorized;
 
   return jsonResponse({ info: "Media file helper. DELETE this path to create a PR that removes the file." });

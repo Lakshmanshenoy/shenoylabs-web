@@ -11,7 +11,7 @@ function jsonResponse(obj: unknown, status = 200) {
 }
 
 export async function POST(req: Request) {
-  const unauthorized = requireAdminAuth(req);
+  const unauthorized = await requireAdminAuth(req);
   if (unauthorized) return unauthorized;
 
   try {
@@ -174,7 +174,7 @@ export async function POST(req: Request) {
 }
 
 export async function GET(req: Request) {
-  const unauthorized = requireAdminAuth(req);
+  const unauthorized = await requireAdminAuth(req);
   if (unauthorized) return unauthorized;
 
   return jsonResponse({ info: "Tree-based GitHub Tina helper. POST with changes to create PR." });

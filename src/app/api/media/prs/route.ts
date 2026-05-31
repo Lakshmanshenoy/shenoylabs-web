@@ -9,7 +9,7 @@ function jsonResponse(obj: unknown, status = 200) {
 }
 
 export async function GET(req: Request) {
-  const unauthorized = requireAdminAuth(req);
+  const unauthorized = await requireAdminAuth(req);
   if (unauthorized) return unauthorized;
 
   try {
@@ -43,7 +43,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const unauthorized = requireAdminAuth(req);
+  const unauthorized = await requireAdminAuth(req);
   if (unauthorized) return unauthorized;
 
   try {
