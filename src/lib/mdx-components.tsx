@@ -4,6 +4,17 @@ import Link from "next/link";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type MDXComponents = Record<string, React.ElementType<any>>;
 
+import { CodeBlock } from "@/components/articles/code-block";
+import { ZoomableImage } from "@/components/articles/image-zoom";
+import { InlineQuiz } from "@/components/articles/inline-quiz";
+import {
+  Callout,
+  Expandable,
+  GlossaryTerm,
+  PredictionReveal,
+  PullQuote,
+  Spoiler,
+} from "@/components/articles/mdx-extras";
 import { cn } from "@/lib/utils";
 
 function textFromChildren(children: React.ReactNode): string {
@@ -110,15 +121,7 @@ export function getMDXComponents(overrides?: MDXComponents): MDXComponents {
         {...props}
       />
     ),
-    pre: ({ className, ...props }) => (
-      <pre
-        className={cn(
-          "mb-5 overflow-x-auto rounded-xl border border-border/70 bg-muted p-5 text-sm leading-relaxed",
-          className,
-        )}
-        {...props}
-      />
-    ),
+    pre: (props) => <CodeBlock {...props} />,
     a: ({ className, href = "#", ...props }) => {
       const isExternal = href.startsWith("http");
       if (isExternal) {
@@ -219,6 +222,16 @@ export function getMDXComponents(overrides?: MDXComponents): MDXComponents {
         {children}
       </ol>
     ),
+    // ── Image zoom ───────────────────────────────────────────────────────────
+    img: (props) => <ZoomableImage {...(props as React.ComponentProps<"img">)} />,
+    // ── Interactive MDX components ───────────────────────────────────────────
+    Quiz: InlineQuiz,
+    Callout,
+    PullQuote,
+    Spoiler,
+    Expandable,
+    GlossaryTerm,
+    PredictionReveal,
     ...overrides,
   };
 }

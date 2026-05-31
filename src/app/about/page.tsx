@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import {
   BookOpenIcon,
@@ -231,8 +232,15 @@ export default async function AboutPage() {
       <div className="grid border-x border-border lg:grid-cols-[300px_1fr]">
         <aside className="border-b border-border p-8 lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:overflow-y-auto lg:border-r lg:border-b-0">
           <div className="mb-7">
-            <div className="relative inline-flex size-20 items-center justify-center rounded-md bg-foreground text-3xl font-black tracking-[-0.08em] text-background">
-              LS
+            <div className="relative size-20 overflow-hidden rounded-md">
+              <Image
+                src="/images/author.png"
+                alt="Lakshman Shenoy"
+                fill
+                className="object-cover object-top"
+                sizes="80px"
+                priority
+              />
               <span className="absolute right-1.5 bottom-1.5 size-3 rounded-full border-2 border-background bg-emerald-500" />
             </div>
             <p className="mt-3 inline-flex items-center gap-2 text-[10px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
