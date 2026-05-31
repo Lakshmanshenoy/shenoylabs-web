@@ -113,6 +113,7 @@ export function ContactForm() {
       : process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
     : "";
   const turnstileRef = useRef<TurnstileInstance | null>(null);
+  const mountedAtRef = useRef<number>(Date.now());
 
   function resetTurnstileWidget() {
     if (verificationReady) {
@@ -202,7 +203,7 @@ export function ContactForm() {
         organization,
         profileUrl,
         referral,
-        submittedAt: Date.now(),
+        submittedAt: mountedAtRef.current,
       };
 
       const res = await fetch("/api/contact", {
