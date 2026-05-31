@@ -8,13 +8,13 @@ import { getAllArticles } from "@/lib/content";
 
 export const metadata: Metadata = {
   title: "Support the Creator — Shenoy Labs",
-  description: "Optional support channels for Shenoy Labs via Razorpay and UPI.",
+  description: "Support Shenoy Labs via UPI or Ko-fi. Reader-funded, ad-free, always independent.",
   alternates: {
     canonical: "/support",
   },
   openGraph: {
     title: "Support — Shenoy Labs",
-    description: "Optional support channels for Shenoy Labs via Razorpay and UPI.",
+    description: "Support Shenoy Labs via UPI or Ko-fi. Reader-funded, ad-free, always independent.",
     type: "website",
     url: "/support",
     images: ["/api/og?title=Support+the+Work"],
@@ -22,14 +22,13 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Support — Shenoy Labs",
-    description: "Optional support channels for Shenoy Labs via Razorpay and UPI.",
+    description: "Support Shenoy Labs via UPI or Ko-fi. Reader-funded, ad-free, always independent.",
     images: ["/api/og?title=Support+the+Work"],
   },
 };
 
 export default function SupportPage() {
   const allArticles = getAllArticles();
-  const razorpayLink = "https://razorpay.me/@lakshmanshenoy";
   const upiId = "lakshmanshenoy@upi";
 
   const totalArticles = allArticles.length;
@@ -126,7 +125,7 @@ export default function SupportPage() {
         </aside>
 
         <main className="space-y-10 p-8 lg:p-12">
-          <SupportPaymentPanel razorpayLink={razorpayLink} upiId={upiId} />
+          <SupportPaymentPanel upiId={upiId} />
 
           <section className="border-t border-border pt-8">
             <p className="mb-3 text-[10px] font-semibold tracking-[0.14em] text-muted-foreground uppercase">

@@ -8,19 +8,19 @@ const isDev = process.env.NODE_ENV === "development";
 // so allow that origin in the CSP while `isDev` is true.
 const tinaDevOrigin = isDev ? ` http://localhost:${process.env.TINA_DATALAYER_PORT ?? 4001}` : "";
 
-const razorpayScriptOrigin = "https://checkout.razorpay.com";
-const razorpayConnectOrigins = "https://api.razorpay.com https://checkout.razorpay.com";
-const razorpayFrameOrigins = "https://checkout.razorpay.com https://api.razorpay.com";
+const kofiScriptOrigin = "https://storage.ko-fi.com";
+const kofiConnectOrigins = "https://storage.ko-fi.com https://ko-fi.com";
+const kofiFrameOrigins = "https://ko-fi.com";
 
 const scriptSrc = isDev
-  ? `'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://challenges.cloudflare.com https://giscus.app ${razorpayScriptOrigin}${tinaDevOrigin}`
-  : `'self' 'unsafe-inline' https://www.googletagmanager.com https://challenges.cloudflare.com https://giscus.app ${razorpayScriptOrigin}`;
+  ? `'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://challenges.cloudflare.com https://giscus.app ${kofiScriptOrigin}${tinaDevOrigin}`
+  : `'self' 'unsafe-inline' https://www.googletagmanager.com https://challenges.cloudflare.com https://giscus.app ${kofiScriptOrigin}`;
 
 const connectSrc = isDev
-  ? `'self' https://www.google-analytics.com https://region1.google-analytics.com https://challenges.cloudflare.com https://giscus.app https://api.github.com ${razorpayConnectOrigins}${tinaDevOrigin}`
-  : `'self' https://www.google-analytics.com https://region1.google-analytics.com https://challenges.cloudflare.com https://giscus.app https://api.github.com ${razorpayConnectOrigins}`;
+  ? `'self' https://www.google-analytics.com https://region1.google-analytics.com https://challenges.cloudflare.com https://giscus.app https://api.github.com ${kofiConnectOrigins}${tinaDevOrigin}`
+  : `'self' https://www.google-analytics.com https://region1.google-analytics.com https://challenges.cloudflare.com https://giscus.app https://api.github.com ${kofiConnectOrigins}`;
 
-const frameSrc = `'self' https://challenges.cloudflare.com https://giscus.app ${razorpayFrameOrigins}`;
+const frameSrc = `'self' https://challenges.cloudflare.com https://giscus.app ${kofiFrameOrigins}`;
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,

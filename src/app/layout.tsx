@@ -5,6 +5,7 @@ import Script from "next/script";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import CookieBanner from "@/components/consent/cookie-banner";
 import { SiteShell } from "@/components/layout/site-shell";
+import { KofiOverlay } from "@/components/support/kofi-overlay";
 import { siteConfig } from "@/lib/site";
 
 import "./globals.css";
@@ -148,6 +149,7 @@ export default function RootLayout({
         <CookieBanner />
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
         <SiteShell>{children}</SiteShell>
+        <KofiOverlay />
       </body>
     </html>
   );

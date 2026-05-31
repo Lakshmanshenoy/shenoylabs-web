@@ -440,6 +440,7 @@ export default async function ArticleDetailPage({
                   })}
                 </p>
               </div>
+              <BookmarkButton slug={slug} title={fm.title} category={fm.primaryCategory ?? fm.category} />
               <div className="ml-auto flex flex-wrap items-center gap-4 text-[11px] font-semibold tracking-[0.05em] text-muted-foreground uppercase">
                 <span className="inline-flex items-center gap-1.5">
                   <Clock3Icon className="size-3.5" />
@@ -453,7 +454,6 @@ export default async function ArticleDetailPage({
                   <Link2Icon className="size-3.5" />
                   Updated {updatedDateLabel}
                 </span>
-                <BookmarkButton slug={slug} title={fm.title} category={fm.primaryCategory ?? fm.category} />
               </div>
             </div>
           </header>

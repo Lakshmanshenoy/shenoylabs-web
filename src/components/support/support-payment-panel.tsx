@@ -6,82 +6,20 @@ import { useMemo, useState } from "react";
 import {
   CheckIcon,
   CopyIcon,
-  CreditCardIcon,
-  LoaderCircleIcon,
   RssIcon,
   WalletIcon,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { KofiWidget } from "@/components/support/kofi-widget";
 
 type SupportPaymentPanelProps = {
-  razorpayLink: string;
   upiId: string;
 };
 
 const presetAmounts = [99, 249, 499, 999] as const;
 
-type PaymentMethod = "upi" | "razorpay" | "free";
-
-type RazorpayCheckoutOptions = {
-  key: string;
-  amount: number;
-  currency: string;
-  name: string;
-  description?: string;
-  order_id: string;
-  handler: (response: {
-    razorpay_payment_id: string;
-    razorpay_order_id: string;
-    razorpay_signature: string;
-  }) => void | Promise<void>;
-  modal?: {
-    ondismiss?: () => void;
-  };
-  theme?: {
-    color?: string;
-  };
-};
-
-type RazorpayCheckoutInstance = {
-  open: () => void;
-  on: (event: "payment.failed", callback: (payload: {
-    error?: {
-      description?: string;
-      reason?: string;
-      source?: string;
-      step?: string;
-      code?: string;
-      metadata?: {
-        order_id?: string;
-        payment_id?: string;
-      };
-    };
-  }) => void) => void;
-};
-
-type RazorpayCheckoutConstructor = new (
-  options: RazorpayCheckoutOptions,
-) => RazorpayCheckoutInstance;
-
-type CreateOrderResponse = {
-  ok: boolean;
-  message?: string;
-  order_id?: string;
-  amount?: number;
-  currency?: string;
-};
-
-type VerifyPaymentResponse = {
-  ok: boolean;
-  message?: string;
-};
-
-declare global {
-  interface Window {
-    Razorpay?: RazorpayCheckoutConstructor;
-  }
-}
+type PaymentMethod = "upi" | "kofi" | "free";
 
 function formatInr(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
@@ -91,34 +29,11 @@ function formatInr(amount: number): string {
   }).format(amount);
 }
 
-async function loadRazorpayScript(): Promise<boolean> {
-  if (typeof window === "undefined") return false;
-  if (window.Razorpay) return true;
-
-  return new Promise((resolve) => {
-    const existing = document.querySelector<HTMLScriptElement>('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
-    if (existing) {
-      existing.addEventListener("load", () => resolve(true), { once: true });
-      existing.addEventListener("error", () => resolve(false), { once: true });
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-}
-
-export function SupportPaymentPanel({ razorpayLink, upiId }: SupportPaymentPanelProps) {
+export function SupportPaymentPanel({ upiId }: SupportPaymentPanelProps) {
   const [selectedAmount, setSelectedAmount] = useState<number>(249);
   const [customAmount, setCustomAmount] = useState("");
   const [activeMethod, setActiveMethod] = useState<PaymentMethod>("upi");
   const [copied, setCopied] = useState(false);
-  const [isLaunchingCheckout, setIsLaunchingCheckout] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState<{ tone: "success" | "error" | "info"; message: string } | null>(null);
 
   const effectiveAmount = useMemo(() => {
     const parsed = Number(customAmount);
@@ -146,124 +61,6 @@ export function SupportPaymentPanel({ razorpayLink, upiId }: SupportPaymentPanel
       setTimeout(() => setCopied(false), 1500);
     } catch {
       setCopied(false);
-    }
-  }
-
-  async function launchRazorpayCheckout() {
-    setPaymentStatus(null);
-
-    if (effectiveAmount < 1) {
-      setPaymentStatus({
-        tone: "error",
-        message: "Amount must be at least INR 1.",
-      });
-      return;
-    }
-
-    const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-    if (!keyId) {
-      setPaymentStatus({
-        tone: "error",
-        message: "Razorpay key is not configured on the frontend.",
-      });
-      return;
-    }
-
-    setIsLaunchingCheckout(true);
-
-    try {
-      const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded || !window.Razorpay) {
-        setPaymentStatus({
-          tone: "error",
-          message: "Unable to load Razorpay checkout script.",
-        });
-        return;
-      }
-
-      const createOrderResponse = await fetch("/api/create-order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: effectiveAmount * 100,
-          currency: "INR",
-          receipt: `support_${Date.now()}`,
-        }),
-      });
-
-      const createOrderData = (await createOrderResponse.json()) as CreateOrderResponse;
-      if (!createOrderResponse.ok || !createOrderData.ok || !createOrderData.order_id || !createOrderData.amount || !createOrderData.currency) {
-        setPaymentStatus({
-          tone: "error",
-          message: createOrderData.message ?? "Unable to create payment order.",
-        });
-        return;
-      }
-
-      const razorpay = new window.Razorpay({
-        key: keyId,
-        amount: createOrderData.amount,
-        currency: createOrderData.currency,
-        name: "Shenoy Labs",
-        description: "Support contribution",
-        order_id: createOrderData.order_id,
-        handler: async (response) => {
-          const verifyResponse = await fetch("/api/verify-payment", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(response),
-          });
-
-          const verifyData = (await verifyResponse.json()) as VerifyPaymentResponse;
-          if (!verifyResponse.ok || !verifyData.ok) {
-            setPaymentStatus({
-              tone: "error",
-              message: verifyData.message ?? "Payment signature verification failed.",
-            });
-            return;
-          }
-
-          setPaymentStatus({
-            tone: "success",
-            message: "Payment successful and verified. Thank you for supporting Shenoy Labs.",
-          });
-        },
-        modal: {
-          ondismiss: () => {
-            setPaymentStatus({
-              tone: "info",
-              message: "Checkout closed before payment completion.",
-            });
-          },
-        },
-        theme: {
-          color: "#B84A0C",
-        },
-      });
-
-      razorpay.on("payment.failed", (payload) => {
-        const reason =
-          payload.error?.description ??
-          payload.error?.reason ??
-          "Payment failed. Please try another method.";
-        setPaymentStatus({
-          tone: "error",
-          message: reason,
-        });
-      });
-
-      razorpay.open();
-    } catch {
-      setPaymentStatus({
-        tone: "error",
-        message: "Something went wrong while launching Razorpay checkout.",
-      });
-    } finally {
-      setIsLaunchingCheckout(false);
     }
   }
 
@@ -389,51 +186,48 @@ export function SupportPaymentPanel({ razorpayLink, upiId }: SupportPaymentPanel
             ) : null}
           </article>
 
+          {/* Ko-fi */}
           <article
             className={cn(
               "rounded-md border transition-shadow",
-              activeMethod === "razorpay" ? "border-primary shadow-sm" : "border-border",
+              activeMethod === "kofi" ? "border-primary shadow-sm" : "border-border",
             )}
           >
             <button
               type="button"
-              onClick={() => setActiveMethod("razorpay")}
+              onClick={() => setActiveMethod("kofi")}
               className="flex w-full items-center gap-3 p-4 text-left"
             >
               <span className="inline-flex size-5 items-center justify-center rounded-full border border-border">
-                {activeMethod === "razorpay" ? <CheckIcon className="size-3 text-primary" /> : null}
+                {activeMethod === "kofi" ? <CheckIcon className="size-3 text-primary" /> : null}
               </span>
-              <span className="inline-flex h-8 items-center rounded bg-blue-600 px-2 text-xs font-semibold text-white">Razorpay</span>
+              <span className="inline-flex h-8 items-center rounded px-2 text-xs font-semibold text-white" style={{ background: "#e06020" }}>Ko-fi</span>
               <span className="flex-1">
-                <span className="block text-sm font-semibold">Razorpay</span>
-                <span className="block text-xs text-muted-foreground">Cards, net banking, UPI, wallets</span>
+                <span className="block text-sm font-semibold">Ko-fi</span>
+                <span className="block text-xs text-muted-foreground">Cards, PayPal, Apple Pay, Google Pay</span>
               </span>
-              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
-                Secure
+              <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-700 dark:bg-orange-950/60 dark:text-orange-300">
+                International
               </span>
             </button>
 
-            {activeMethod === "razorpay" ? (
+            {activeMethod === "kofi" ? (
               <div className="border-t border-border p-4">
-                <p className="mb-3 text-sm italic text-muted-foreground">
-                  Secure checkout via Razorpay. Processing fees may apply based on payment mode.
+                <p className="mb-4 text-sm italic text-muted-foreground">
+                  Support via Ko-fi using cards, PayPal, Apple Pay, or Google Pay. No account needed.
                 </p>
-                <button
-                  type="button"
-                  onClick={launchRazorpayCheckout}
-                  disabled={isLaunchingCheckout}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-sm bg-primary px-5 py-2.5 text-xs font-semibold tracking-[0.08em] text-primary-foreground uppercase transition-colors hover:bg-primary/90"
-                >
-                  {isLaunchingCheckout ? <LoaderCircleIcon className="size-3.5 animate-spin" /> : <CreditCardIcon className="size-3.5" />}
-                  Pay {formatInr(effectiveAmount).replace(".00", "")} via Razorpay
-                </button>
-
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Need fallback? Use direct payment link:
-                  {" "}
-                  <Link href={razorpayLink} target="_blank" rel="noreferrer" className="text-primary underline-offset-2 hover:underline">
-                    Open Razorpay page
-                  </Link>
+                <KofiWidget />
+                <p className="mt-3 text-center text-xs text-muted-foreground">
+                  Or visit{" "}
+                  <Link
+                    href="https://ko-fi.com/lakshmanshenoy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline-offset-2 hover:underline"
+                  >
+                    ko-fi.com/lakshmanshenoy
+                  </Link>{" "}
+                  directly.
                 </p>
               </div>
             ) : null}
@@ -489,19 +283,6 @@ export function SupportPaymentPanel({ razorpayLink, upiId }: SupportPaymentPanel
           </article>
         </div>
       </section>
-
-      {paymentStatus ? (
-        <p
-          className={cn(
-            "rounded-sm border px-3 py-2 text-sm",
-            paymentStatus.tone === "success" && "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-            paymentStatus.tone === "error" && "border-red-500/40 bg-red-500/10 text-red-700 dark:text-red-300",
-            paymentStatus.tone === "info" && "border-blue-500/40 bg-blue-500/10 text-blue-700 dark:text-blue-300",
-          )}
-        >
-          {paymentStatus.message}
-        </p>
-      ) : null}
     </div>
   );
 }
