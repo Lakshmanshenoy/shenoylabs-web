@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { rpush, lrange, ltrim } from "@/lib/upstash";
+import { checkAdminRateLimit } from "@/lib/admin-rate-limit";
 import { normalizeUpstashList } from "@/lib/dsr-utils";
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -199,6 +200,9 @@ export async function GET(req: Request) {
   if (!adminKey || provided !== adminKey) {
     return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 });
   }
+
+  const rl = await checkAdminRateLimit(req);
+  if (rl) return rl;
 
 
   // Try reading from Upstash if available

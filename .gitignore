@@ -48,6 +48,7 @@ dev-console-network.log
 # GH CLI run logs and archives
 .gh_run*
 .gh_run_logs_*.zip
+GH_PAGER=cat gh run view * --log
 
 # TinaCMS
 /admin/
@@ -57,6 +58,8 @@ data/tina-media-prs.json
 public/admin/
 .eslintcache
 reports/*.log
+vercel_runtime_logs*.json
+vercel_runtime_logs*.txt
 
 # Calibration Data
 /data

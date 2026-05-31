@@ -1,4 +1,6 @@
 // List media files under `public/` in the repository
+import { requireAdminAuth } from "../../../../lib/admin-auth";
+
 function jsonResponse(obj: unknown, status = 200) {
   return new Response(JSON.stringify(obj), {
     status,
@@ -7,6 +9,9 @@ function jsonResponse(obj: unknown, status = 200) {
 }
 
 export async function GET(req: Request) {
+  const unauthorized = await requireAdminAuth(req);
+  if (unauthorized) return unauthorized;
+
   try {
     const token = process.env.GITHUB_TOKEN ?? process.env.TINA_GITHUB_TOKEN;
     const repository = process.env.GITHUB_REPOSITORY;

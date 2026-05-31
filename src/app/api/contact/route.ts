@@ -138,14 +138,17 @@ async function rateLimited(key: string) {
 
   if (UPSTASH_URL && UPSTASH_TOKEN) {
     try {
-      const prev = await upstashCmd(["GET", `rl:${key}`]);
+      // Namespace contact-specific rate keys to avoid colliding with global
+      // middleware counters that use `rl:<ip>` for numeric counts.
+      const upstashKey = `rl:contact:${key}`;
+      const prev = await upstashCmd(["GET", upstashKey]);
       if (prev != null) {
         const prevTs = Number(prev);
         if (!Number.isNaN(prevTs) && now - prevTs < RATE_LIMIT_WINDOW_MS) {
           return true;
         }
       }
-      await upstashCmd(["SET", `rl:${key}`, String(now), "PX", String(RATE_LIMIT_WINDOW_MS)]);
+      await upstashCmd(["SET", upstashKey, String(now), "PX", String(RATE_LIMIT_WINDOW_MS)]);
       return false;
     } catch {
       // fallthrough to in-memory
@@ -328,10 +331,14 @@ async function verifyTurnstileToken(token: string, ip: string, trustedHosts: Set
     const verification = (await verifyResponse.json()) as TurnstileVerifyResponse;
     if (!verification.success) {
       const errorCodes = verification["error-codes"] ?? [];
-      logContactSecurityEvent("turnstile_verification_failed", {
-        ip,
-        errorCodes,
-      });
+        // Log non-sensitive verification details to help diagnose failures.
+        logContactSecurityEvent("turnstile_verification_failed", {
+          ip,
+          errorCodes,
+          action: verification.action ?? null,
+          hostname: verification.hostname ?? null,
+          providerStatus: verifyResponse.status,
+        });
 
       return {
         ok: false,
@@ -369,16 +376,19 @@ async function verifyTurnstileToken(token: string, ip: string, trustedHosts: Set
     }
 
     if (verification.hostname && !trustedHosts.has(verification.hostname)) {
-      logContactSecurityEvent("turnstile_hostname_mismatch", {
-        ip,
-        hostname: verification.hostname,
-        trustedHosts: Array.from(trustedHosts),
-      });
-      return {
-        ok: false,
-        status: 400,
-        message: "Verification failed. Please retry.",
-      } as const;
+      // Allow hostname mismatches when using test keys in development.
+      if (!useTestKeys) {
+        logContactSecurityEvent("turnstile_hostname_mismatch", {
+          ip,
+          hostname: verification.hostname,
+          trustedHosts: Array.from(trustedHosts),
+        });
+        return {
+          ok: false,
+          status: 400,
+          message: "Verification failed. Please retry.",
+        } as const;
+      }
     }
 
     if (!useTestKeys) {

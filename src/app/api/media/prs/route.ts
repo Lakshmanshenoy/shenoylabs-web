@@ -1,4 +1,6 @@
 // Server-backed PR log storage — reads/writes `data/tina-media-prs.json` on the base branch
+import { requireAdminAuth } from "../../../../lib/admin-auth";
+
 function jsonResponse(obj: unknown, status = 200) {
   return new Response(JSON.stringify(obj), {
     status,
@@ -6,7 +8,10 @@ function jsonResponse(obj: unknown, status = 200) {
   });
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const unauthorized = await requireAdminAuth(req);
+  if (unauthorized) return unauthorized;
+
   try {
     const token = process.env.GITHUB_TOKEN ?? process.env.TINA_GITHUB_TOKEN;
     const repository = process.env.GITHUB_REPOSITORY;
@@ -38,6 +43,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const unauthorized = await requireAdminAuth(req);
+  if (unauthorized) return unauthorized;
+
   try {
     const token = process.env.GITHUB_TOKEN ?? process.env.TINA_GITHUB_TOKEN;
     const repository = process.env.GITHUB_REPOSITORY;

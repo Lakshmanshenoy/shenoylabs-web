@@ -1,4 +1,6 @@
 // Media file operations (DELETE)
+import { requireAdminAuth } from "../../../lib/admin-auth";
+
 function jsonResponse(obj: unknown, status = 200) {
   return new Response(JSON.stringify(obj), {
     status,
@@ -7,6 +9,9 @@ function jsonResponse(obj: unknown, status = 200) {
 }
 
 export async function DELETE(req: Request) {
+  const unauthorized = await requireAdminAuth(req);
+  if (unauthorized) return unauthorized;
+
   try {
     const token = process.env.GITHUB_TOKEN ?? process.env.TINA_GITHUB_TOKEN;
     const repository = process.env.GITHUB_REPOSITORY;
@@ -90,5 +95,8 @@ export async function DELETE(req: Request) {
 }
 
 export async function GET(req: Request) {
+  const unauthorized = await requireAdminAuth(req);
+  if (unauthorized) return unauthorized;
+
   return jsonResponse({ info: "Media file helper. DELETE this path to create a PR that removes the file." });
 }

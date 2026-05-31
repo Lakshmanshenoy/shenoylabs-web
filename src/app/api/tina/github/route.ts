@@ -2,7 +2,7 @@
 // Used for a GitHub-backed Tina workflow (no Tina Cloud required).
 // Requires env vars: GITHUB_TOKEN and GITHUB_REPOSITORY (owner/repo)
 
-import type { NextRequest } from "next/server";
+import { requireAdminAuth } from "../../../../lib/admin-auth";
 
 function jsonResponse(obj: unknown, status = 200) {
   return new Response(JSON.stringify(obj), {
@@ -16,6 +16,9 @@ function encodePathSegments(p: string) {
 }
 
 export async function POST(req: Request) {
+  const unauthorized = await requireAdminAuth(req);
+  if (unauthorized) return unauthorized;
+
   try {
     const token = process.env.GITHUB_TOKEN ?? process.env.TINA_GITHUB_TOKEN;
     const repository = process.env.GITHUB_REPOSITORY; // expected "owner/repo"
@@ -135,6 +138,9 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const unauthorized = await requireAdminAuth(req);
+  if (unauthorized) return unauthorized;
+
   return jsonResponse({ info: "GitHub-backed Tina helper. POST with changes to create a PR." });
 }

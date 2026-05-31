@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore, useEffect } from "react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import Link from "next/link";
 import { CheckIcon, SendIcon } from "lucide-react";
@@ -17,6 +17,12 @@ function subscribeToHydration() {
 
 function isLocalHostname(hostname: string) {
   return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "0.0.0.0";
+}
+
+async function wait(ms: number) {
+  await new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 type SubmitState =
@@ -107,6 +113,11 @@ export function ContactForm() {
       : process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
     : "";
   const turnstileRef = useRef<TurnstileInstance | null>(null);
+  const mountedAtRef = useRef<number>(0);
+
+  useEffect(() => {
+    mountedAtRef.current = Date.now();
+  }, []);
 
   function resetTurnstileWidget() {
     if (verificationReady) {
@@ -115,8 +126,12 @@ export function ContactForm() {
   }
 
   async function getVerificationToken(formData: FormData) {
-    const responseFieldToken = String(formData.get("cf-turnstile-response") ?? "").trim();
-    const currentToken = captchaToken || responseFieldToken;
+    const readCurrentToken = () => {
+      const responseFieldToken = String(formData.get("cf-turnstile-response") ?? "").trim();
+      return captchaToken || responseFieldToken;
+    };
+
+    const currentToken = readCurrentToken();
 
     if (currentToken) {
       return currentToken;
@@ -127,10 +142,16 @@ export function ContactForm() {
     }
 
     if (!verificationReady) {
-      throw new Error("Verification is still loading. Please wait a moment and try again.");
+      // Give the widget a short grace period to hydrate before failing.
+      await wait(800);
+      const afterWaitToken = readCurrentToken();
+      if (afterWaitToken) {
+        return afterWaitToken;
+      }
+      throw new Error("Verification is still loading. Please wait a few seconds, complete it, and try again.");
     }
 
-    throw new Error("Please complete verification and try again.");
+    throw new Error("Please complete the verification challenge and try again.");
   }
 
   function resetContactForm() {
@@ -186,7 +207,7 @@ export function ContactForm() {
         organization,
         profileUrl,
         referral,
-        submittedAt: Date.now(),
+        submittedAt: mountedAtRef.current,
       };
 
       const res = await fetch("/api/contact", {
@@ -226,13 +247,22 @@ export function ContactForm() {
       setCaptchaToken("");
       resetTurnstileWidget();
     } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Network issue. Please try again in a minute.";
+      const transientVerificationError =
+        message.toLowerCase().includes("still loading") ||
+        message.toLowerCase().includes("complete the verification challenge");
+
       setSubmitState({
         status: "error",
-        message:
-          error instanceof Error ? error.message : "Network issue. Please try again in a minute.",
+        message,
       });
-      setCaptchaToken("");
-      resetTurnstileWidget();
+
+      // Do not reset the widget for transient verification errors.
+      if (!transientVerificationError) {
+        setCaptchaToken("");
+        resetTurnstileWidget();
+      }
     } finally {
       setIsPending(false);
     }

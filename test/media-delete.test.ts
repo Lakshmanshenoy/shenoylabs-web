@@ -8,6 +8,7 @@ describe("media delete route (dry-run)", () => {
     process.env.GITHUB_TOKEN = process.env.GITHUB_TOKEN || "test-token";
     process.env.GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY || "owner/repo";
     process.env.GITHUB_BASE_BRANCH = process.env.GITHUB_BASE_BRANCH || "main";
+    process.env.ADMIN_API_KEY = "test-admin-key";
   });
 
   it("attempts to create branch, delete file and open PR", async () => {
@@ -44,7 +45,12 @@ describe("media delete route (dry-run)", () => {
       return { ok: true, json: async () => ({}), text: async () => "{}" };
     });
 
-    const req = { url: "https://example.local/media/images/test-file.txt" } as any;
+    const req = {
+      url: "https://example.local/media/images/test-file.txt",
+      headers: {
+        get: (name: string) => (name.toLowerCase() === "x-admin-key" ? "test-admin-key" : null),
+      },
+    } as any;
     const res: any = await (route as any).DELETE(req);
     const body = await res.json();
     // debug output on failure
