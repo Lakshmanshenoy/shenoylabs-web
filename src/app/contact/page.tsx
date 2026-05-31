@@ -115,7 +115,7 @@ export default function ContactPage() {
                 <span className="ml-auto text-xs opacity-0 transition-opacity group-hover:opacity-100">↗</span>
               </a>
               <a
-                href="https://github.com/Lakshmanshenoy/issues"
+                href="https://github.com/Lakshmanshenoy/shenoylabs-web/issues"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex items-center gap-3 py-2.5 text-sm text-muted-foreground transition-colors hover:text-primary"
