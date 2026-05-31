@@ -46,6 +46,7 @@ import {
   getRelatedProjectsForArticle,
 } from "@/lib/recommendations";
 import { buildBreadcrumbJsonLd } from "@/lib/seo";
+import JsonLd from "@/components/seo/json-ld";
 import { cn } from "@/lib/utils";
 
 function stripFrontmatter(source: string): string {
@@ -328,19 +329,9 @@ export default async function ArticleDetailPage({
         category={fm.primaryCategory ?? fm.category}
       />
 
-      {/* JSON-LD */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
-        }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
-        }}
-      />
+      {/* JSON-LD (server: inert <template>, client: injector appends <script> to head) */}
+      <JsonLd id={`jsonld-article-${slug}`} json={jsonLd} />
+      <JsonLd id={`jsonld-breadcrumb-${slug}`} json={breadcrumbJsonLd} />
 
       {/* Top reader bar — full width above the layout grid */}
       <div className="sticky top-[3.5rem] z-30 mb-5 border-b border-border/65 bg-background/92 py-3 backdrop-blur-sm sm:top-[3.75rem]">

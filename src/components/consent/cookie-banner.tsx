@@ -6,15 +6,10 @@ import Link from "next/link";
 const CONSENT_KEY = "shenoylabs:consent:analytics";
 
 export default function CookieBanner() {
-  const [visible, setVisible] = useState<boolean>(() => {
-    try {
-      if (typeof window === "undefined") return false;
-      const v = localStorage.getItem(CONSENT_KEY);
-      return !v;
-    } catch {
-      return false;
-    }
-  });
+  // Start hidden on both server and the client's first render so the
+  // initial DOM matches and avoids hydration mismatches. Read localStorage
+  // after mount and then reveal the banner if needed.
+  const [visible, setVisible] = useState<boolean>(false);
 
   const [announce, setAnnounce] = useState<string>("");
   const acceptRef = useRef<HTMLButtonElement | null>(null);
@@ -24,6 +19,19 @@ export default function CookieBanner() {
       acceptRef.current?.focus();
     }
   }, [visible]);
+
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem(CONSENT_KEY);
+      // show banner when there's no stored consent — defer state update
+      // to avoid synchronous setState inside effect which triggers
+      // cascading renders and is flagged by our lint rules.
+      setTimeout(() => setVisible(!v), 0);
+    } catch {
+      // leave hidden on error
+      setTimeout(() => setVisible(false), 0);
+    }
+  }, []);
 
   const sendConsentEvent = async (action: "grant" | "revoke") => {
     const payload = { action: action === "grant" ? "grant" : "revoke", type: "analytics" };

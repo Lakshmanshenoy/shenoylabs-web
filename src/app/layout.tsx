@@ -90,7 +90,10 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
-      <head>
+      <head />
+      {/* suppressHydrationWarning prevents false positives from browser extensions
+           that mutate body attributes (e.g. Grammarly) after server render. */}
+      <body className="min-h-full" suppressHydrationWarning>
         <Script id="theme-init" strategy="beforeInteractive">
           {`
             try {
@@ -136,19 +139,9 @@ export default function RootLayout({
             } catch {}
           `}
         </Script>
-        <link
-          rel="alternate"
-          type="application/rss+xml"
-          title={`${siteConfig.name} — Articles feed`}
-          href="/feed.xml"
-        />
-      </head>
-      {/* suppressHydrationWarning prevents false positives from browser extensions
-           that mutate body attributes (e.g. Grammarly) after server render. */}
-      <body className="min-h-full" suppressHydrationWarning>
-        <CookieBanner />
         <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
         <SiteShell>{children}</SiteShell>
+        <CookieBanner />
         <KofiOverlay />
       </body>
     </html>

@@ -16,6 +16,7 @@ import {
   getRelatedProjects,
 } from "@/lib/recommendations";
 import { buildBreadcrumbJsonLd } from "@/lib/seo";
+import JsonLd from "@/components/seo/json-ld";
 import { cn } from "@/lib/utils";
 
 // ─── Static generation ────────────────────────────────────────────────────────
@@ -126,19 +127,9 @@ export default async function ProjectDetailPage({
 
   return (
     <SectionContainer>
-      {/* JSON-LD */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
-        }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
-        }}
-      />
+      {/* JSON-LD (server: inert <template>, client: injector appends <script> to head) */}
+      <JsonLd id={`jsonld-project-${slug}`} json={jsonLd} />
+      <JsonLd id={`jsonld-breadcrumb-project-${slug}`} json={breadcrumbJsonLd} />
 
       {/* Back link */}
       <Link

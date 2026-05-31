@@ -6,6 +6,7 @@ import { SectionContainer } from "@/components/shared/section-container";
 import { getAllProjects } from "@/lib/content";
 import { getGitHubProjectsData, type GitHubProjectsData } from "@/lib/github-projects";
 import { buildBreadcrumbJsonLd } from "@/lib/seo";
+import JsonLd from "@/components/seo/json-ld";
 
 export const revalidate = 3600;
 
@@ -59,12 +60,7 @@ export default async function ProjectsPage() {
 
   return (
     <SectionContainer className="env-projects rounded-2xl">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
-        }}
-      />
+      <JsonLd id="jsonld-projects-page" json={breadcrumbJsonLd} />
 
       <ChapterOpener
         kicker="Build Log"
