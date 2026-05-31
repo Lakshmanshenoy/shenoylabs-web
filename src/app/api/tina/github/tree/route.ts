@@ -1,6 +1,7 @@
 // Tree-based GitHub commit + PR helper for Tina (single atomic commit)
 // POST JSON: { changes: [{ path, content, encoding? }], commitMessage?, prTitle?, prBody?, baseBranch?, branchName? }
 // Requires env: GITHUB_TOKEN, GITHUB_REPOSITORY (owner/repo)
+import { requireAdminAuth } from "../../../../../lib/admin-auth";
 
 function jsonResponse(obj: unknown, status = 200) {
   return new Response(JSON.stringify(obj), {
@@ -9,11 +10,10 @@ function jsonResponse(obj: unknown, status = 200) {
   });
 }
 
-function encodePathSegments(p: string) {
-  return p.split("/").map(encodeURIComponent).join("/");
-}
-
 export async function POST(req: Request) {
+  const unauthorized = requireAdminAuth(req);
+  if (unauthorized) return unauthorized;
+
   try {
     const token = process.env.GITHUB_TOKEN ?? process.env.TINA_GITHUB_TOKEN;
     const repository = process.env.GITHUB_REPOSITORY; // owner/repo
@@ -173,6 +173,9 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const unauthorized = requireAdminAuth(req);
+  if (unauthorized) return unauthorized;
+
   return jsonResponse({ info: "Tree-based GitHub Tina helper. POST with changes to create PR." });
 }

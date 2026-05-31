@@ -120,6 +120,43 @@ else \
   grep -R -n -E --include="*.mdx" --include="*.tsx" --include="*.jsx" "$HYPN_PATTERN" . && exit 1 || exit 0; \
 fi'
 
+# Exposure guard: fail on tracked sensitive runtime artifacts and token-like strings.
+run_cmd exposure-guard bash -lc '
+set -euo pipefail
+
+forbidden_files=(
+  ".env"
+  ".env.local"
+  ".env.local.bak"
+  "vercel_runtime_logs.json"
+  "vercel_runtime_logs_cli_capture.txt"
+  "data/consent-events.ndjson"
+  "GH_PAGER=cat gh run view 24303868073 --log"
+)
+
+for file in "${forbidden_files[@]}"; do
+  if git ls-files --error-unmatch "$file" >/dev/null 2>&1; then
+    echo "Tracked forbidden file detected: $file"
+    exit 1
+  fi
+done
+
+pattern="AKIA[0-9A-Z]{16}|ASIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{20,}|vcp_[A-Za-z0-9]{20,}|re_[A-Za-z0-9]{20,}|rediss://[^\"\x27[:space:]]+|-----BEGIN (RSA|EC|OPENSSH|PRIVATE) KEY-----"
+
+if git grep -nI -E "$pattern" -- \
+  . \
+  ":(exclude)scripts/checks.sh" \
+  ":(exclude).env.example" \
+  ":(exclude).env.local.example" \
+  ":(exclude)docs/**" \
+  ":(exclude)content/articles/**"; then
+  echo "Potential secret-like content found in tracked files."
+  exit 1
+fi
+
+exit 0
+'
+
 # Prettier (optional) — only run if configured in package.json
 if grep -q '"prettier"' package.json 2>/dev/null; then
   if [ "$FIX" = true ]; then

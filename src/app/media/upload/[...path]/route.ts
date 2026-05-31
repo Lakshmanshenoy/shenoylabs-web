@@ -1,5 +1,5 @@
 // Media upload route — accepts FormData (file, filename, directory) and creates a GitHub PR with the file
-import { NextResponse } from 'next/server';
+import { requireAdminAuth } from "../../../../lib/admin-auth";
 
 function jsonResponse(obj: unknown, status = 200) {
   return new Response(JSON.stringify(obj), {
@@ -9,6 +9,9 @@ function jsonResponse(obj: unknown, status = 200) {
 }
 
 export async function POST(req: Request) {
+  const unauthorized = requireAdminAuth(req);
+  if (unauthorized) return unauthorized;
+
   try {
     const token = process.env.GITHUB_TOKEN ?? process.env.TINA_GITHUB_TOKEN;
     const repository = process.env.GITHUB_REPOSITORY;
@@ -47,12 +50,15 @@ export async function POST(req: Request) {
     const prBody = `Upload ${filename} via Tina CMS`;
     const baseBranch = process.env.GITHUB_BASE_BRANCH || 'main';
     const branchName = `tina-media-${Date.now()}`;
+    const adminKeyHeader = req.headers.get("x-admin-key") ?? req.headers.get("x-consent-admin-key") ?? "";
 
     // Use the tree helper endpoint internally to create a PR atomically
     const base = process.env.NEXT_PUBLIC_BASE_URL || `http://localhost:3000`;
+    const treeHeaders: HeadersInit = { 'Content-Type': 'application/json' };
+    if (adminKeyHeader) treeHeaders["x-admin-key"] = adminKeyHeader;
     const treeRes = await fetch(`${base}/api/tina/github/tree`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: treeHeaders,
       body: JSON.stringify({
         changes: [{ path: repoPath, content: contentBase64, encoding: 'base64' }],
         commitMessage,
@@ -80,6 +86,9 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const unauthorized = requireAdminAuth(req);
+  if (unauthorized) return unauthorized;
+
   return jsonResponse({ info: 'Media upload helper. POST FormData file to this endpoint.' });
 }

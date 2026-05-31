@@ -6,6 +6,14 @@ import Toast from "../../../components/ui/Toast";
 type FileItem = { filename: string; src: string };
 
 export default function MediaAdminPage() {
+  const [adminKey, setAdminKey] = useState(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      return sessionStorage.getItem("admin_api_key") ?? "";
+    } catch {
+      return "";
+    }
+  });
   const [dir, setDir] = useState("");
   const [files, setFiles] = useState<FileItem[]>([]);
   const [directories, setDirectories] = useState<string[]>([]);
@@ -23,10 +31,26 @@ export default function MediaAdminPage() {
 
   // load server-backed logs with localStorage fallback
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (adminKey) {
+        sessionStorage.setItem("admin_api_key", adminKey);
+      } else {
+        sessionStorage.removeItem("admin_api_key");
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, [adminKey]);
+
+  // load server-backed logs with localStorage fallback
+  useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const res = await fetch("/api/media/prs", { headers: { "User-Agent": "Mozilla/5.0" } });
+        const headers: HeadersInit = { "User-Agent": "Mozilla/5.0" };
+        if (adminKey) headers["x-admin-key"] = adminKey;
+        const res = await fetch("/api/media/prs", { headers });
         if (res.ok) {
           const json = await res.json();
           if (mounted && Array.isArray(json?.logs)) {
@@ -47,7 +71,7 @@ export default function MediaAdminPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [adminKey]);
 
   const addPrLog = useCallback((url: string, action: "upload" | "delete", filename?: string) => {
     const ts = Date.now();
@@ -63,16 +87,18 @@ export default function MediaAdminPage() {
     // try to persist server-side (best-effort)
     (async () => {
       try {
+          const headers: HeadersInit = { "Content-Type": "application/json" };
+          if (adminKey) headers["x-admin-key"] = adminKey;
         await fetch("/api/media/prs", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+            headers,
           body: JSON.stringify(entry),
         });
       } catch (e) {
         // ignore failures — localStorage remains as fallback
       }
     })();
-  }, [setPrLogs]);
+  }, [setPrLogs, adminKey]);
 
   useEffect(() => {
     fetchList();
@@ -86,7 +112,9 @@ export default function MediaAdminPage() {
       setError(null);
       const path = targetDir ?? dir;
       const url = path ? `/media/list/${encodeURIComponent(path)}` : `/media/list`;
-      const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+        const headers: HeadersInit = { "User-Agent": "Mozilla/5.0" };
+        if (adminKey) headers["x-admin-key"] = adminKey;
+        const res = await fetch(url, { headers });
       if (!res.ok) {
         const txt = await res.text();
         setError(txt || `Failed to fetch ${url}`);
@@ -119,7 +147,9 @@ export default function MediaAdminPage() {
       setSuccess(null);
       setPrUrl(null);
       const path = dir ? `${dir}/${filename}` : filename;
-      const res = await fetch(`/media/${encodeURIComponent(path)}`, { method: "DELETE", headers: { "User-Agent": "Mozilla/5.0" } });
+      const headers: HeadersInit = { "User-Agent": "Mozilla/5.0" };
+      if (adminKey) headers["x-admin-key"] = adminKey;
+      const res = await fetch(`/media/${encodeURIComponent(path)}`, { method: "DELETE", headers });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(json?.error || `Delete failed`);
@@ -160,7 +190,9 @@ export default function MediaAdminPage() {
       if (dir) form.append("directory", dir);
 
       const path = dir ? `/media/upload/${encodeURIComponent(dir)}` : "/media/upload";
-      const res = await fetch(path, { method: "POST", body: form });
+      const headers: HeadersInit = {};
+      if (adminKey) headers["x-admin-key"] = adminKey;
+      const res = await fetch(path, { method: "POST", headers, body: form });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(json?.error || "Upload failed");
@@ -188,6 +220,18 @@ export default function MediaAdminPage() {
   return (
     <div style={{ padding: 20, fontFamily: "Inter, system-ui, -apple-system, sans-serif" }}>
       <h1 style={{ marginBottom: 10 }}>Media Manager</h1>
+      <div style={{ marginBottom: 12, display: "grid", gap: 6 }}>
+        <label htmlFor="admin-key" style={{ fontSize: 12, color: "#6b7280" }}>
+          Admin API Key (required)
+        </label>
+        <input
+          id="admin-key"
+          type="password"
+          value={adminKey}
+          onChange={(e) => setAdminKey(e.target.value)}
+          placeholder="Set ADMIN_API_KEY or CONSENT_ADMIN_KEY in server env"
+        />
+      </div>
       <div style={{ marginBottom: 12 }}>
         <input value={dir} onChange={(e) => setDir(e.target.value)} placeholder="directory (e.g. images)" />
         <button onClick={() => fetchList()} style={{ marginLeft: 8 }}>
