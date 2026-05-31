@@ -1,0 +1,12 @@
+Checking commit...
+Commit exists; pushing branch...
+Pushing to https://github.com/Lakshmanshenoy/shenoylabs-web.git
+POST git-receive-pack (224 bytes)
+remote: 
+remote: Create a pull request for 'pr/dfc95af' on GitHub by visiting:        
+remote:      https://github.com/Lakshmanshenoy/shenoylabs-web/pull/new/pr/dfc95af        
+remote: 
+To https://github.com/Lakshmanshenoy/shenoylabs-web.git
+ * [new branch]      dfc95af3d35f2fd94abc3aab41de24baddcf321b -> pr/dfc95af
+updating local tracking ref 'refs/remotes/origin/pr/dfc95af'
+EXIT:0
