@@ -11,26 +11,35 @@ import JsonLd from "@/components/seo/json-ld";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Projects — Shenoy Labs",
+  title: "Projects — ShenoyLabs",
   description:
-    "Shipped products, ongoing builds, and planned work by Lakshman Shenoy.",
+    "Open-source projects and experiments built in public by Lakshman Shenoy.",
   alternates: {
     canonical: "/projects",
   },
   openGraph: {
-    title: "Projects — Shenoy Labs",
+    title: "Projects — ShenoyLabs",
     description:
-      "Shipped products, ongoing builds, and planned work by Lakshman Shenoy.",
+      "Open-source projects and experiments built in public.",
     type: "website",
     url: "/projects",
-    images: ["/api/og?title=Projects"],
+    siteName: "ShenoyLabs",
+    images: [
+      {
+        url: "/api/og?title=Projects&type=project&description=Open-source+projects+built+in+public",
+        width: 1200,
+        height: 630,
+        alt: "Projects — ShenoyLabs",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Projects — Shenoy Labs",
+    title: "Projects — ShenoyLabs",
     description:
-      "Shipped products, ongoing builds, and planned work by Lakshman Shenoy.",
-    images: ["/api/og?title=Projects"],
+      "Open-source projects and experiments built in public.",
+    images: ["/api/og?title=Projects&type=project"],
+    creator: "@shenoylakshman",
   },
 };
 

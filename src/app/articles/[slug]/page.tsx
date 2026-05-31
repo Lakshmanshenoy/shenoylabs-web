@@ -147,12 +147,20 @@ export async function generateMetadata({
     const { frontmatter: fm } = getArticle(slug);
     const createdDate = fm.createdDate ?? fm.date;
     const lastUpdated = fm.lastUpdated ?? createdDate;
-    const socialImage = fm.coverImage
-      ? [fm.coverImage]
-      : [`/api/og?title=${encodeURIComponent(fm.title)}&type=article`];
+
+    // Always use the dynamic OG route — never the static hero SVG
+    const ogParams = new URLSearchParams({
+      title: fm.title,
+      type: "article",
+      ...(fm.primaryCategory || fm.category
+        ? { category: fm.primaryCategory ?? fm.category }
+        : {}),
+      ...(fm.excerpt ? { description: fm.excerpt } : {}),
+    });
+    const ogImageUrl = `/api/og?${ogParams.toString()}`;
 
     return {
-      title: `${fm.title} — Shenoy Labs`,
+      title: `${fm.title} — ShenoyLabs`,
       description: fm.excerpt,
       alternates: {
         canonical: `/articles/${slug}`,
@@ -162,17 +170,27 @@ export async function generateMetadata({
         description: fm.excerpt,
         type: "article",
         url: `/articles/${slug}`,
+        siteName: "ShenoyLabs",
         publishedTime: createdDate,
         modifiedTime: lastUpdated,
         authors: [fm.author],
         tags: fm.tags,
-        images: socialImage,
+        images: [
+          {
+            url: ogImageUrl,
+            width: 1200,
+            height: 630,
+            alt: fm.title,
+          },
+        ],
       },
       twitter: {
         card: "summary_large_image",
         title: fm.title,
         description: fm.excerpt,
-        images: socialImage,
+        images: [ogImageUrl],
+        creator: "@shenoylakshman",
+        site: "@shenoylakshman",
       },
     };
   } catch {

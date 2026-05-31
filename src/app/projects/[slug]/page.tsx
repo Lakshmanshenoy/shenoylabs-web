@@ -38,12 +38,18 @@ export async function generateMetadata({
   const { slug } = await params;
   try {
     const { frontmatter: fm } = getProject(slug);
-    const socialImage = fm.coverImage
-      ? [fm.coverImage]
-      : [`/api/og?title=${encodeURIComponent(fm.title)}&type=project`];
+
+    // Always use the dynamic OG route — never a static cover image
+    const ogParams = new URLSearchParams({
+      title: fm.title,
+      type: "project",
+      ...(fm.primaryCategory ? { category: fm.primaryCategory } : {}),
+      ...(fm.description ? { description: fm.description } : {}),
+    });
+    const ogImageUrl = `/api/og?${ogParams.toString()}`;
 
     return {
-      title: `${fm.title} — Shenoy Labs`,
+      title: `${fm.title} — ShenoyLabs`,
       description: fm.description,
       alternates: {
         canonical: `/projects/${slug}`,
@@ -53,13 +59,23 @@ export async function generateMetadata({
         description: fm.description,
         type: "website",
         url: `/projects/${slug}`,
-        images: socialImage,
+        siteName: "ShenoyLabs",
+        images: [
+          {
+            url: ogImageUrl,
+            width: 1200,
+            height: 630,
+            alt: fm.title,
+          },
+        ],
       },
       twitter: {
         card: "summary_large_image",
         title: fm.title,
         description: fm.description,
-        images: socialImage,
+        images: [ogImageUrl],
+        creator: "@shenoylakshman",
+        site: "@shenoylakshman",
       },
     };
   } catch {
