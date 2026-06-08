@@ -181,7 +181,7 @@ export function MobileTocSheet({ toc }: { toc: ArticleTocItem[] }) {
 // Sticky left column navigation. Tracks active section on scroll and shows
 // an "approaching" highlight for the upcoming section. Shown at xl+ only.
 
-export function ArticleTocSidebar({ toc }: { toc: ArticleTocItem[] }) {
+export function ArticleTocSidebar({ toc, onToggle }: { toc: ArticleTocItem[]; onToggle?: () => void }) {
   const [activeId, setActiveId] = useState<string | null>(toc[0]?.id ?? null);
   const [approaching, setApproaching] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
@@ -227,13 +227,25 @@ export function ArticleTocSidebar({ toc }: { toc: ArticleTocItem[] }) {
     <aside className="hidden xl:block">
       <div className="sticky top-24 flex w-full flex-col overflow-hidden rounded-xl border border-border/60 bg-background/90 shadow-sm backdrop-blur-sm">
         {/* Panel header */}
-        <div className="border-b border-border/50 px-4 pb-3 pt-4">
-          <p className="text-[11px] font-semibold tracking-[0.15em] text-muted-foreground/65 uppercase">
-            Contents
-          </p>
-          <p className="mt-0.5 font-mono text-[11px] text-muted-foreground/55">
-            Section {sectionLabel}
-          </p>
+        <div className="flex items-center justify-between border-b border-border/50 px-4 pb-3 pt-4">
+          <div>
+            <p className="text-[11px] font-semibold tracking-[0.15em] text-muted-foreground/65 uppercase">
+              Contents
+            </p>
+            <p className="mt-0.5 font-mono text-[11px] text-muted-foreground/55">
+              Section {sectionLabel}
+            </p>
+          </div>
+          {onToggle && (
+            <button
+              onClick={onToggle}
+              className="rounded-md p-1.5 text-muted-foreground/60 transition-colors hover:bg-secondary/60 hover:text-foreground"
+              title="Collapse contents"
+              aria-label="Collapse contents"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
         </div>
 
         {/* TOC nav — scrollable so very long articles don't overflow */}
@@ -523,5 +535,51 @@ export function ArticleReaderEnhancements({
       {/* Passage share popover */}
       <QuoteSharePopover quote={quote} onClose={() => setQuote(null)} />
     </>
+  );
+}
+
+// ─── Article Reader Layout ────────────────────────────────────────────────────
+// Client-side layout that manages TOC visibility. Switches between two-column
+// (TOC visible, 30/70 split) and single-column (TOC collapsed, article fills).
+
+export function ArticleReaderLayout({
+  toc,
+  children,
+}: {
+  toc: ArticleTocItem[];
+  children: React.ReactNode;
+}) {
+  const [tocCollapsed, setTocCollapsed] = useState(false);
+
+  if (tocCollapsed) {
+    return (
+      <div className="xl:relative">
+        <div className="xl:sticky xl:top-24 xl:z-10 hidden xl:block w-fit">
+          <button
+            onClick={() => setTocCollapsed(false)}
+            className="flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/90 px-2 py-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-secondary/50"
+            title="Expand table of contents"
+            aria-label="Expand table of contents"
+          >
+            <ListTree className="size-4 text-muted-foreground" />
+            <span className="text-[10px] font-semibold tracking-[0.1em] text-muted-foreground/70 uppercase [writing-mode:vertical-lr]">
+              Contents
+            </span>
+          </button>
+        </div>
+        <div id="reader-scroll-pane" className="min-w-0 xl:h-full xl:overflow-y-auto xl:pr-2">
+          {children}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="xl:grid xl:h-full xl:grid-cols-[30%_70%] xl:items-start xl:gap-8 2xl:gap-12">
+      <ArticleTocSidebar toc={toc} onToggle={() => setTocCollapsed(true)} />
+      <div id="reader-scroll-pane" className="min-w-0 xl:h-full xl:overflow-y-auto xl:pr-2">
+        {children}
+      </div>
+    </div>
   );
 }

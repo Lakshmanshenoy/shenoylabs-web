@@ -540,7 +540,7 @@ textarea:focus-visible {
 /* Baseline article prose — slightly more generous spacing than .prose-custom
    alone to aid sustained reading comfort */
 .article-prose {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 
   & > * {
     max-width: 100%;

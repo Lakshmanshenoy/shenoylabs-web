@@ -12,6 +12,7 @@ import rehypeKatex from "rehype-katex";
 
 import {
   ArticleReaderEnhancements,
+  ArticleReaderLayout,
   ArticleTocSidebar,
   MobileTocSheet,
   type ArticleTocItem,
@@ -385,14 +386,9 @@ export default async function ArticleDetailPage({
         </div>
       </div>
 
-      {/* Two-column layout: sticky left TOC + content */}
+      {/* Two-column layout: 30% TOC + 70% content */}
       <div className="xl:h-[calc(100vh-11rem)] xl:overflow-hidden">
-        <div className="xl:grid xl:h-full xl:grid-cols-[30%_70%] xl:items-start xl:gap-8 2xl:gap-12">
-        {/* Left TOC — visible at xl+ only, rendered by the ArticleTocSidebar client component */}
-        <ArticleTocSidebar toc={toc} />
-
-        {/* Primary content column */}
-        <div id="reader-scroll-pane" className="min-w-0 xl:h-full xl:overflow-y-auto xl:pr-2">
+        <ArticleReaderLayout toc={toc}>
           <header className="space-y-5">
             {fm.coverImage && (
               <div className="overflow-hidden rounded-xl border border-border/70">
@@ -616,8 +612,7 @@ export default async function ArticleDetailPage({
               <InteractionCtaPanel />
             </div>
           </section>
-        </div>
-      </div>
+        </ArticleReaderLayout>
       </div>
     </SectionContainer>
   );
