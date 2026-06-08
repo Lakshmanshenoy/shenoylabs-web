@@ -387,7 +387,7 @@ export default async function ArticleDetailPage({
 
       {/* Two-column layout: sticky left TOC + content */}
       <div className="xl:h-[calc(100vh-11rem)] xl:overflow-hidden">
-        <div className="xl:grid xl:h-full xl:grid-cols-[minmax(18rem,max-content)_minmax(0,1fr)] xl:items-start xl:gap-8 2xl:gap-12">
+        <div className="xl:grid xl:h-full xl:grid-cols-[30%_70%] xl:items-start xl:gap-8 2xl:gap-12">
         {/* Left TOC — visible at xl+ only, rendered by the ArticleTocSidebar client component */}
         <ArticleTocSidebar toc={toc} />
 
@@ -469,11 +469,9 @@ export default async function ArticleDetailPage({
           </header>
 
           {/* Article body — id used by selection tracking and long-session opt */}
-          <div className="mx-auto w-full xl:max-w-[50%]">
-            <article id="article-body" className="prose-custom article-prose mt-10">
-              {content}
-            </article>
-          </div>
+          <article id="article-body" className="prose-custom article-prose mt-10">
+            {content}
+          </article>
 
           {/* Post-article sections */}
           <section className="mt-14 space-y-8">

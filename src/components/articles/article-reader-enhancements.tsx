@@ -185,7 +185,6 @@ export function ArticleTocSidebar({ toc }: { toc: ArticleTocItem[] }) {
   const [activeId, setActiveId] = useState<string | null>(toc[0]?.id ?? null);
   const [approaching, setApproaching] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
-  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     const onScroll = () => {
@@ -224,47 +223,17 @@ export function ArticleTocSidebar({ toc }: { toc: ArticleTocItem[] }) {
   const sectionLabel =
     activeIndex >= 0 ? `${activeIndex + 1} of ${toc.length}` : `— of ${toc.length}`;
 
-  if (collapsed) {
-    return (
-      <aside className="hidden xl:block">
-        <div className="sticky top-24">
-          <button
-            onClick={() => setCollapsed(false)}
-            className="flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/90 px-2 py-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-secondary/50"
-            title="Expand table of contents"
-            aria-label="Expand table of contents"
-          >
-            <ListTree className="size-4 text-muted-foreground" />
-            <span className="text-[10px] font-semibold tracking-[0.1em] text-muted-foreground/70 uppercase [writing-mode:vertical-lr]">
-              Contents
-            </span>
-          </button>
-        </div>
-      </aside>
-    );
-  }
-
   return (
     <aside className="hidden xl:block">
-      <div className="sticky top-24 flex w-fit min-w-[18rem] max-w-[30vw] flex-col overflow-hidden rounded-xl border border-border/60 bg-background/90 shadow-sm backdrop-blur-sm">
+      <div className="sticky top-24 flex w-full flex-col overflow-hidden rounded-xl border border-border/60 bg-background/90 shadow-sm backdrop-blur-sm">
         {/* Panel header */}
-        <div className="flex items-center justify-between border-b border-border/50 px-4 pb-3 pt-4">
-          <div>
-            <p className="text-[11px] font-semibold tracking-[0.15em] text-muted-foreground/65 uppercase">
-              Contents
-            </p>
-            <p className="mt-0.5 font-mono text-[11px] text-muted-foreground/55">
-              Section {sectionLabel}
-            </p>
-          </div>
-          <button
-            onClick={() => setCollapsed(true)}
-            className="rounded-md p-1.5 text-muted-foreground/60 transition-colors hover:bg-secondary/60 hover:text-foreground"
-            title="Collapse contents"
-            aria-label="Collapse contents"
-          >
-            <X className="size-3.5" />
-          </button>
+        <div className="border-b border-border/50 px-4 pb-3 pt-4">
+          <p className="text-[11px] font-semibold tracking-[0.15em] text-muted-foreground/65 uppercase">
+            Contents
+          </p>
+          <p className="mt-0.5 font-mono text-[11px] text-muted-foreground/55">
+            Section {sectionLabel}
+          </p>
         </div>
 
         {/* TOC nav — scrollable so very long articles don't overflow */}
