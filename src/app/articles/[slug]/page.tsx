@@ -7,6 +7,7 @@ import fs from "fs";
 import path from "path";
 import { CalendarDaysIcon, Clock3Icon, Link2Icon } from "lucide-react";
 import remarkMath from "remark-math";
+import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 
 import {
@@ -275,7 +276,7 @@ export default async function ArticleDetailPage({
     options: {
       parseFrontmatter: true,
       mdxOptions: {
-        remarkPlugins: [remarkMath],
+        remarkPlugins: [remarkMath, remarkGfm],
         rehypePlugins: [rehypeKatex],
       },
     },
@@ -468,9 +469,11 @@ export default async function ArticleDetailPage({
           </header>
 
           {/* Article body — id used by selection tracking and long-session opt */}
-          <article id="article-body" className="prose-custom article-prose mt-10">
-            {content}
-          </article>
+          <div className="mx-auto w-full xl:max-w-[50%]">
+            <article id="article-body" className="prose-custom article-prose mt-10">
+              {content}
+            </article>
+          </div>
 
           {/* Post-article sections */}
           <section className="mt-14 space-y-8">
