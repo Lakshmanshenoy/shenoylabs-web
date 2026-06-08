@@ -553,31 +553,30 @@ export function ArticleReaderLayout({
 
   if (tocCollapsed) {
     return (
-      <div className="xl:grid xl:h-full xl:grid-cols-[auto_1fr] xl:items-start xl:gap-4">
-        <aside className="hidden xl:block">
-          <button
-            onClick={() => setTocCollapsed(false)}
-            className="xl:sticky xl:top-24 flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/90 px-2 py-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-secondary/50"
-            title="Expand table of contents"
-            aria-label="Expand table of contents"
-          >
-            <ListTree className="size-4 text-muted-foreground" />
-            <span className="text-[10px] font-semibold tracking-[0.1em] text-muted-foreground/70 uppercase [writing-mode:vertical-lr]">
-              Contents
-            </span>
-          </button>
-        </aside>
-        <div id="reader-scroll-pane" className="min-w-0 xl:h-full xl:overflow-y-auto xl:pr-2">
+      <>
+        {/* Floating expand button — fixed to viewport, never overlaps content */}
+        <button
+          onClick={() => setTocCollapsed(false)}
+          className="fixed left-3 top-24 z-20 hidden xl:flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/90 px-2 py-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-secondary/50"
+          title="Expand table of contents"
+          aria-label="Expand table of contents"
+        >
+          <ListTree className="size-4 text-muted-foreground" />
+          <span className="text-[10px] font-semibold tracking-[0.1em] text-muted-foreground/70 uppercase [writing-mode:vertical-lr]">
+            Contents
+          </span>
+        </button>
+        <div id="reader-scroll-pane" className="min-w-0 break-words xl:h-full xl:overflow-y-auto xl:overflow-x-hidden xl:pr-2">
           {children}
         </div>
-      </div>
+      </>
     );
   }
 
   return (
     <div className="xl:grid xl:h-full xl:grid-cols-[30%_70%] xl:items-start xl:gap-8 2xl:gap-12">
       <ArticleTocSidebar toc={toc} onToggle={() => setTocCollapsed(true)} />
-      <div id="reader-scroll-pane" className="min-w-0 xl:h-full xl:overflow-y-auto xl:pr-2">
+      <div id="reader-scroll-pane" className="min-w-0 break-words xl:h-full xl:overflow-y-auto xl:overflow-x-hidden xl:pr-2">
         {children}
       </div>
     </div>
