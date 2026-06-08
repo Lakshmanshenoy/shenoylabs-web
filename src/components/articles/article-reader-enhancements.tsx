@@ -553,11 +553,11 @@ export function ArticleReaderLayout({
 
   if (tocCollapsed) {
     return (
-      <div className="xl:relative">
-        <div className="xl:sticky xl:top-24 xl:z-10 hidden xl:block w-fit">
+      <div className="xl:grid xl:h-full xl:grid-cols-[auto_1fr] xl:items-start xl:gap-4">
+        <aside className="hidden xl:block">
           <button
             onClick={() => setTocCollapsed(false)}
-            className="flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/90 px-2 py-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-secondary/50"
+            className="xl:sticky xl:top-24 flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/90 px-2 py-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-secondary/50"
             title="Expand table of contents"
             aria-label="Expand table of contents"
           >
@@ -566,7 +566,7 @@ export function ArticleReaderLayout({
               Contents
             </span>
           </button>
-        </div>
+        </aside>
         <div id="reader-scroll-pane" className="min-w-0 xl:h-full xl:overflow-y-auto xl:pr-2">
           {children}
         </div>

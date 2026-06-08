@@ -432,7 +432,7 @@ export default async function ArticleDetailPage({
               {fm.excerpt}
             </p>
 
-            <div className="flex items-center gap-3 border-y border-border py-4">
+            <div className="flex flex-wrap items-center gap-3 border-y border-border py-4">
               <div className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 font-heading text-sm font-bold text-primary">
                 LS
               </div>
