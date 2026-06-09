@@ -566,7 +566,7 @@ export function ArticleReaderLayout({
             Contents
           </span>
         </button>
-        <div id="reader-scroll-pane" className="min-w-0 w-full flex-1 break-words xl:h-full xl:overflow-y-auto xl:pr-2">
+        <div id="reader-scroll-pane" className="min-w-0 grow break-words xl:h-full xl:overflow-y-auto xl:pr-2">
           {children}
         </div>
       </div>
