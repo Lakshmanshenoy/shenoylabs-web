@@ -424,7 +424,7 @@ export default async function ArticleDetailPage({
               <DifficultyBadge level={fm.depthLevel} />
             )}
 
-            <h1 className="font-[family-name:var(--font-body)] text-4xl font-semibold italic leading-tight tracking-tight sm:text-5xl">
+            <h1 className="text-balance font-[family-name:var(--font-body)] text-4xl font-semibold italic leading-tight tracking-tight sm:text-5xl">
               {fm.title}
             </h1>
 
@@ -447,16 +447,16 @@ export default async function ArticleDetailPage({
                 </p>
               </div>
               <BookmarkButton slug={slug} title={fm.title} category={fm.primaryCategory ?? fm.category} />
-              <div className="ml-auto flex flex-wrap items-center gap-4 text-[11px] font-semibold tracking-[0.05em] text-muted-foreground uppercase">
-                <span className="inline-flex items-center gap-1.5">
+              <div className="ml-auto flex min-w-0 flex-wrap items-center gap-4 text-[11px] font-semibold tracking-[0.05em] text-muted-foreground uppercase">
+                <span className="inline-flex min-w-0 items-center gap-1.5">
                   <Clock3Icon className="size-3.5" />
                   {readingTime}
                 </span>
-                <span className="inline-flex items-center gap-1.5">
+                <span className="inline-flex min-w-0 items-center gap-1.5">
                   <CalendarDaysIcon className="size-3.5" />
                   Created {createdDateLabel}
                 </span>
-                <span className="inline-flex items-center gap-1.5">
+                <span className="inline-flex min-w-0 items-center gap-1.5">
                   <Link2Icon className="size-3.5" />
                   Updated {updatedDateLabel}
                 </span>

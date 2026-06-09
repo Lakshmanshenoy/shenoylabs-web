@@ -567,7 +567,7 @@ export function ArticleReaderLayout({
             </span>
           </button>
         </aside>
-        <div id="reader-scroll-pane" className="min-w-0 break-words xl:h-full xl:overflow-y-auto xl:overflow-x-hidden xl:pr-2">
+        <div id="reader-scroll-pane" className="min-w-0 break-words xl:h-full xl:overflow-y-auto xl:pr-2">
           {children}
         </div>
       </div>
@@ -577,7 +577,7 @@ export function ArticleReaderLayout({
   return (
     <div className="xl:grid xl:h-full xl:grid-cols-[30%_70%] xl:items-start xl:gap-8 2xl:gap-12" style={{ gridTemplateRows: 'minmax(0, 1fr)' }}>
       <ArticleTocSidebar toc={toc} onToggle={() => setTocCollapsed(true)} />
-      <div id="reader-scroll-pane" className="min-w-0 break-words xl:h-full xl:overflow-y-auto xl:overflow-x-hidden xl:pr-2">
+      <div id="reader-scroll-pane" className="min-w-0 break-words xl:h-full xl:overflow-y-auto xl:pr-2">
         {children}
       </div>
     </div>
