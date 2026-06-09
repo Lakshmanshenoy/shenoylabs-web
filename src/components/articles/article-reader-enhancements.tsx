@@ -553,7 +553,7 @@ export function ArticleReaderLayout({
 
   if (tocCollapsed) {
     return (
-      <div className="xl:relative xl:flex xl:h-full xl:w-full">
+      <div className="xl:relative xl:flex xl:h-full">
         {/* Expand button — fixed to left edge of the article area, outside normal flow */}
         <button
           onClick={() => setTocCollapsed(false)}
