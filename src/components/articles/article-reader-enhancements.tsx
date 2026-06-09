@@ -553,7 +553,7 @@ export function ArticleReaderLayout({
 
   if (tocCollapsed) {
     return (
-      <div className="xl:relative xl:flex xl:h-full">
+      <div className="xl:relative xl:flex xl:h-full xl:w-full">
         {/* Expand button — fixed to left edge of the article area, outside normal flow */}
         <button
           onClick={() => setTocCollapsed(false)}
@@ -574,7 +574,7 @@ export function ArticleReaderLayout({
   }
 
   return (
-    <div className="xl:flex xl:h-full xl:gap-8 2xl:gap-12">
+    <div className="xl:flex xl:h-full xl:w-full xl:gap-8 2xl:gap-12">
       <div className="xl:w-[30%] xl:shrink-0">
         <ArticleTocSidebar toc={toc} onToggle={() => setTocCollapsed(true)} />
       </div>
