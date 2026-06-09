@@ -554,10 +554,10 @@ export function ArticleReaderLayout({
   if (tocCollapsed) {
     return (
       <div className="xl:flex xl:h-full xl:gap-4">
-        <div className="xl:w-fit xl:shrink-0">
+        <div className="xl:w-12 xl:shrink-0">
           <button
             onClick={() => setTocCollapsed(false)}
-            className="sticky top-24 flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/90 px-2 py-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-secondary/50 w-fit"
+            className="sticky top-24 flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/90 px-2 py-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-secondary/50"
             title="Expand table of contents"
             aria-label="Expand table of contents"
           >
