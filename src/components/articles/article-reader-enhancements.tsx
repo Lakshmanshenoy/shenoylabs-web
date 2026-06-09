@@ -554,7 +554,7 @@ export function ArticleReaderLayout({
   if (tocCollapsed) {
     return (
       <div className="xl:flex xl:h-full xl:gap-4">
-        <div className="xl:w-12 xl:shrink-0">
+        <div className="xl:w-12 xl:shrink-0" style={{ flexBasis: '48px' }}>
           <button
             onClick={() => setTocCollapsed(false)}
             className="sticky top-24 flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/90 px-2 py-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-secondary/50"
@@ -567,7 +567,7 @@ export function ArticleReaderLayout({
             </span>
           </button>
         </div>
-        <div id="reader-scroll-pane" className="min-w-0 flex-1 break-words xl:h-full xl:overflow-y-auto xl:pr-2">
+        <div id="reader-scroll-pane" className="min-w-0 w-full flex-1 break-words xl:h-full xl:overflow-y-auto xl:pr-2">
           {children}
         </div>
       </div>
