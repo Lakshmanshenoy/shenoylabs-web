@@ -465,7 +465,7 @@ export default async function ArticleDetailPage({
           </header>
 
           {/* Article body — id used by selection tracking and long-session opt */}
-          <article id="article-body" className="prose-custom article-prose mt-10">
+          <article id="article-body" className="prose-custom article-prose mt-10 w-full">
             {content}
           </article>
 
