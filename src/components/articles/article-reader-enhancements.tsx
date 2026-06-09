@@ -553,19 +553,20 @@ export function ArticleReaderLayout({
 
   if (tocCollapsed) {
     return (
-      <div className="xl:relative xl:flex xl:h-full">
-        {/* Expand button — fixed to left edge of the article area, outside normal flow */}
-        <button
-          onClick={() => setTocCollapsed(false)}
-          className="absolute left-0 top-24 z-20 flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/90 px-2 py-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-secondary/50"
-          title="Expand table of contents"
-          aria-label="Expand table of contents"
-        >
-          <ListTree className="size-4 text-muted-foreground" />
-          <span className="text-[10px] font-semibold tracking-[0.1em] text-muted-foreground/70 uppercase [writing-mode:vertical-lr]">
-            Contents
-          </span>
-        </button>
+      <div className="xl:flex xl:h-full xl:gap-4">
+        <div className="xl:w-12 xl:shrink-0" style={{ flexBasis: '48px' }}>
+          <button
+            onClick={() => setTocCollapsed(false)}
+            className="sticky top-24 flex flex-col items-center gap-2 rounded-xl border border-border/60 bg-background/90 px-2 py-4 shadow-sm backdrop-blur-sm transition-colors hover:bg-secondary/50"
+            title="Expand table of contents"
+            aria-label="Expand table of contents"
+          >
+            <ListTree className="size-4 text-muted-foreground" />
+            <span className="text-[10px] font-semibold tracking-[0.1em] text-muted-foreground/70 uppercase [writing-mode:vertical-lr]">
+              Contents
+            </span>
+          </button>
+        </div>
         <div id="reader-scroll-pane" className="min-w-0 grow break-words xl:h-full xl:overflow-y-auto xl:pr-2">
           {children}
         </div>
